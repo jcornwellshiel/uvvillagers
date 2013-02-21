@@ -1,0 +1,10 @@
+name: UVVillagers
+main: net.uvnode.uvvillagers.UVVillagers
+version: 0.0.5
+
+commands:
+   siege:
+      description: This outputs information about a siege
+      usage: /siege
+      permission: uvvillagers.siege
+      permission-message: You don't have <permission>
