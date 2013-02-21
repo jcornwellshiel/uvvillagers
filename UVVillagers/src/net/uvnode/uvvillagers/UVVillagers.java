@@ -44,7 +44,8 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 	@Override
 	public void onEnable() {
 		getServer().getPluginManager().registerEvents(this, this);
-		
+
+		saveDefaultConfig();
 		loadConfig();
 		
 		// Step through worlds every 20 ticks and throw UVTimeEvents for various times of day.
@@ -74,7 +75,6 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 		minPerSiegeKill = getConfig().getInt("minPerSiegeKill", 1);
 		maxPerSiegeKill = getConfig().getInt("maxPerSiegeKill", 2);
 		getLogger().info("Configuration loaded.");
-		saveConfig();
 	}
 
 
