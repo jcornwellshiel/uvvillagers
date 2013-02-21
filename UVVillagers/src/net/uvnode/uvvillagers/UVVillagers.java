@@ -168,15 +168,15 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 					if (activeSiege != null) {
 						int kills = activeSiege.getPlayerKills(pname);
 						for (int i = 0; i < kills; i++) {
-							tributeAmount += rng.nextInt(maxPerSiegeKill + 1) + (maxPerSiegeKill - minPerSiegeKill);
+							tributeAmount += rng.nextInt(maxPerSiegeKill + 1 - minPerSiegeKill) + minPerSiegeKill;
 						}
 					}
 					if (numVillagers >= villagerCount) {
 						for (int i = 0; i < (int)(numVillagers / villagerCount); i++) {
 							if (activeSiege == null) {
-								tributeAmount += rng.nextInt(maxPerVillagerCount + 1) + (maxPerVillagerCount - minPerVillagerCount);
+								tributeAmount += rng.nextInt(maxPerVillagerCount + 1 - minPerVillagerCount) + minPerVillagerCount;
 							} else {
-								tributeAmount += rng.nextInt(maxPerVillagerCount + 1) + (maxPerVillagerCount - minPerVillagerCount) + baseSiegeBonus;
+								tributeAmount += rng.nextInt(maxPerVillagerCount + 1 - minPerVillagerCount) + minPerVillagerCount + baseSiegeBonus;
 							}
 						}
 						if (tributeAmount > 0) {
