@@ -73,6 +73,8 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 		baseSiegeBonus = getConfig().getInt("baseSiegeBonus", 1);
 		minPerSiegeKill = getConfig().getInt("minPerSiegeKill", 1);
 		maxPerSiegeKill = getConfig().getInt("maxPerSiegeKill", 2);
+		getLogger().info("Configuration loaded.");
+		saveConfig();
 	}
 
 
@@ -83,12 +85,19 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 	}
 	
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args){
-		if(cmd.getName().equalsIgnoreCase("siege")){
-			if (activeSiege == null) {
-				sender.sendMessage("No sieges.");
-			}
-			else {
-				activeSiege.sendOverview(sender);
+		if(cmd.getName().equalsIgnoreCase("uvv")){
+			sender.sendMessage("- UVVillagers -");
+			if (args.length > 0 && args[0] == "siege") {
+				if (activeSiege == null) {
+					sender.sendMessage("No sieges.");
+				} else {
+					activeSiege.sendOverview(sender);
+				}
+			} else if (args.length > 0 && args[0] == "reload") {
+				sender.sendMessage("Reloading Config.");
+				loadConfig();
+			} else {
+				sender.sendMessage("Try \"/uvv siege\" for current siege info, or \"/uvv reload\" to reload the config.");
 			}
 			return true;
 		}
