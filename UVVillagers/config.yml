@@ -1,0 +1,23 @@
+#Give tributes to "player" or to "chest". tribute chests must be a single chest block on top of a gold block. 
+tributeMode: player
+
+#The radius (in blocks) around the player or chest to get villager tributes from. 
+tributeRange: 64
+
+#The number of villagers per tribute
+villagerCount: 20
+
+#The minimum tribute size per X villagers
+minPerVillagerCount: 0
+
+#The maximum tribute size per X villagers
+maxPerVillagerCount: 3
+
+#Bonus tribute per X villagers if there was a zombie siege in the vicinity
+baseSiegeBonus: 1
+
+#The minimum tribute granted for killing a zombie siege mob.
+minPerSiegeKill: 1
+
+#The maximum tribute granted for killing a zombie siege mob.
+maxPerSiegeKill: 2
