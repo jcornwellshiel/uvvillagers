@@ -1,10 +1,10 @@
 name: UVVillagers
 main: net.uvnode.uvvillagers.UVVillagers
-version: 0.0.7
+version: 0.0.8
 
 commands:
    uvv:
-      description: UVVillagers commands. Get siege information or reload config.
-      usage: /uvv [siege|reload]
-      permission: uvvillagers.siege
+      description: UVVillagers commands. Get nearest village info.
+      usage: /uvv
+      permission: uvvillagers.main
       permission-message: You don't have <permission>
