@@ -1,6 +1,6 @@
 name: UVVillagers
 main: net.uvnode.uvvillagers.UVVillagers
-version: 0.2.23
+version: 0.1.4
 
 commands:
    uvv:

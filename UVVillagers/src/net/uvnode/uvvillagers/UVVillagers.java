@@ -77,7 +77,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 						UVTimeEvent event = new UVTimeEvent(worlds.get(i), UVTimeEventType.DAWN);
 						getServer().getPluginManager().callEvent(event);
 					}
-					if (worlds.get(i).getTime() >= 16000 && worlds.get(i).getTime() < 16020) {
+					if (worlds.get(i).getTime() >= 12500 && worlds.get(i).getTime() < 12520) {
 						UVTimeEvent event = new UVTimeEvent(worlds.get(i), UVTimeEventType.DUSK);
 						getServer().getPluginManager().callEvent(event);
 					}
@@ -137,6 +137,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 
 	@EventHandler
 	public void playerMove(PlayerMoveEvent event) {
+		if (event.getTo().getWorld() != getServer().getWorlds().get(0));
 		Village v = _worldserver.villages.getClosestVillage(
 				event.getTo().getBlockX(),
 				event.getTo().getBlockY(),
@@ -174,7 +175,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 		switch(event.getSpawnReason()) {
 			case VILLAGE_INVASION: 
 				// VILLAGE_INVASION is only triggered in a zombie siege.
-
+				// TO DO - ADD METHOD THAT MAKES SURE THAT ZOMBIES SPAWN AT VILLAGE HEIGHT - thebloodline has his village floating 3 blocks over land, and all the zombies spawn underneath.
 				// If we haven't already registered this siege, create a new siege tracking object
 				if (_activeSiege == null) {
 					getServer().broadcastMessage("A zombie siege has begun!!!");
@@ -191,11 +192,10 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 				_activeSiege.addSpawn(event.getEntity());
 				
 				// If configured to, randomly spawn extra zombies! 
-				// Eventually this will be replaced by a method that handles spawning a variety of mob types. 
+				// Eventually this will be replaced by a method that handles spawning a variety of mob types based on village size
 				if (chanceOfExtraZombies > 1) { 
 					Random rng = new Random();
 					if (chanceOfExtraZombies > rng.nextInt(100)) {
-						getLogger().info("An extra zombie spawns!");
 						// Spawn a zombie and add him to the siege mob list for kill tracking.
 						_activeSiege.addSpawn((LivingEntity)event.getEntity().getWorld().spawnEntity(event.getEntity().getLocation(), EntityType.ZOMBIE));
 					}
@@ -228,7 +228,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 				// Kick us out of this if we're not dealing with the main world.
 				if (event.getWorld().getName() != _worldserver.getWorld().getName()) { return; }
 					
-				getServer().broadcastMessage("Dawn has arrived in world " + event.getWorld().getName() + "!");
+				//getServer().broadcastMessage("Dawn has arrived in world " + event.getWorld().getName() + "!");
 
 				//Map<String, Integer> playerVillagerCounts = new HashMap<String, Integer>();
 				List<Player> players = event.getWorld().getPlayers();
@@ -241,8 +241,8 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 				while (playerIterator.hasNext()) {
 					Player p = playerIterator.next();
 					Iterator<Village> villageIterator = villages.iterator();
-
-					int tributeAmount = 0, killBonus = 0;
+					
+					int tributeAmount = 0, killBonus = 0, numVillagesNearby = 0;
 					Random rng = new Random();
 
 					// Calculate bonus from kills
@@ -255,17 +255,15 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 
 					// Step through the villages. Add their tributes if they're close enough.
 					while (villageIterator.hasNext()) {
-						getLogger().info("Next village");
 						int villageTributeAmount = 0;
 						Village v = villageIterator.next();
 						Location loc = new Location(event.getWorld(), v.getCenter().x, v.getCenter().y, v.getCenter().z);
 						// Check village distance from player
 						if (p.getLocation().distanceSquared(loc) < (tributeRange+v.getSize()) * (tributeRange+v.getSize())) {
-							getLogger().info("...is close enough");
+							numVillagesNearby++;
 							// Check population size
 							int population = v.getPopulationCount();
 							if (population > 20) {
-								getLogger().info("...is big enough");
 								// Give a random bonus per 20 villagers
 								for (int i = 0; i < (int)(population / villagerCount); i++) {
 									villageTributeAmount += rng.nextInt(maxPerVillagerCount + 1 - minPerVillagerCount) + minPerVillagerCount + baseSiegeBonus;
@@ -282,15 +280,16 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 					// TO-DO: Save the tribute amount for each player/village so that receive it next time the player talks to a villager in that village.
 					// This will force players to interact with every village that they are to get credit for.
 					// But for now... just award the tribute directly.
-					if (tributeAmount > 0) {
-						ItemStack items = new ItemStack(Material.EMERALD, tributeAmount);
-						p.getInventory().addItem(items);
-						p.sendMessage("Grateful villagers gave you " + tributeAmount + " emeralds!");
-					}
-					else
-						p.sendMessage("The villagers didn't have any emeralds for you today.");
-					
-					getLogger().info(p.getName() + " received " + tributeAmount + " emeralds.");						
+					if (numVillagesNearby > 0) {
+						if (tributeAmount > 0) {
+							ItemStack items = new ItemStack(Material.EMERALD, tributeAmount);
+							p.getInventory().addItem(items);
+							p.sendMessage("Grateful villagers gave you " + tributeAmount + " emeralds!");
+							getLogger().info(p.getName() + " received " + tributeAmount + " emeralds.");						
+						} else
+							p.sendMessage("The villagers didn't have any emeralds for you today.");
+					} else
+						p.sendMessage("You weren't near any villages large enough to pay you tribute.");
 				}
 				if (_activeSiege != null) {
 					ArrayList<String> messages = _activeSiege.overviewMessage();
@@ -304,7 +303,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 				// Kick us out of this if we're not dealing with the main world.
 				if (event.getWorld().getName() != _worldserver.getWorld().getName()) { return; }
 
-				getServer().broadcastMessage("Dusk has arrived in world " + event.getWorld().getName() + "!");
+				//getServer().broadcastMessage("Dusk has arrived in world " + event.getWorld().getName() + "!");
 
 				// TO-DO: clear pending tributes list
 				// clear active siege

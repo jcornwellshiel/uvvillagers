@@ -21,3 +21,9 @@ minPerSiegeKill: 1
 
 #The maximum tribute granted for killing a zombie siege mob.
 maxPerSiegeKill: 2
+
+#The random % chance that an extra zombie will spawn with each zombie siege spawn. 
+chanceOfExtraZombies: 50
+
+#Whether to prevent anti-siege strategies of building raised houses
+preventUnderspawn: 1
