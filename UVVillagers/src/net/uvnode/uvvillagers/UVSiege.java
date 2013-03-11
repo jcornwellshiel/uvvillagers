@@ -17,13 +17,14 @@ public class UVSiege {
 	ArrayList<Entity> _spawns = new ArrayList<Entity>();
 	ArrayList<Integer> _spawnIds = new ArrayList<Integer>();
 	Map<String, Integer> _players = new HashMap<String, Integer>();
+	Map<String, Integer> _playerPoints = new HashMap<String, Integer>();
 	Village _village = null;
 	int _villageHashCode, _villageCenterX, _villageCenterY, _villageCenterZ;
 	
 	UVSiege(long gamestart, Date start, Village village) {
 		_start = start;
 		_gamestart = gamestart;
-		//_village = village;
+		_village = village;
 		_villageHashCode = village.hashCode();
 		_villageCenterX = village.getCenter().x;
 		_villageCenterY = village.getCenter().y;
@@ -43,16 +44,25 @@ public class UVSiege {
 		return _spawnIds.contains(entityId);
 	}
 
-	public void addPlayerKill(String name) {
-		if (_players.containsKey(name))
+	public void addPlayerKill(String name, Integer value) {
+		if (_players.containsKey(name)) {
 			_players.put(name, _players.get(name) + 1);
-		else 
+			_playerPoints.put(name, _playerPoints.get(name) + value);
+		} else { 
 			_players.put(name, 1);
+			_playerPoints.put(name, value);
+		}
 	}
 
 	public int getPlayerKills(String name) {
 		if (_players.containsKey(name))
 			return _players.get(name);
+		else 
+			return 0;
+	}
+	public int getPlayerPoints(String name) {
+		if (_playerPoints.containsKey(name))
+			return _playerPoints.get(name);
 		else 
 			return 0;
 	}
@@ -75,4 +85,5 @@ public class UVSiege {
 		}
 		return msgs;
 	}
+
 }

@@ -22,8 +22,78 @@ minPerSiegeKill: 1
 #The maximum tribute granted for killing a zombie siege mob.
 maxPerSiegeKill: 2
 
-#The random % chance that an extra zombie will spawn with each zombie siege spawn. 
-chanceOfExtraZombies: 50
+#Radius around the initial siege location to spawn mobs in.
+randomSpread: 16
+randomVerticalSpread: 6
 
-#Whether to prevent anti-siege strategies of building raised houses
-preventUnderspawn: 1
+#Settings for each mob type. Settings are as follows:
+#   threshold - minimum number of villagers required for this type of mob to spawn.
+#   chance - % chance of this mob spawning if the threshold is met. ### SET TO 0 TO DISABLE THIS MOB. ###
+#   max - max number of this mob that can spawn in a siege.
+#   points - the number of popularity points killing this mob type will grant.
+mobs:
+  zombie:
+    threshold: 1
+    chance: 100
+    points: 1
+    max: 100
+  skeleton:
+    threshold: 20
+    chance: 100
+    points: 1
+    max: 100
+  spider:
+    threshold: 20
+    chance: 100
+    points: 1
+    max: 100
+  cave_spider:
+    threshold: 40
+    chance: 100
+    points: 10
+    max: 100
+  pig_zombie:
+    threshold: 1
+    chance: 0
+    points: 1
+    max: 100
+  blaze:
+    threshold: 40
+    chance: 100
+    points: 1
+    max: 100
+  witch:
+    threshold: 40
+    chance: 100
+    points: 1
+    max: 100
+  magma_cube:
+    threshold: 60
+    chance: 0
+    points: 1
+    max: 10
+  wither_skeleton:
+    threshold: 60
+    chance: 60
+    points: 10
+    max: 100
+  enderman:
+    threshold: 60
+    chance: 0
+    points: 1
+    max: 100
+  ghast:
+    threshold: 80
+    chance: 0
+    points: 1
+    max: 100
+  wither:
+    threshold: 150
+    chance: 0
+    points: 1
+    max: 100
+  ender_dragon:
+    threshold: 150
+    chance: 0
+    points: 1
+    max: 3
