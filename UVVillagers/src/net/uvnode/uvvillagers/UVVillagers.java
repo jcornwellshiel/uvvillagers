@@ -17,8 +17,6 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
-//import org.bukkit.potion.PotionEffect;
-//import org.bukkit.potion.PotionEffectType;
 
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.command.Command;
@@ -36,8 +34,6 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.ItemStack;
 
 import org.bukkit.craftbukkit.v1_4_R1.CraftWorld;
-
-//import lib.PatPeter.SQLibrary.*;
 
 /**
  * @author James Cornwell-Shiel
@@ -114,7 +110,22 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 						UVTimeEvent event = new UVTimeEvent(worlds.get(i), UVTimeEventType.DUSK);
 						getServer().getPluginManager().callEvent(event);
 					}
+					/*
+					if (worlds.get(i).getTime() >= 0 && worlds.get(i).getTime() < 20) {
+						UVTimeEvent event = new UVTimeEvent(worlds.get(i), UVTimeEventType.NOON);
+						getServer().getPluginManager().callEvent(event);
+					}
+					if (worlds.get(i).getTime() >= 12500 && worlds.get(i).getTime() < 12520) {
+						UVTimeEvent event = new UVTimeEvent(worlds.get(i), UVTimeEventType.MIDNIGHT);
+						getServer().getPluginManager().callEvent(event);
+					}*/
+					if (worlds.get(i).getTime() % 1000 < 20) {
+						UVTimeEvent event = new UVTimeEvent(worlds.get(i), UVTimeEventType.CHECK);
+						getServer().getPluginManager().callEvent(event);
+					}
+						
 				}
+				
 			}
 		}, 0, 20);
 	}
@@ -228,8 +239,14 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 				int x = villageConfigSection.getInt("x");
 				int y = villageConfigSection.getInt("y");
 				int z = villageConfigSection.getInt("z");
+				int size = villageConfigSection.getInt("size");
+				int doors = villageConfigSection.getInt("doors");
+				int population = villageConfigSection.getInt("population");
 
 				UVVillageData v = new UVVillageData(w, x, y, z);
+				v._size = size;
+				v._doors = doors;
+				v._population = population;
 				for(Map.Entry<String, Object> playerEntry : playersMap.entrySet()) {
 					String playerName = playerEntry.getKey();
 					int playerRep = (Integer) playerEntry.getValue();
@@ -265,6 +282,9 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 			v.put("x", vdata.getValue()._centerX);
 			v.put("y", vdata.getValue()._centerY);
 			v.put("z", vdata.getValue()._centerZ);
+			v.put("size", vdata.getValue()._size);
+			v.put("doors", vdata.getValue()._doors);
+			v.put("population", vdata.getValue()._population);
 			v.put("pr", vdata.getValue()._playerReputations);
 			map.put(vdata.getKey(), v);
 		}
@@ -571,108 +591,132 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 	}
 
 	@EventHandler
-	public void emeraldsAtDawn(UVTimeEvent event) {
-		if (!emeraldsAtDawnRunning) {
-			emeraldsAtDawnRunning = true;
-		}
+	public void onUVTimeEvent(UVTimeEvent event) {
 		switch(event.getType()) {
 			case DAWN:
-				// TO-DO: ADD MULTIWORLD SUPPORT!
-				// Kick us out of this if we're not dealing with the main world.
-				if (event.getWorld().getName() != _worldserver.getWorld().getName()) { return; }
-					
-				//getServer().broadcastMessage("Dawn has arrived in world " + event.getWorld().getName() + "!");
-
-				//Map<String, Integer> playerVillagerCounts = new HashMap<String, Integer>();
-				List<Player> players = event.getWorld().getPlayers();
-				
-				@SuppressWarnings("unchecked")
-				List<Village> villages = _worldserver.villages.getVillages();
-				Iterator<Player> playerIterator = players.iterator();
-				
-				// Step through the players to calculate tribute 
-				while (playerIterator.hasNext()) {
-					Player p = playerIterator.next();
-					Iterator<Village> villageIterator = villages.iterator();
-					
-					int tributeAmount = 0, killBonus = 0, numVillagesNearby = 0;
-					Random rng = new Random();
-
-					// Calculate bonus from kills
-					if (_activeSiege != null) {
-						int kills = _activeSiege.getPlayerKills(p.getName());
-						for (int i = 0; i < kills; i++) {
-							killBonus += rng.nextInt(maxPerSiegeKill + 1 - minPerSiegeKill) + minPerSiegeKill;
-						}
-					}
-
-					// Step through the villages. Add their tributes if they're close enough.
-					while (villageIterator.hasNext()) {
-						int villageTributeAmount = 0;
-						Village v = villageIterator.next();
-						Location loc = new Location(event.getWorld(), v.getCenter().x, v.getCenter().y, v.getCenter().z);
-						// Get UV village data object
-						UVVillageData uv = getUVVillageData(loc, tributeRange);
-						p.getName();
-						// Check village distance from player
-						if (p.getLocation().distanceSquared(loc) < (tributeRange+v.getSize()) * (tributeRange+v.getSize())) {
-							numVillagesNearby++;
-							// Check population size
-							int population = v.getPopulationCount();
-							if (population > 0 && _activeSiege != null) {
-								// Update reputation if villagers survived
-								uv.modifyPlayerReputation(p.getName(), _activeSiege.getPlayerPoints(p.getName()));
-							}
-							if (population > 20) {
-								// Give a random bonus per 20 villagers
-								for (int i = 0; i < (int)(population / villagerCount); i++) {
-									villageTributeAmount += rng.nextInt(maxPerVillagerCount + 1 - minPerVillagerCount) + minPerVillagerCount + baseSiegeBonus;
-								}
-								// If this village was the one sieged, give the kill bonus and an extra survival thankfulness bonus
-								if (_activeSiege != null && _activeSiege.getVillage() != null && _activeSiege.getVillage().hashCode() == v.hashCode()) {
-									villageTributeAmount += 1 * (int)(population / villagerCount) + killBonus;
-								}
-							}
-						}
-						// Add the tribute from this village to the total owed
-						tributeAmount += villageTributeAmount;
-					}
-					// TO-DO: Save the tribute amount for each player/village so that receive it next time the player talks to a villager in that village.
-					// This will force players to interact with every village that they are to get credit for.
-					// But for now... just award the tribute directly.
-					if (numVillagesNearby > 0) {
-						if (tributeAmount > 0) {
-							ItemStack items = new ItemStack(Material.EMERALD, tributeAmount);
-							p.getInventory().addItem(items);
-							p.sendMessage("Grateful villagers gave you " + tributeAmount + " emeralds!");
-							getLogger().info(p.getName() + " received " + tributeAmount + " emeralds.");						
-						} else
-							p.sendMessage("The villagers didn't have any emeralds for you today.");
-					} else
-						p.sendMessage("You weren't near any villages large enough to pay you tribute.");
-				}
-				if (_activeSiege != null) {
-					ArrayList<String> messages = _activeSiege.overviewMessage();
-					Iterator<String> messageIterator = messages.iterator();
-					while (messageIterator.hasNext())
-						getServer().broadcastMessage(messageIterator.next());
+				if (!emeraldsAtDawnRunning) {
+					// TO-DO: ADD MULTIWORLD SUPPORT!
+					// Kick us out of this if we're not dealing with the main world.
+					if (event.getWorld().getName() != _worldserver.getWorld().getName()) { return; }
+					emeraldsAtDawnRunning = true;
+					dawnHandler(event);
+					emeraldsAtDawnRunning = false;
 				}
 				break;
 			case DUSK:
 				// TO-DO: ADD MULTIWORLD SUPPORT!
 				// Kick us out of this if we're not dealing with the main world.
 				if (event.getWorld().getName() != _worldserver.getWorld().getName()) { return; }
-
+	
 				//getServer().broadcastMessage("Dusk has arrived in world " + event.getWorld().getName() + "!");
-
+	
 				// TO-DO: clear pending tributes list
 				// clear active siege
 				_activeSiege = null;
 				break;
+			case CHECK:
+				getLogger().info("Checking villages...");
+				checkVillageData();
+				break;
 			default:
 				break;
 		}
-		emeraldsAtDawnRunning = false;
+	}
+	
+	private void checkVillageData() {
+		getLogger().info("Checking villages...");
+		for(Map.Entry<String, UVVillageData> villageEntry : _villageData.entrySet()) {
+			UVVillageData vdata = villageEntry.getValue();
+			if (vdata.getVillage() == null) {
+				Village village = _worldserver.villages.getClosestVillage(vdata._centerX, vdata._centerY, vdata._centerZ, tributeRange);
+				if (village != null) {
+					int result = vdata.setVillage(village);
+					if (result > 0) {
+						getLogger().info("Updates found for " + villageEntry.getKey());
+						UVVillageEvent event = new UVVillageEvent(vdata, villageEntry.getKey(), UVVillageEventType.UPDATED);
+						getServer().getPluginManager().callEvent(event);
+					}
+				}
+			}
+		}
+
+	}
+
+	public void dawnHandler(UVTimeEvent event) {
+		//Map<String, Integer> playerVillagerCounts = new HashMap<String, Integer>();
+		List<Player> players = event.getWorld().getPlayers();
+		
+		@SuppressWarnings("unchecked")
+		List<Village> villages = _worldserver.villages.getVillages();
+		Iterator<Player> playerIterator = players.iterator();
+		
+		// Step through the players to calculate tribute 
+		while (playerIterator.hasNext()) {
+			Player p = playerIterator.next();
+			Iterator<Village> villageIterator = villages.iterator();
+			
+			int tributeAmount = 0, killBonus = 0, numVillagesNearby = 0;
+			Random rng = new Random();
+
+			// Calculate bonus from kills
+			if (_activeSiege != null) {
+				int kills = _activeSiege.getPlayerKills(p.getName());
+				for (int i = 0; i < kills; i++) {
+					killBonus += rng.nextInt(maxPerSiegeKill + 1 - minPerSiegeKill) + minPerSiegeKill;
+				}
+			}
+
+			// Step through the villages. Add their tributes if they're close enough.
+			while (villageIterator.hasNext()) {
+				int villageTributeAmount = 0;
+				Village v = villageIterator.next();
+				Location loc = new Location(event.getWorld(), v.getCenter().x, v.getCenter().y, v.getCenter().z);
+				// Get UV village data object
+				UVVillageData uv = getUVVillageData(loc, tributeRange);
+				p.getName();
+				// Check village distance from player
+				if (p.getLocation().distanceSquared(loc) < (tributeRange+v.getSize()) * (tributeRange+v.getSize())) {
+					numVillagesNearby++;
+					// Check population size
+					int population = v.getPopulationCount();
+					if (population > 0 && _activeSiege != null) {
+						// Update reputation if villagers survived
+						uv.modifyPlayerReputation(p.getName(), _activeSiege.getPlayerPoints(p.getName()));
+					}
+					if (population > 20) {
+						// Give a random bonus per 20 villagers
+						for (int i = 0; i < (int)(population / villagerCount); i++) {
+							villageTributeAmount += rng.nextInt(maxPerVillagerCount + 1 - minPerVillagerCount) + minPerVillagerCount + baseSiegeBonus;
+						}
+						// If this village was the one sieged, give the kill bonus and an extra survival thankfulness bonus
+						if (_activeSiege != null && _activeSiege.getVillage() != null && _activeSiege.getVillage().hashCode() == v.hashCode()) {
+							villageTributeAmount += 1 * (int)(population / villagerCount) + killBonus;
+						}
+					}
+				}
+				// Add the tribute from this village to the total owed
+				tributeAmount += villageTributeAmount;
+			}
+			// TO-DO: Save the tribute amount for each player/village so that receive it next time the player talks to a villager in that village.
+			// This will force players to interact with every village that they are to get credit for.
+			// But for now... just award the tribute directly.
+			if (numVillagesNearby > 0) {
+				if (tributeAmount > 0) {
+					ItemStack items = new ItemStack(Material.EMERALD, tributeAmount);
+					p.getInventory().addItem(items);
+					p.sendMessage("Grateful villagers gave you " + tributeAmount + " emeralds!");
+					getLogger().info(p.getName() + " received " + tributeAmount + " emeralds.");						
+				} else
+					p.sendMessage("The villagers didn't have any emeralds for you today.");
+			} else
+				p.sendMessage("You weren't near any villages large enough to pay you tribute.");
+		}
+		if (_activeSiege != null) {
+			ArrayList<String> messages = _activeSiege.overviewMessage();
+			Iterator<String> messageIterator = messages.iterator();
+			while (messageIterator.hasNext())
+				getServer().broadcastMessage(messageIterator.next());
+		}
 	}
 
 

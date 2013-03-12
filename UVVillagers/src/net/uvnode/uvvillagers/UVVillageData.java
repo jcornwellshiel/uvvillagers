@@ -16,6 +16,8 @@ public class UVVillageData {
 	int _centerY;
 	int _centerZ;
 	int _size;
+	int _doors;
+	int _population;
 	Location _location;
 	Map<String, Integer> _playerReputations = new HashMap<String, Integer>();
 	Village _village;
@@ -28,8 +30,18 @@ public class UVVillageData {
 		_location = new Location(world, centerX, centerY, centerZ);
 		_village = null;
 		_size = 32;
+		_doors = 0;
+		_population = 0;
 	}
 	
+	public int getDoors() {
+		return _doors;
+	}
+
+	public int getPopulation() {
+		return _population;
+	}
+
 	public int modifyPlayerReputation(String name, Integer amount) {
 		int currentRep = 0;
 		if (_playerReputations.containsKey(name))
@@ -50,8 +62,37 @@ public class UVVillageData {
 		return _village;
 	}
 	
-	public void setVillage(Village village) {
+	/**
+	 * @param village
+	 * @return 0: No changes detected. 1: geometry changed. 2: data changed. 3: both changed.
+	 */
+	public int setVillage(Village village) {
 		_village = village;
+		boolean geometryChanged = false, dataChanged = false;
+		if (_centerX != village.getCenter().x || _centerY != village.getCenter().y || _centerZ != village.getCenter().z) {			
+			_centerX = village.getCenter().x;
+			_centerY = village.getCenter().y;
+			_centerZ = village.getCenter().z;
+			_location.setX(_centerX);
+			_location.setY(_centerY);
+			_location.setZ(_centerZ);
+			geometryChanged = true;
+		}
+			
+		if (village.getSize() != _size) {
+			_size = village.getSize();
+			geometryChanged = true;			
+		}
+		if (village.getSize() != _size) {
+			_doors = village.getDoorCount();
+			dataChanged = true;
+		}
+		if (village.getSize() != _size) {
+			_population = village.getPopulationCount();
+			dataChanged = true;
+		}		
+		
+		return 0 + (geometryChanged?1:0) + (dataChanged?2:0);
 	}
 
 	public Location getLocation() {
@@ -72,5 +113,12 @@ public class UVVillageData {
 			}
 		}
 		return topPlayer;
+	}
+
+	public void checkData() {
+		if (_village != null) {
+			
+		}
+		
 	}
 }
