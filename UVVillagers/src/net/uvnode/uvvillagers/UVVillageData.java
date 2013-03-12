@@ -15,6 +15,7 @@ public class UVVillageData {
 	int _centerX;
 	int _centerY;
 	int _centerZ;
+	int _size;
 	Location _location;
 	Map<String, Integer> _playerReputations = new HashMap<String, Integer>();
 	Village _village;
@@ -26,6 +27,7 @@ public class UVVillageData {
 		_centerZ = centerZ;
 		_location = new Location(world, centerX, centerY, centerZ);
 		_village = null;
+		_size = 32;
 	}
 	
 	public int modifyPlayerReputation(String name, Integer amount) {
@@ -51,9 +53,24 @@ public class UVVillageData {
 	public void setVillage(Village village) {
 		_village = village;
 	}
-	
+
 	public Location getLocation() {
 		return _location;
 	}
 
+	public int getSize() {
+		return _size;
+	}
+
+	public String getTopReputation() {
+		String topPlayer = "Nobody";
+		int topRep = Integer.MIN_VALUE;
+		for(Map.Entry<String, Integer> entry : _playerReputations.entrySet()) {
+			if (entry.getValue() > topRep) {
+				topPlayer = entry.getKey();
+				topRep = entry.getValue();
+			}
+		}
+		return topPlayer;
+	}
 }

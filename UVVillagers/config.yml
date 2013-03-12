@@ -26,6 +26,16 @@ maxPerSiegeKill: 2
 randomSpread: 16
 randomVerticalSpread: 6
 
+ranks:
+  hated: -1000
+  hostile: -100
+  unfriendly: -10
+  neutral: 0
+  friendly: 10
+  honored: 100
+  revered: 1000
+  exalted: 10000
+
 #Settings for each mob type. Settings are as follows:
 #   threshold - minimum number of villagers required for this type of mob to spawn.
 #   chance - % chance of this mob spawning if the threshold is met. ### SET TO 0 TO DISABLE THIS MOB. ###

@@ -20,6 +20,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 //import org.bukkit.potion.PotionEffect;
 //import org.bukkit.potion.PotionEffectType;
 
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.EntityType;
@@ -82,12 +83,23 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 	public void onEnable() {
 
 		_worldserver = ((CraftWorld) getServer().getWorlds().get(0)).getHandle();
-
+		
 		getServer().getPluginManager().registerEvents(this, this);
 
 		saveDefaultConfig();
 		loadConfig();
-		
+		startDayTimer();
+	}
+
+	@Override
+	public void onDisable() {
+		//updateConfig();
+	}
+	
+	/**
+	 * Starts a timer that throws dawn/dusk events.
+	 */
+	public void startDayTimer() {
 		// Step through worlds every 20 ticks and throw UVTimeEvents for various times of day.
 		getServer().getScheduler().runTaskTimerAsynchronously(this, new Runnable() {
 			@Override
@@ -104,17 +116,12 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 					}
 				}
 			}
-		
 		}, 0, 20);
 	}
 	
-
-	@Override
-	public void onDisable() {
-		updateConfig();
-		saveConfig();
-	}
-	
+	/**
+	 * Loads the plugin configuration.
+	 */
 	private void loadConfig() {
 		tributeRange = getConfig().getInt("tributeRange", 64);
 		villagerCount = getConfig().getInt("villagerCount", 20);
@@ -133,6 +140,9 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 
 	
 
+	/**
+	 * Loads the configuration data for mob spawn rate, etc.
+	 */
 	private void loadMobData() {
 		// Load Mob Spawn Chances
 		_chanceOfExtraMobs.put(EntityType.ZOMBIE, getConfig().getInt("mobs.zombie.chance", 100));
@@ -202,39 +212,49 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 	}
 
 
-	@SuppressWarnings("unchecked")
+	/**
+	 * Loads the configuration data for villages and player-village reputations.
+	 */
 	private void loadVillageData() {
 		// Load Village Data
-		Map<String, Object> map = getConfig().getConfigurationSection("villages").getValues(true);
 		_villageData.clear();
-		
-		for(Map.Entry<String, Object> ventry : map.entrySet())
-		{
-			Map<String, Object> vdata = (Map<String, Object>) ventry.getValue();
-			
-			World w = getServer().getWorld((String) vdata.get("world"));
-			int x = Integer.parseInt((String) vdata.get("x"));
-			int y = Integer.parseInt((String) vdata.get("y"));
-			int z = Integer.parseInt((String) vdata.get("z"));
-			
-			UVVillageData v = new UVVillageData(w, x, y, z);
-			
-			Map<String, Object> pmap = (Map<String, Object>) vdata.get("players");
-			for(Map.Entry<String, Object> pEntry : pmap.entrySet())
-			{
-				String pName = pEntry.getKey();
-				int pRep = Integer.parseInt((String) pEntry.getValue());
-				v._playerReputations.put(pName, pRep);
+		try {
+			Map<String, Object> villageList = getConfig().getConfigurationSection("villages").getValues(false);
+			for(Map.Entry<String, Object> villageEntry : villageList.entrySet()) {
+				ConfigurationSection villageConfigSection = (ConfigurationSection) villageEntry.getValue();
+				Map<String, Object> playersMap = villageConfigSection.getConfigurationSection("pr").getValues(false);
+
+				World w = getServer().getWorld(villageConfigSection.getString("world"));
+				int x = villageConfigSection.getInt("x");
+				int y = villageConfigSection.getInt("y");
+				int z = villageConfigSection.getInt("z");
+
+				UVVillageData v = new UVVillageData(w, x, y, z);
+				for(Map.Entry<String, Object> playerEntry : playersMap.entrySet()) {
+					String playerName = playerEntry.getKey();
+					int playerRep = (Integer) playerEntry.getValue();
+					v._playerReputations.put(playerName, playerRep);
+				}
+				_villageData.put(villageEntry.getKey(), v);
 			}
-			_villageData.put("village"+x+","+y+","+z, v);
+		} catch(Exception e) {
+			e.printStackTrace();
 		}
-		
 	}
 	
+	/**
+	 * Updates the configuration file and saves it.
+	 */
 	private void updateConfig() {
 		this.getConfig().createSection("villages", saveVillageData());
+
+		saveConfig();
 	}
 
+	/**
+	 * Dumps the village data into a config-friendly hashmap.
+	 * @return village data hashmap
+	 */
 	private  Map<String, Object> saveVillageData() {
 		// Save Village Data
 		Map<String, Object> map = new HashMap<String, Object>();
@@ -248,13 +268,17 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 			v.put("pr", vdata.getValue()._playerReputations);
 			map.put(vdata.getKey(), v);
 		}
+		getLogger().info(map.toString());
 		return map;
 	}
 
+	/**
+	 * Command listener
+	 */
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args){
 		if(cmd.getName().equalsIgnoreCase("uvv")){
 			if(args.length > 0) {
-				if (args[0].equalsIgnoreCase("reload")){
+				if (args[0].equalsIgnoreCase("reload")) {
 					if (sender instanceof Player) {
 						Player p = (Player) sender;
 						if (p.hasPermission("uvv.reload")) {
@@ -264,6 +288,54 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 							sender.sendMessage("You don't have permission to do that.");
 					} else {
 						sender.sendMessage("Reloading...");
+						loadConfig();
+					}
+				} else if (args[0].equalsIgnoreCase("save")) {
+					if (sender instanceof Player) {
+						Player p = (Player) sender;
+						if (p.hasPermission("uvv.save")) {
+							sender.sendMessage("Saving...");
+							updateConfig();
+						} else 
+							sender.sendMessage("You don't have permission to do that.");
+					} else {
+						sender.sendMessage("Saving...");
+						updateConfig();
+					}
+				} else if (args[0].equalsIgnoreCase("list")) {
+					if (sender instanceof Player) {
+						Player p = (Player) sender;
+						if (p.hasPermission("uvv.list")) {
+							sender.sendMessage("Saving...");
+							loadConfig();
+						} else 
+							sender.sendMessage("You don't have permission to do that.");
+					} else {
+						sender.sendMessage("Saving...");
+						loadConfig();
+					}
+				} else if (args[0].equalsIgnoreCase("nearest")) {
+					if (sender instanceof Player) {
+						Player p = (Player) sender;
+						if (p.hasPermission("uvv.nearest")) {
+							sender.sendMessage("Saving...");
+							loadConfig();
+						} else 
+							sender.sendMessage("You don't have permission to do that.");
+					} else {
+						sender.sendMessage("Saving...");
+						loadConfig();
+					}
+				} else if (args[0].equalsIgnoreCase("checkrange")) {
+					if (sender instanceof Player) {
+						Player p = (Player) sender;
+						if (p.hasPermission("uvv.checkrange")) {
+							sender.sendMessage("Saving...");
+							loadConfig();
+						} else 
+							sender.sendMessage("You don't have permission to do that.");
+					} else {
+						sender.sendMessage("Saving...");
 						loadConfig();
 					}
 				}
@@ -292,7 +364,10 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 		}
 		return false;
 	}
-	
+	/**
+	 * Sends village data to sender
+	 * @param sender CommandSender
+	 */
 	private void printAllVillageData(CommandSender sender) {
 		Iterator<String> vIterator = _villageData.keySet().iterator();
 		while (vIterator.hasNext()) {
@@ -309,7 +384,10 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 		}
 	}
 
-
+	/**
+	 * Player move listener
+	 * @param event PlayerMoveEvent
+	 */
 	@EventHandler
 	public void playerMove(PlayerMoveEvent event) {
 		// Kick out if not on primary world
@@ -358,7 +436,10 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 		UVVillageData uv = new UVVillageData(world, x, y, z);
 		uv.setVillage(v);
 		uv.modifyPlayerReputation(name, 10);
-		_villageData.put("village " + x  + "," + y + "," + z, uv);
+		String key = "village_" + x  + "_" + y + "_" + z;
+		_villageData.put(key, uv);
+		UVVillageEvent event = new UVVillageEvent(uv, key, UVVillageEventType.DISCOVERED);
+		getServer().getPluginManager().callEvent(event);
 		return uv;
 	}
 
@@ -374,7 +455,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 			if (uv.getLocation().distanceSquared(location) < (distance * distance)) {
 				return uv;
 			}
-		}		
+		}
 		return null;
 	}
 
@@ -595,5 +676,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 	}
 
 
-	
+	public Map<String, UVVillageData> getVillages() {
+		return _villageData;
+	}
 }
