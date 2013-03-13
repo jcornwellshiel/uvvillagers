@@ -92,7 +92,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 		maxPerSiegeKill = getConfig().getInt("maxPerSiegeKill", 2);
 
 		_reputationRanks.clear();
-		
+
 		Map<String, Object> rankMap = getConfig().getConfigurationSection("ranks").getValues(false);
 		
 		for (Map.Entry<String, Object> rank : rankMap.entrySet()) {
@@ -167,6 +167,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 						Player p = (Player) sender;
 						if (p.hasPermission("uvv.reload")) {
 							sender.sendMessage("Reloading...");
+							reloadConfig();
 							loadConfig();
 						} else 
 							sender.sendMessage("You don't have permission to do that.");
