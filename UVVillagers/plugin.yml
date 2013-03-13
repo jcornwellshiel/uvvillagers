@@ -1,10 +1,37 @@
 name: UVVillagers
 main: net.uvnode.uvvillagers.UVVillagers
-version: 0.2.2
+version: 1.0.0
 
 commands:
-   uvv:
-      description: UVVillagers commands. Get nearest village info.
-      usage: /uvv
-      permission: uvvillagers.main
-      permission-message: You don't have <permission>
+  uvv:
+    description: UVVillagers commands
+    usage: /uvv [reload,save,list,nearby,current,rename]
+
+permissions:
+  uvv.*:
+    description: Gives access to all Inferno commands
+    children:
+      uvv.reload: true
+      uvv.save: true
+      uvv.list: true
+      uvv.nearby: true
+      uvv.current: true
+      uvv.rename: true
+  uvv.reload:
+    description: 
+    default: op
+  uvv.save:
+    description: 
+    default: op
+  uvv.list:
+    description: 
+    default: true
+  uvv.nearby:
+    description: 
+    default: true
+  uvv.current:
+    description: 
+    default: true
+  uvv.rename:
+    description: 
+    default: true

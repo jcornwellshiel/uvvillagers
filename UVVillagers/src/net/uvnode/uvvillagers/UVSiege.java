@@ -1,49 +1,53 @@
 package net.uvnode.uvvillagers;
 
-import java.util.Date;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import net.minecraft.server.v1_4_R1.Village;
-
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
+/**
+ * @author James Cornwell-Shiel
+ *
+ */
 public class UVSiege {
-	Date _start;
-	long _gamestart;
-	ArrayList<Entity> _spawns = new ArrayList<Entity>();
-	ArrayList<Integer> _spawnIds = new ArrayList<Integer>();
-	Map<String, Integer> _players = new HashMap<String, Integer>();
-	Map<String, Integer> _playerPoints = new HashMap<String, Integer>();
-	Village _village = null;
-	int _villageHashCode, _villageCenterX, _villageCenterY, _villageCenterZ;
-	
-	UVSiege(long gamestart, Date start, Village village) {
-		_start = start;
-		_gamestart = gamestart;
+	private Map<Integer, LivingEntity> _spawns = new HashMap<Integer, LivingEntity>(); 
+	//ArrayList<Entity> _spawns = new ArrayList<Entity>();
+	//private ArrayList<Integer> _spawnIds = new ArrayList<Integer>();
+	private Map<String, Integer> _players = new HashMap<String, Integer>();
+	private Map<String, Integer> _playerPoints = new HashMap<String, Integer>();
+	private UVVillage _village = null;
+	private int _mobsLeft;
+	UVSiege(UVVillage village) {
 		_village = village;
-		_villageHashCode = village.hashCode();
-		_villageCenterX = village.getCenter().x;
-		_villageCenterY = village.getCenter().y;
-		_villageCenterZ = village.getCenter().z;
+		_mobsLeft = 0;
 	}
 	
-	UVSiege(long gamestart, Village village) {
-		this(gamestart, new Date(), village);
-	}
-
+	/**
+	 * @param entity
+	 */
 	public void addSpawn(LivingEntity entity) {
-		_spawns.add(entity);
-		_spawnIds.add(entity.getEntityId());
+		//_spawns.add(entity);
+		//_spawnIds.add(entity.getEntityId());
+		_spawns.put(entity.getEntityId(), entity);
+		_mobsLeft++;
 	}
 
+	/**
+	 * @param entityId
+	 * @return
+	 */
 	public boolean checkEntityId(int entityId) {
-		return _spawnIds.contains(entityId);
+//		return _spawnIds.contains(entityId);
+		return _spawns.containsKey(entityId);
 	}
 
+	/**
+	 * @param name
+	 * @param value
+	 */
 	public void addPlayerKill(String name, Integer value) {
 		if (_players.containsKey(name)) {
 			_players.put(name, _players.get(name) + 1);
@@ -54,12 +58,21 @@ public class UVSiege {
 		}
 	}
 
+	/**
+	 * @param name
+	 * @return
+	 */
 	public int getPlayerKills(String name) {
 		if (_players.containsKey(name))
 			return _players.get(name);
 		else 
 			return 0;
 	}
+	
+	/**
+	 * @param name
+	 * @return
+	 */
 	public int getPlayerPoints(String name) {
 		if (_playerPoints.containsKey(name))
 			return _playerPoints.get(name);
@@ -67,16 +80,22 @@ public class UVSiege {
 			return 0;
 	}
 	
-	public Village getVillage() {
+	/**
+	 * @return
+	 */
+	public UVVillage getVillage() {
 		return _village;
 	}
-
+	
+	/**
+	 * @return
+	 */
 	public ArrayList<String> overviewMessage() {
 		ArrayList<String> msgs = new ArrayList<String>();
 		
 		msgs.add("Zombie Siege Stats:");
-		msgs.add(" - Location: " + _villageCenterX + ", " + _villageCenterY + ", " + _villageCenterZ);
-		msgs.add(" - Zombies: " + _spawns.size());
+		msgs.add(" - Location: " + _village.getName());
+		msgs.add(" - Enemies: " + _spawns.size() + " (" + _mobsLeft + " still alive)");
 		msgs.add(" - Player Kills: ");
 		Iterator<String> playersIterator = _players.keySet().iterator();
 		while (playersIterator.hasNext()) {
@@ -84,6 +103,33 @@ public class UVSiege {
 			msgs.add("   - " + playerName + ": " + _players.get(playerName));
 		}
 		return msgs;
+	}
+
+	/**
+	 * 
+	 */
+	public void killMob() {
+		_mobsLeft--;
+	}
+	
+	/**
+	 * @return
+	 */
+	public int getNumMobsLeft() {
+		return _mobsLeft;
+	}
+	
+	/**
+	 * @return
+	 */
+	public Map<Integer, LivingEntity> getMobsLeft() {
+		Map<Integer, LivingEntity> living = new HashMap<Integer, LivingEntity>();
+		for (Map.Entry<Integer, LivingEntity> mobEntry : _spawns.entrySet()) {
+			if (mobEntry.getValue() != null && !mobEntry.getValue().isDead()) {
+				living.put(mobEntry.getKey(), mobEntry.getValue());
+			}
+		}
+		return living;
 	}
 
 }
