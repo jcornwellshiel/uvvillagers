@@ -167,7 +167,9 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 						Player p = (Player) sender;
 						if (p.hasPermission("uvv.reload")) {
 							sender.sendMessage("Reloading...");
+							// Reload the config from disk.
 							reloadConfig();
+							// Process the new config.
 							loadConfig();
 						} else 
 							sender.sendMessage("You don't have permission to do that.");
