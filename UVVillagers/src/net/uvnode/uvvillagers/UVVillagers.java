@@ -237,7 +237,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 								}
 								UVVillage village = villageManager.getClosestVillageToLocation(p.getLocation(), tributeRange);
 								if (village != null) {
-									if (village.getTopReputation() == p.getName()) {
+									if (village.getTopReputation().equalsIgnoreCase(p.getName())) {
 										if (villageManager.getVillageByKey(newName) != null) {
 											if (villageManager.renameVillage(village.getName(), newName)) {
 												sender.sendMessage("Village renamed!");
