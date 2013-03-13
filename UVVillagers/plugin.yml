@@ -1,6 +1,6 @@
 name: UVVillagers
 main: net.uvnode.uvvillagers.UVVillagers
-version: 1.0.0
+version: 1.0.1
 
 commands:
   uvv:
@@ -9,7 +9,7 @@ commands:
 
 permissions:
   uvv.*:
-    description: Gives access to all Inferno commands
+    description: Gives access to all UVVillagers commands
     children:
       uvv.reload: true
       uvv.save: true
@@ -18,13 +18,13 @@ permissions:
       uvv.current: true
       uvv.rename: true
   uvv.reload:
-    description: 
+    description: Gives access to reload the UVVillagers configuration from disk.
     default: op
   uvv.save:
-    description: 
+    description: Gives access to save the UVVillagers configuration to disk.
     default: op
   uvv.list:
-    description: 
+    description: Gives access to save the UVVillagers configuration to disk.
     default: true
   uvv.nearby:
     description: 

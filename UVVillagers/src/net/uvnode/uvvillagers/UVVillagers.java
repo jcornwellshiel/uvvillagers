@@ -91,16 +91,18 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 		minPerSiegeKill = getConfig().getInt("minPerSiegeKill", 1);
 		maxPerSiegeKill = getConfig().getInt("maxPerSiegeKill", 2);
 
+		_reputationRanks.clear();
+		
 		Map<String, Object> rankMap = getConfig().getConfigurationSection("ranks").getValues(false);
 		
 		for (Map.Entry<String, Object> rank : rankMap.entrySet()) {
-			String name = rank.getKey();
+			String name = rank.getKey();	
 			int threshold = getConfig().getInt("ranks." + name + ".threshold");
 			double multiplier = getConfig().getDouble("ranks." + name + ".multiplier");
 			_reputationRanks.add(new UVVillageRank(name, threshold, multiplier));
-		}
+		}		
 		Collections.sort(_reputationRanks);
-		
+
 		siegeManager.loadConfig(getConfig().getConfigurationSection("siege"));
 		villageManager.loadVillages(getConfig().getConfigurationSection("villages"));
 		
