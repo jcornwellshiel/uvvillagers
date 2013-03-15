@@ -152,7 +152,7 @@ public class UVVillage {
 		if (_villageCore.getPopulationCount() != _population) {
 			_population = _villageCore.getPopulationCount();
 			dataChanged = true;
-		}		
+		}
 		
 		return 0 + (geometryChanged?1:0) + (dataChanged?2:0);
 	}

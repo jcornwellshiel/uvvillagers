@@ -239,7 +239,8 @@ public class VillageManager {
 			UVVillage village = _villages.get(oldName);
 			village.setName(newName);
 			_villages.put(newName, village);
-
+			_villages.remove(oldName);
+			
 			// Throw an RENAMED event!
 			UVVillageEvent event = new UVVillageEvent(village, newName, UVVillageEventType.RENAMED, oldName);
 			_plugin.getServer().getPluginManager().callEvent(event);
@@ -286,4 +287,9 @@ public class VillageManager {
 		return _worldServer.getWorld();
 	}
 
+
+	/**
+	 * Get the world that this VillageManager operates in.
+	 * @return The world the VillageManager operates in.
+	 */
 }

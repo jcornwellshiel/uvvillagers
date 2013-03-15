@@ -125,7 +125,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 	 */
 	public void startDayTimer() {
 		// Step through worlds every 20 ticks and throw UVTimeEvents for various times of day.
-		getServer().getScheduler().runTaskTimerAsynchronously(this, new Runnable() {
+		getServer().getScheduler().runTaskTimer(this, new Runnable() {
 			@Override
 			public void run() {
 				List<World> worlds = getServer().getWorlds();
@@ -238,7 +238,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 								UVVillage village = villageManager.getClosestVillageToLocation(p.getLocation(), tributeRange);
 								if (village != null) {
 									if (village.getTopReputation().equalsIgnoreCase(p.getName())) {
-										if (villageManager.getVillageByKey(newName) != null) {
+										if (villageManager.getVillageByKey(newName) == null) {
 											if (villageManager.renameVillage(village.getName(), newName)) {
 												sender.sendMessage("Village renamed!");
 											} else {
@@ -290,15 +290,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 
 	private void sendVillageInfo(CommandSender sender, Map<String, UVVillage> villages) {
 		for (Map.Entry<String, UVVillage> villageEntry : villages.entrySet()) {
-			String rankString = "";
-			if (sender instanceof Player)
-				rankString = " (" + getRank(villageEntry.getValue().getPlayerReputation(sender.getName())).getName() + ")";
-			sender.sendMessage(
-				villageEntry.getValue().getName() + 
-				rankString + ": " + 
-				villageEntry.getValue().getDoors() + " doors, " +
-				villageEntry.getValue().getPopulation() + " villagers, " +
-				villageEntry.getValue().getSize() + " block size.");
+			sendVillageInfo(sender, villageEntry.getValue());
 		}
 	}
 	
@@ -344,13 +336,13 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 				String current = _playerVillagesProximity.get(name);
 				if (village.getName() != current) {
 					// No? Alert him!
-					event.getPlayer().sendMessage("You're near "+ village.getName() + "! Your popularity with the " + village.getPopulation() + " villagers here is " + getRank(village.getPlayerReputation(name)).getName());
+					event.getPlayer().sendMessage("You're near "+ village.getName() + "! Your popularity with the " + village.getPopulation() + " villagers here is " + getRank(village.getPlayerReputation(name)).getName() + ".");
 					// Set the player as near this village
 					_playerVillagesProximity.put(name, village.getName());
 				}
 			} else {
 				// if no record, alert him!
-				event.getPlayer().sendMessage("You're near "+ village.getName() + "! Your popularity with the " + village.getPopulation() + " villagers here is " + getRank(village.getPlayerReputation(name)).getName());
+				event.getPlayer().sendMessage("You're near "+ village.getName() + "! Your popularity with the " + village.getPopulation() + " villagers here is " + getRank(village.getPlayerReputation(name)).getName() + ".");
 				// Set the player as near this village
 				_playerVillagesProximity.put(name, village.getName());
 			}
@@ -530,11 +522,16 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 	 * @return the UVVillageRank object, containing name, tribute multiplier, and point threshold.
 	 */
 	public UVVillageRank getRank(int playerReputation) {
+		UVVillageRank current = null;
 		for (UVVillageRank rank : _reputationRanks) {
-			if (playerReputation <= rank.getThreshold())
-				return rank;
+			if (playerReputation >= rank.getThreshold())
+				current = rank;
 		}
-		return _reputationRanks.get(_reputationRanks.size() - 1);
+		if (current == null && _reputationRanks.size() > 0)
+			current = _reputationRanks.get(0);
+		if (current == null)
+			current = new UVVillageRank("unknown", Integer.MIN_VALUE, 0);
+		return current;
 	}
 	
 	public VillageManager getVillageManager() {
