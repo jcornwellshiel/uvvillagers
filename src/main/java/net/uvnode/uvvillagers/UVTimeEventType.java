@@ -1,11 +1,12 @@
 package net.uvnode.uvvillagers;
 
-
 /**
  * Describes the type of UVTimeEvent
+ *
  * @author James Cornwell-Shiel
  */
 public enum UVTimeEventType {
+
     /**
      * Dawn arrived in a world.
      */
@@ -25,4 +26,5 @@ public enum UVTimeEventType {
     /**
      * A time check event.
      */
-    CHECK }
+    CHECK
+}

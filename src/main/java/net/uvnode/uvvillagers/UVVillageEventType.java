@@ -1,11 +1,11 @@
 package net.uvnode.uvvillagers;
 
-
 /**
  *
  * @author James Cornwell-Shiel
  */
 public enum UVVillageEventType {
+
     /**
      * A new village was discovered.
      */
@@ -33,4 +33,5 @@ public enum UVVillageEventType {
     /**
      * A village was renamed.
      */
-    RENAMED }
+    RENAMED
+}

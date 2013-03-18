@@ -160,7 +160,7 @@ public class SiegeManager {
 		// Is there an active siege?
 		if (!isSiegeActive()) {
 			// No! Find the village closest to the siege...
-			UVVillage village = _plugin.villageManager.getClosestVillageToLocation(event.getLocation(), 32);
+			UVVillage village = _plugin.getVillageManager().getClosestVillageToLocation(event.getLocation(), 32);
 			
 			// TODO ***Maybe replace this with a "check if coords are in a village's boundaries" event***
 			
@@ -228,13 +228,13 @@ public class SiegeManager {
 		if (population >= threshold) {
 			if (getExtraMobChance(type) > 1) {
 				// Generate a random number of extra mobs to possibly spawn
-				int count = _plugin.rng.nextInt((int)(population / threshold)) + 1;
+				int count = _plugin.getRandomNumber(1, (int)(population / threshold) + 1);
 				int numSpawned = 0; 
 				for (int i = 0; i < count; i++) {
 					// Are we under our max allowed of this type?
 					if (numSpawned < max) {
 						// Randomly decide whether this mob will spawn.
-						if (chance > _plugin.rng.nextInt(100)) {
+						if (chance > _plugin.getRandomNumber(0, 100)) {
 							// Yay! It's spawning!
 							numSpawned++;
 							if(skeletonType == SkeletonType.WITHER) {
