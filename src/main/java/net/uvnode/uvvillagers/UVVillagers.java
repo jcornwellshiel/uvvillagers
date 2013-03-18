@@ -1,5 +1,8 @@
 package net.uvnode.uvvillagers;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -7,6 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.logging.Level;
 
 import net.minecraft.server.v1_4_R1.Village;
 
@@ -17,6 +21,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
@@ -35,8 +41,8 @@ import org.bukkit.craftbukkit.v1_4_R1.CraftWorld;
  */
 public final class UVVillagers extends JavaPlugin implements Listener {
 
-    private VillageManager villageManager;
-    private SiegeManager siegeManager;
+    private VillageManager _villageManager;
+    private SiegeManager _siegeManager;
     private Random rng = new Random();
     private Map<String, String> _playerVillagesProximity = new HashMap<String, String>();
     //UVTributeMode tributeMode;
@@ -50,6 +56,10 @@ public final class UVVillagers extends JavaPlugin implements Listener {
             maxPerSiegeKill,
             timerInterval = 100;
     private boolean tributeCalculating = false;
+    
+    private File villageConfigurationFile, siegeConfigurationFile, ranksConfigurationFile;
+    private FileConfiguration villageConfiguration, siegeConfiguration, ranksConfiguration;
+    
 
     /**
      * Loads data and runs initialization tasks when enabling the plugin (e.g.
@@ -58,13 +68,16 @@ public final class UVVillagers extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         // Initialize the village and siege manager objects
-        villageManager = new VillageManager(this, ((CraftWorld) getServer().getWorlds().get(0)).getHandle());
-        siegeManager = new SiegeManager(this);
+        _villageManager = new VillageManager(this, ((CraftWorld) getServer().getWorlds().get(0)).getHandle());
+        _siegeManager = new SiegeManager(this);
 
         // Register us to handle events
         getServer().getPluginManager().registerEvents(this, this);
 
         saveDefaultConfig();
+        saveResource("siege.yml", false);
+        saveResource("villages.yml", false);
+        saveResource("ranks.yml", false);
         loadConfig();
         startDayTimer();
     }
@@ -78,6 +91,129 @@ public final class UVVillagers extends JavaPlugin implements Listener {
     }
 
     /**
+     * Reloads the siege configuration file
+     */
+    private void reloadSiegeConfig() {
+        if (siegeConfigurationFile == null) {
+            siegeConfigurationFile = new File(getDataFolder(), "siege.yml");
+        }
+        siegeConfiguration = YamlConfiguration.loadConfiguration(siegeConfigurationFile);
+        
+        // Look for defaults in the jar
+        InputStream defConfigStream = this.getResource("siege.yml");
+        if (defConfigStream != null) {
+            YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
+            siegeConfiguration.setDefaults(defConfig);
+        }
+    }
+    
+    /**
+     * Get the rank configuration
+     * @return siege config
+     */
+    private FileConfiguration getSiegeConfig() {
+        if (siegeConfiguration == null)
+            reloadSiegeConfig();
+        return siegeConfiguration;
+    }
+    
+    /** 
+     * Save the siege config file
+     */
+    private void saveSiegeConfig() {
+        if (siegeConfiguration == null || siegeConfigurationFile == null) {
+            return;
+        }
+        try {
+            getSiegeConfig().save(siegeConfigurationFile);
+        } catch (IOException ex) {
+            getLogger().log(Level.SEVERE, "Could not save config to " + siegeConfigurationFile, ex);
+        }
+    }
+    
+    /**
+     * Reloads the village configuration file
+     */
+    private void reloadVillageConfig() {
+        if (villageConfigurationFile == null) {
+            villageConfigurationFile = new File(getDataFolder(), "villages.yml");
+        }
+        villageConfiguration = YamlConfiguration.loadConfiguration(villageConfigurationFile);
+
+        // Look for defaults in the jar
+        InputStream defConfigStream = this.getResource("villages.yml");
+        if (defConfigStream != null) {
+            YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
+            villageConfiguration.setDefaults(defConfig);
+        }
+    }
+    
+    /**
+     * Get the village configuration
+     * @return village config
+     */
+    private FileConfiguration getVillageConfig() {
+        if (villageConfiguration == null)
+            reloadVillageConfig();
+        return villageConfiguration;
+    }
+    
+    /** 
+     * Save the village config file
+     */
+    private void saveVillageConfig() {
+        if (villageConfiguration == null || villageConfigurationFile == null) {
+            return;
+        }
+        try {
+            getVillageConfig().save(villageConfigurationFile);
+        } catch (IOException ex) {
+            getLogger().log(Level.SEVERE, "Could not save config to " + villageConfigurationFile, ex);
+        }
+    }
+    
+    /**
+     * Reloads the rank configuration file
+     */
+    private void reloadRanksConfig() {
+        if (ranksConfigurationFile == null) {
+            ranksConfigurationFile = new File(getDataFolder(), "ranks.yml");
+        }
+        ranksConfiguration = YamlConfiguration.loadConfiguration(ranksConfigurationFile);
+
+        // Look for defaults in the jar
+        InputStream defConfigStream = this.getResource("ranks.yml");
+        if (defConfigStream != null) {
+            YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
+            ranksConfiguration.setDefaults(defConfig);
+        }
+    }
+    
+    /**
+     * Get the rank configuration
+     * @return ranks config
+     */
+    private FileConfiguration getRanksConfig() {
+        if (ranksConfiguration == null)
+            reloadRanksConfig();
+        return ranksConfiguration;
+    }
+    
+    /** 
+     * Save the rank config file
+     */
+    private void saveRanksConfig() {
+        if (ranksConfiguration == null || ranksConfigurationFile == null) {
+            return;
+        }
+        try {
+            getRanksConfig().save(ranksConfigurationFile);
+        } catch (IOException ex) {
+            getLogger().log(Level.SEVERE, "Could not save config to " + ranksConfigurationFile, ex);
+        }
+    }
+    
+    /**
      * Loads the plugin configuration.
      */
     private void loadConfig() {
@@ -87,11 +223,11 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         maxPerVillagerCount = getConfig().getInt("maxPerVillagerCount", 3);
         baseSiegeBonus = getConfig().getInt("baseSiegeBonus", 1);
         minPerSiegeKill = getConfig().getInt("minPerSiegeKill", 1);
-        maxPerSiegeKill = getConfig().getInt("maxPerSiegeKill", 2);
+        maxPerSiegeKill = getConfig().getInt("maxPerSiegeKill", getConfig().getDefaults().getInt("maxPerSiegeKill", 2));
 
         _reputationRanks.clear();
 
-        Map<String, Object> rankMap = getConfig().getConfigurationSection("ranks").getValues(false);
+        Map<String, Object> rankMap = getRanksConfig().getConfigurationSection("ranks").getValues(false);
 
         for (Map.Entry<String, Object> rank : rankMap.entrySet()) {
             String name = rank.getKey();
@@ -101,11 +237,11 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         }
         Collections.sort(_reputationRanks);
 
-        siegeManager.loadConfig(getConfig().getConfigurationSection("siege"));
-        villageManager.loadVillages(getConfig().getConfigurationSection("villages"));
+        _siegeManager.loadConfig(getSiegeConfig().getConfigurationSection("siege"));
+        _villageManager.loadVillages(getVillageConfig().getConfigurationSection("villages"));
 
-        getLogger().info(_reputationRanks.size() + " reputation ranks loaded.");
-        getLogger().info(villageManager.getAllVillages().size() + " villages loaded.");
+        getLogger().info(String.format("%d reputation ranks loaded.", _reputationRanks.size()));
+        getLogger().info(String.format("%d villages loaded.", _villageManager.getAllVillages().size()));
         getLogger().info("Configuration loaded.");
     }
 
@@ -113,7 +249,10 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      * Updates the configuration file and saves it.
      */
     private void updateConfig() {
-        this.getConfig().createSection("villages", villageManager.saveVillages());
+        this.getVillageConfig().createSection("villages", _villageManager.saveVillages());
+        saveRanksConfig();
+        saveVillageConfig();
+        saveSiegeConfig();
         saveConfig();
     }
 
@@ -200,19 +339,19 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                     if (sender instanceof Player) {
                         Player p = (Player) sender;
                         if (p.hasPermission("uvv.list")) {
-                            sendVillageInfo(sender, villageManager.getAllVillages());
+                            sendVillageInfo(sender, _villageManager.getAllVillages());
                         } else {
                             sender.sendMessage("You don't have permission to do that.");
                         }
                     } else {
-                        sendVillageInfo(sender, villageManager.getAllVillages());
+                        sendVillageInfo(sender, _villageManager.getAllVillages());
                     }
                 } else if (args[0].equalsIgnoreCase("nearby")) {
                     sender.sendMessage(" - UVVillagers Nearby Villages - ");
                     if (sender instanceof Player) {
                         Player p = (Player) sender;
                         if (p.hasPermission("uvv.nearby")) {
-                            sendVillageInfo(sender, villageManager.getVillagesNearLocation(p.getLocation(), tributeRange));
+                            sendVillageInfo(sender, _villageManager.getVillagesNearLocation(p.getLocation(), tributeRange));
                         } else {
                             sender.sendMessage("You don't have permission to do that.");
                         }
@@ -224,7 +363,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                     if (sender instanceof Player) {
                         Player p = (Player) sender;
                         if (p.hasPermission("uvv.nearby")) {
-                            sendVillageInfo(sender, villageManager.getClosestVillageToLocation(p.getLocation(), tributeRange));
+                            sendVillageInfo(sender, _villageManager.getClosestVillageToLocation(p.getLocation(), tributeRange));
                         } else {
                             sender.sendMessage("You don't have permission to do that.");
                         }
@@ -244,16 +383,16 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                                         newName += " " + args[i];
                                     }
                                 }
-                                UVVillage village = villageManager.getClosestVillageToLocation(p.getLocation(), tributeRange);
+                                UVVillage village = _villageManager.getClosestVillageToLocation(p.getLocation(), tributeRange);
                                 if (village != null) {
                                     if (village.getTopReputation().equalsIgnoreCase(p.getName())) {
-                                        if (villageManager.getVillageByKey(newName) == null) {
-                                            if (villageManager.renameVillage(village.getName(), newName)) {
+                                        if (_villageManager.getVillageByKey(newName) == null) {
+                                            if (_villageManager.renameVillage(village.getName(), newName)) {
                                                 sender.sendMessage("Village renamed!");
                                             } else {
                                                 sender.sendMessage("Rename failed for some reason...");
                                             }
-                                            sendVillageInfo(sender, villageManager.getVillagesNearLocation(p.getLocation(), tributeRange));
+                                            sendVillageInfo(sender, _villageManager.getVillagesNearLocation(p.getLocation(), tributeRange));
                                         } else {
                                             sender.sendMessage("There's already a village named " + newName);
                                         }
@@ -334,14 +473,14 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      * @param event PlayerMoveEvent
      */
     @EventHandler
-    private void onPlayerMove(PlayerMoveEvent event) {
+    private void onPlayerMoveEvent(PlayerMoveEvent event) {
         // Kick out if not on primary world
         if (event.getTo().getWorld() != getServer().getWorlds().get(0)) {
             return;
         }
 
         // Get closest core village
-        Village coreVillage = villageManager.getClosestCoreVillageToLocation(event.getTo(), tributeRange);
+        Village coreVillage = _villageManager.getClosestCoreVillageToLocation(event.getTo(), tributeRange);
 
         // Get player name
         String name = event.getPlayer().getName();
@@ -349,9 +488,9 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         if (coreVillage != null) {
             Location coreVillageLocation = new Location(event.getTo().getWorld(), coreVillage.getCenter().x, coreVillage.getCenter().y, coreVillage.getCenter().z);
             // Do we have a UVVillage object for this village?
-            UVVillage village = villageManager.getClosestVillageToLocation(coreVillageLocation, coreVillage.getSize());
+            UVVillage village = _villageManager.getClosestVillageToLocation(coreVillageLocation, coreVillage.getSize());
             if (village == null) {
-                village = villageManager.discoverVillage(coreVillageLocation, coreVillage, event.getPlayer());
+                village = _villageManager.discoverVillage(coreVillageLocation, coreVillage, event.getPlayer());
                 event.getPlayer().sendMessage("You discovered " + village.getName());
             }
             // Do we have a record for this player?
@@ -383,12 +522,12 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      * @param event CreatureSpawnEvent
      */
     @EventHandler
-    private void onCreatureSpawn(CreatureSpawnEvent event) {
+    private void onCreatureSpawnEvent(CreatureSpawnEvent event) {
         switch (event.getSpawnReason()) {
             case VILLAGE_INVASION:
                 // VILLAGE_INVASION is only triggered in a zombie siege.
                 // Send this event to the SiegeManager!
-                siegeManager.trackSpawn(event);
+                _siegeManager.trackSpawn(event);
                 break;
             default:
                 break;
@@ -401,8 +540,8 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      * @param event EntityDeathEvent
      */
     @EventHandler
-    private void onEntityDeath(EntityDeathEvent event) {
-        siegeManager.checkDeath(event);
+    private void onEntityDeathEvent(EntityDeathEvent event) {
+        _siegeManager.checkDeath(event);
     }
 
     /**
@@ -442,15 +581,15 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         switch (event.getType()) {
             case DAWN:
                 // Kick us out of this if we're not dealing with the main world.
-                if (!event.getWorld().getName().equalsIgnoreCase(villageManager.getWorld().getName())) {
+                if (!event.getWorld().getName().equalsIgnoreCase(_villageManager.getWorld().getName())) {
                     return;
                 }
                 calculateTribute(event.getWorld());
-                siegeManager.endSiege();
+                _siegeManager.endSiege();
                 break;
             case DUSK:
                 // Kick us out of this if we're not dealing with the main world.
-                if (!event.getWorld().getName().equalsIgnoreCase(villageManager.getWorld().getName())) {
+                if (!event.getWorld().getName().equalsIgnoreCase(_villageManager.getWorld().getName())) {
                     return;
                 }
                 //duskHandler(event);
@@ -459,11 +598,11 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 
                 // TODO: clear pending tributes list
                 // clear active siege just in case something is missing
-                siegeManager.clearSiege();
+                _siegeManager.clearSiege();
                 break;
             case CHECK:
                 // Update villages
-                villageManager.matchVillagesToCore();
+                _villageManager.matchVillagesToCore();
                 break;
             default:
                 break;
@@ -481,7 +620,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
             tributeCalculating = true;
 
             // Make sure the villages are up to date
-            villageManager.matchVillagesToCore();
+            _villageManager.matchVillagesToCore();
 
             // Get the player list
             List<Player> players = world.getPlayers();
@@ -491,11 +630,11 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                 int tributeAmount = 0, killBonus = 0;
 
                 // Get the villages within tribute range of the player
-                Map<String, UVVillage> villages = villageManager.getVillagesNearLocation(player.getLocation(), tributeRange);
+                Map<String, UVVillage> villages = _villageManager.getVillagesNearLocation(player.getLocation(), tributeRange);
 
                 // if a siege is active, calculate siege tribute bonuses  
-                if (siegeManager.isSiegeActive()) {
-                    int kills = siegeManager.getPlayerKills(player.getName());
+                if (_siegeManager.isSiegeActive()) {
+                    int kills = _siegeManager.getPlayerKills(player.getName());
                     for (int i = 0; i < kills; i++) {
                         killBonus += getRandomNumber(minPerSiegeKill, maxPerSiegeKill);
                     }
@@ -513,7 +652,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                     getLogger().info(" - Villagers: " + population + " (" + numVillagerGroups + " tribute groups)");
 
                     // If this village was the one sieged, give the kill bonus and an extra survival "base siege" thankfulness bonus
-                    if (siegeManager.isSiegeActive() && village.getKey() == siegeManager.getVillage().getName()) {
+                    if (_siegeManager.isSiegeActive() && village.getKey() == _siegeManager.getVillage().getName()) {
                         siegeBonus = numVillagerGroups * baseSiegeBonus;
                         villageTributeAmount += siegeBonus;
                         siegeKillTributeAmount = killBonus;
@@ -582,7 +721,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      * @return the UVVillageRank object, containing name, tribute multiplier,
      * and point threshold.
      */
-    public UVVillageRank getRank(int playerReputation) {
+    protected UVVillageRank getRank(int playerReputation) {
         UVVillageRank current = null;
         for (UVVillageRank rank : _reputationRanks) {
             if (playerReputation >= rank.getThreshold()) {
@@ -603,8 +742,8 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      *
      * @return
      */
-    public VillageManager getVillageManager() {
-        return villageManager;
+    protected VillageManager getVillageManager() {
+        return _villageManager;
     }
 
     /**
@@ -614,7 +753,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      * @param distance Maximum allowed distance of the player from the location.
      * @return True if a player is in range, false if not.
      */
-    public boolean areAnyPlayersInRange(Location location, int distance) {
+    protected boolean areAnyPlayersInRange(Location location, int distance) {
         List<Player> players = location.getWorld().getPlayers();
         for (Player player : players) {
             if (location.distanceSquared(player.getLocation()) < distance * distance) {

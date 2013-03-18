@@ -1,0 +1,25 @@
+ranks:
+  hated:
+    threshold: -1000
+    multiplier: 0.0
+  hostile:
+    threshold: -100
+    multiplier: 0.0
+  unfriendly:
+    threshold: -10
+    multiplier: 0.0
+  neutral:
+    threshold: 0
+    multiplier: 0.25
+  friendly:
+    threshold: 10
+    multiplier: 0.5
+  honored:
+    threshold: 100
+    multiplier: 0.75
+  revered:
+    threshold: 1000
+    multiplier: 1.0
+  exalted:
+    threshold: 10000
+    multiplier: 2.0
