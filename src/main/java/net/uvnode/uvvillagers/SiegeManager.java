@@ -124,6 +124,9 @@ public class SiegeManager {
 		return (_currentSiege != null);
 	}
 	
+        /** 
+         * Trigger end-of-siege processing
+         */
 	public void endSiege() {
 		// If there was a siege, do stuff. Otherwise do nothing.
 		if (isSiegeActive()) {
@@ -133,12 +136,20 @@ public class SiegeManager {
 		}
 	}
 	
+        /**
+         * Null out the current siege.
+         */
 	public void clearSiege() {
 		// Null out the siege object
 		_currentSiege = null;
 
 	}
 	
+        /** 
+         * Record that a siege began at this location, for this village!
+         * @param location Location
+         * @param village Village
+         */
 	private void startSiege(Location location, UVVillage village) {
 		// Create the siege and associate it with the village we found
 		_currentSiege = new UVSiege(village);
@@ -178,14 +189,18 @@ public class SiegeManager {
 		addSpawn(event.getEntity());
 	}
 	
+        /**
+         * Add this entity to the current siege's tracker
+         * @param entity the spawn
+         */
 	private void addSpawn(LivingEntity entity) {
 		// TODO Randomly buff the entity
 		_currentSiege.addSpawn(entity);
 	}
 
 	/**
-	 * @param location
-	 * @param village
+         * Spawn more mobs!
+	 * @param location Location to spawn them!
 	 */
 	private void spawnMoreMobs(Location location) {
 		// Make sure we didn't call this by mistake... 
@@ -209,10 +224,12 @@ public class SiegeManager {
 	}
 
 	/**
-	 * @param location
-	 * @param population
-	 * @param type
-	 * @param skeletonType
+         * Try to spawn additional mobs of a type
+         * 
+	 * @param location Village location
+	 * @param population Village population
+	 * @param type Mob type
+	 * @param skeletonType Skeleton type
 	 */
 	private void trySpawn(Location location, int population, EntityType type, SkeletonType skeletonType) {
 		int threshold, chance, max;
@@ -253,8 +270,9 @@ public class SiegeManager {
 	}
 
 	/**
-	 * @param type
-	 * @return
+         * Get the chance of spawning extras of this mob type
+	 * @param type mob type
+	 * @return chance out of 100
 	 */
 	private int getExtraMobChance(EntityType type) {
 		if (_chanceOfExtraMobs.containsKey(type))
@@ -263,6 +281,12 @@ public class SiegeManager {
 			return 0;
 	}
 
+	/**
+         * Get the max number of this mob type to allow to spawn
+         * 
+	 * @param type mob type
+	 * @return max
+	 */
 	private int getMaxToSpawn(EntityType type) {
 		if (_maxExtraMobs.containsKey(type))
 			return _maxExtraMobs.get(type);
@@ -271,8 +295,10 @@ public class SiegeManager {
 	}
 	
 	/**
+         * Get the minumum population this mob type is allowed to spawn at
+         * 
 	 * @param type
-	 * @return
+	 * @return minimum population
 	 */
 	private int getPopulationThreshold(EntityType type) {
 		if (_populationThresholds.containsKey(type))
@@ -282,8 +308,9 @@ public class SiegeManager {
 	}
 
 	/**
-	 * @param entityType
-	 * @return
+         * Get the point value for killing this mob type
+	 * @param entity mob type
+	 * @return point value
 	 */
 	private Integer getKillValue(LivingEntity entity) {
 		// Is it a skeleton?
@@ -303,6 +330,10 @@ public class SiegeManager {
 		}
 	}
 
+        /**
+         * Try to process a mob death.
+         * @param event mob death event
+         */
 	public void checkDeath(EntityDeathEvent event) {
 		// If there's an active siege being tracked, check to see if the mob killed is part of the siege 
 		if (_currentSiege != null) {
@@ -321,7 +352,12 @@ public class SiegeManager {
 		
 	}
 
-	
+	/** 
+         * Get the number of kills a player got during the current siege
+         * 
+         * @param name player name
+         * @return kill count
+         */
 	public int getPlayerKills(String name) {
 		if(isSiegeActive())
 			return _currentSiege.getPlayerKills(name);
@@ -329,6 +365,10 @@ public class SiegeManager {
 			return 0;
 	}
 
+        /**
+         * Get the village associated with the active siege
+         * @return village object
+         */
 	public UVVillage getVillage() {
 		if (isSiegeActive())
 			return _currentSiege.getVillage();
