@@ -1,38 +1,72 @@
 package net.uvnode.uvvillagers;
 
 
+/**
+ *
+ * @author James Cornwell-Shiel
+ */
 public class UVVillageRank implements Comparable<UVVillageRank> {
 	private String _name;
 	private int _threshold;
 	private double _multiplier;
 
-	public UVVillageRank(String name, int threshold, double multiplier) {
+	/**
+     *
+     * @param name
+     * @param threshold
+     * @param multiplier
+     */
+    public UVVillageRank(String name, int threshold, double multiplier) {
 		_name = name;
 		_threshold = threshold;
 		_multiplier = multiplier;
 	}
 
-	public String getName() {
+	/**
+     *
+     * @return
+     */
+    public String getName() {
 		return _name;
 	}
 
-	public void setName(String name) {
+	/**
+     *
+     * @param name
+     */
+    public void setName(String name) {
 		this._name = name;
 	}
 
-	public int getThreshold() {
+	/**
+     *
+     * @return
+     */
+    public int getThreshold() {
 		return _threshold;
 	}
 
-	public void setThreshold(int threshold) {
+	/**
+     *
+     * @param threshold
+     */
+    public void setThreshold(int threshold) {
 		this._threshold = threshold;
 	}
 
-	public double getMultiplier() {
+	/**
+     *
+     * @return
+     */
+    public double getMultiplier() {
 		return _multiplier;
 	}
 
-	public void setMultiplier(double multiplier) {
+	/**
+     *
+     * @param multiplier
+     */
+    public void setMultiplier(double multiplier) {
 		this._multiplier = multiplier;
 	}
 

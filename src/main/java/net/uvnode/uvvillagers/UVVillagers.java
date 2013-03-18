@@ -1,6 +1,3 @@
-/**
- * 
- */
 package net.uvnode.uvvillagers;
 
 import java.util.ArrayList;
@@ -60,6 +57,9 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 	
 	boolean tributeCalculating = false;
 	
+        /**
+         * Loads data and runs initialization tasks when enabling the plugin (e.g. on server startup)
+         */
 	@Override
 	public void onEnable() {
 		// Initialize the village and siege manager objects
@@ -74,6 +74,9 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 		startDayTimer();
 	}
 
+        /**
+         * Saves data when disabling the plugin (e.g. on server shutdown)
+         */
 	@Override
 	public void onDisable() {
 		updateConfig();
@@ -123,7 +126,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 	/**
 	 * Starts a timer that throws dawn/dusk events.
 	 */
-	public void startDayTimer() {
+	private void startDayTimer() {
 		// Step through worlds every 20 ticks and throw UVTimeEvents for various times of day.
 		getServer().getScheduler().runTaskTimer(this, new Runnable() {
 			@Override
@@ -158,7 +161,13 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 	
 	/**
 	 * Command listener
+         * @param sender The command sender.
+         * @param cmd The command sent.
+         * @param label The command label.
+         * @param args The command arguments.
+         * @return Whether the command was processed.
 	 */
+        @Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args){
 		if(cmd.getName().equalsIgnoreCase("uvv")){
 			if(args.length > 0) {
@@ -288,13 +297,23 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 		return false;
 	}
 
-	private void sendVillageInfo(CommandSender sender, Map<String, UVVillage> villages) {
+	/**
+	 * Sends village information to the sender
+	 * @param sender The command sender.
+         * @param villages A hashmap of village objects.
+	 */
+        private void sendVillageInfo(CommandSender sender, Map<String, UVVillage> villages) {
 		for (Map.Entry<String, UVVillage> villageEntry : villages.entrySet()) {
 			sendVillageInfo(sender, villageEntry.getValue());
 		}
 	}
 	
-	private void sendVillageInfo(CommandSender sender, UVVillage village) {
+	/**
+	 * Sends village information to the sender
+	 * @param sender The command sender.
+         * @param village A single village object.
+	 */
+        private void sendVillageInfo(CommandSender sender, UVVillage village) {
 		String rankString = "";
 		if (sender instanceof Player)
 			rankString = " (" + getRank(village.getPlayerReputation(sender.getName())).getName() + ")";
@@ -307,11 +326,11 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 	}
 
 	/**
-	 * Player move listener
+	 * Player move listener. Fires when a player moves.
 	 * @param event PlayerMoveEvent
 	 */
 	@EventHandler
-	public void onPlayerMove(PlayerMoveEvent event) {
+	private void onPlayerMove(PlayerMoveEvent event) {
 		// Kick out if not on primary world
 		if (event.getTo().getWorld() != getServer().getWorlds().get(0))
 			return;
@@ -334,7 +353,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 			if (_playerVillagesProximity.containsKey(name)) {
 				// If so, check to see if we've already alerted the player that he's near this village
 				String current = _playerVillagesProximity.get(name);
-				if (village.getName() != current) {
+				if (village.getName().equalsIgnoreCase(current)) {
 					// No? Alert him!
 					event.getPlayer().sendMessage("You're near "+ village.getName() + "! Your popularity with the " + village.getPopulation() + " villagers here is " + getRank(village.getPlayerReputation(name)).getName() + ".");
 					// Set the player as near this village
@@ -353,6 +372,10 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 		}
 	}
 	
+        /**
+         * CreatureSpawnEvent listener. Fires when a creature spawns.
+         * @param event CreatureSpawnEvent
+         */
 	@EventHandler
 	private void onCreatureSpawn(CreatureSpawnEvent event) {
 		switch(event.getSpawnReason()) {
@@ -368,12 +391,20 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 		
 
 
+        /**
+         * EntityDeathEvent listener. Fires when an entity dies.
+         * @param event EntityDeathEvent
+         */
 	@EventHandler
 	private void onEntityDeath(EntityDeathEvent event) {
 		siegeManager.checkDeath(event);
 	}
 
 
+        /**
+         * UVVillageEvent listener
+         * @param event UVVillageEvent
+         */
 	@EventHandler
 	private void onUVVillageEvent(UVVillageEvent event) {
 		switch(event.getType()) {
@@ -395,18 +426,22 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 		}
 	}
 	
+        /**
+         * UVTimeEvent listener
+         * @param event UVTimeEvent
+         */
 	@EventHandler
 	private void onUVTimeEvent(UVTimeEvent event) {
 		switch(event.getType()) {
 			case DAWN:
 				// Kick us out of this if we're not dealing with the main world.
-				if (event.getWorld().getName() != villageManager.getWorld().getName()) { return; }
+				if (!event.getWorld().getName().equalsIgnoreCase(villageManager.getWorld().getName())) { return; }
 				calculateTribute(event.getWorld());
 				siegeManager.endSiege();
 				break;
 			case DUSK:
 				// Kick us out of this if we're not dealing with the main world.
-				if (event.getWorld().getName() != villageManager.getWorld().getName()) { return; }
+				if (!event.getWorld().getName().equalsIgnoreCase(villageManager.getWorld().getName())) { return; }
 				//duskHandler(event);
 	
 				//getServer().broadcastMessage("Dusk has arrived in world " + event.getWorld().getName() + "!");
@@ -424,10 +459,13 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 		}
 	}
 	
-
-	public void calculateTribute(World world) {
+        /**
+         * Runs tribute calculations for a world.
+         * @param world The world for which to calculate
+         */
+	private void calculateTribute(World world) {
 		if (!tributeCalculating) {
-			// TO-DO: ADD MULTIWORLD SUPPORT!
+			// TODO: ADD MULTIWORLD SUPPORT!
 			tributeCalculating = true;
 			
 			// Make sure the villages are up to date
@@ -507,6 +545,12 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 		tributeCalculating = false;
 	}
 
+        /**
+         * Utility function to get a random number
+         * @param minimum The minimum number to return.
+         * @param maximum The maximum number to return.
+         * @return A random integer between minimum and maximum
+         */
 	private int getRandomNumber(int minimum, int maximum) {
 		if (maximum < minimum) {
 			getLogger().info("Can't generate a random number with a higher min than max.");
@@ -534,10 +578,20 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 		return current;
 	}
 	
+        /**
+         * Utility function to get the VillageManager instance.
+         * @return 
+         */
 	public VillageManager getVillageManager() {
 		return villageManager;
 	}
 
+        /**
+         * Checks whether any players are online within distance blocks of location
+         * @param location The location.
+         * @param distance Maximum allowed distance of the player from the location.
+         * @return True if a player is in range, false if not.
+         */
 	public boolean areAnyPlayersInRange(Location location, int distance) {
 		List<Player> players = location.getWorld().getPlayers();
 		for (Player player : players) {
