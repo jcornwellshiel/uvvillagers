@@ -56,6 +56,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
             maxPerSiegeKill,
             timerInterval = 100;
     private boolean tributeCalculating = false;
+    private boolean _debug = false;
     
     private File villageConfigurationFile, siegeConfigurationFile, ranksConfigurationFile;
     private FileConfiguration villageConfiguration, siegeConfiguration, ranksConfiguration;
@@ -75,9 +76,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(this, this);
 
         saveDefaultConfig();
-        saveResource("siege.yml", false);
-        saveResource("villages.yml", false);
-        saveResource("ranks.yml", false);
+        
         loadConfig();
         startDayTimer();
     }
@@ -97,6 +96,9 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         if (siegeConfigurationFile == null) {
             siegeConfigurationFile = new File(getDataFolder(), "siege.yml");
         }
+        if(!siegeConfigurationFile.exists())
+            saveResource("siege.yml", false);
+
         siegeConfiguration = YamlConfiguration.loadConfiguration(siegeConfigurationFile);
         
         // Look for defaults in the jar
@@ -138,6 +140,10 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         if (villageConfigurationFile == null) {
             villageConfigurationFile = new File(getDataFolder(), "villages.yml");
         }
+        
+        if(!villageConfigurationFile.exists())
+            saveResource("villages.yml", false);
+        
         villageConfiguration = YamlConfiguration.loadConfiguration(villageConfigurationFile);
 
         // Look for defaults in the jar
@@ -179,6 +185,10 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         if (ranksConfigurationFile == null) {
             ranksConfigurationFile = new File(getDataFolder(), "ranks.yml");
         }
+        
+        if(!ranksConfigurationFile.exists())
+            saveResource("ranks.yml", false);
+        
         ranksConfiguration = YamlConfiguration.loadConfiguration(ranksConfigurationFile);
 
         // Look for defaults in the jar
@@ -224,6 +234,8 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         baseSiegeBonus = getConfig().getInt("baseSiegeBonus", 1);
         minPerSiegeKill = getConfig().getInt("minPerSiegeKill", 1);
         maxPerSiegeKill = getConfig().getInt("maxPerSiegeKill", getConfig().getDefaults().getInt("maxPerSiegeKill", 2));
+        _debug = getConfig().getBoolean("debug", false);
+        if (_debug) debug("Debug enabled.");
 
         _reputationRanks.clear();
 
@@ -231,8 +243,8 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 
         for (Map.Entry<String, Object> rank : rankMap.entrySet()) {
             String name = rank.getKey();
-            int threshold = getConfig().getInt("ranks." + name + ".threshold");
-            double multiplier = getConfig().getDouble("ranks." + name + ".multiplier");
+            int threshold = getRanksConfig().getInt("ranks." + name + ".threshold");
+            double multiplier = getRanksConfig().getDouble("ranks." + name + ".multiplier");
             _reputationRanks.add(new UVVillageRank(name, threshold, multiplier));
         }
         Collections.sort(_reputationRanks);
@@ -250,6 +262,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      */
     private void updateConfig() {
         this.getVillageConfig().createSection("villages", _villageManager.saveVillages());
+        getLogger().info(String.format("Saving %d villages", _villageManager.getAllVillages().size()));
         saveRanksConfig();
         saveVillageConfig();
         saveSiegeConfig();
@@ -274,15 +287,14 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                         UVTimeEvent event = new UVTimeEvent(worlds.get(i), UVTimeEventType.DUSK);
                         getServer().getPluginManager().callEvent(event);
                     }
-                    /*
-                     if (worlds.get(i).getTime() >= 0 && worlds.get(i).getTime() < 20) {
+                     if (worlds.get(i).getTime() >= 5000 && worlds.get(i).getTime() < 5000 + timerInterval) {
                      UVTimeEvent event = new UVTimeEvent(worlds.get(i), UVTimeEventType.NOON);
                      getServer().getPluginManager().callEvent(event);
                      }
-                     if (worlds.get(i).getTime() >= 12500 && worlds.get(i).getTime() < 12520) {
+                     if (worlds.get(i).getTime() >= 17000 && worlds.get(i).getTime() < 17000 + timerInterval) {
                      UVTimeEvent event = new UVTimeEvent(worlds.get(i), UVTimeEventType.MIDNIGHT);
                      getServer().getPluginManager().callEvent(event);
-                     }*/
+                     }
                     UVTimeEvent event = new UVTimeEvent(worlds.get(i), UVTimeEventType.CHECK);
                     getServer().getPluginManager().callEvent(event);
 
@@ -308,7 +320,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                 if (args[0].equalsIgnoreCase("reload")) {
                     if (sender instanceof Player) {
                         Player p = (Player) sender;
-                        if (p.hasPermission("uvv.reload")) {
+                        if (p.hasPermission("uvv.admin")) {
                             sender.sendMessage("Reloading...");
                             // Reload the config from disk.
                             reloadConfig();
@@ -321,10 +333,15 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                         sender.sendMessage("Reloading...");
                         loadConfig();
                     }
+                } else if (args[0].equalsIgnoreCase("debug")) {
+                    if (!(sender instanceof Player)) {
+                        _debug = !_debug;
+                        sender.sendMessage("Debug is " + (_debug?"On":"Off"));
+                    }
                 } else if (args[0].equalsIgnoreCase("save")) {
                     if (sender instanceof Player) {
                         Player p = (Player) sender;
-                        if (p.hasPermission("uvv.save")) {
+                        if (p.hasPermission("uvv.admin")) {
                             sender.sendMessage("Saving...");
                             updateConfig();
                         } else {
@@ -334,11 +351,24 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                         sender.sendMessage("Saving...");
                         updateConfig();
                     }
+                } else if (args[0].equalsIgnoreCase("startsiege")) {
+                    if (sender instanceof Player) {
+                        Player p = (Player) sender;
+                        if (p.hasPermission("uvv.admin")) {
+                            sender.sendMessage("Starting a siege...");
+                            startSiege();
+                        } else {
+                            sender.sendMessage("You don't have permission to do that.");
+                        }
+                    } else {
+                        sender.sendMessage("Starting a siege...");
+                        startSiege();
+                    }
                 } else if (args[0].equalsIgnoreCase("list")) {
                     sender.sendMessage(" - UVVillagers Village List - ");
                     if (sender instanceof Player) {
                         Player p = (Player) sender;
-                        if (p.hasPermission("uvv.list")) {
+                        if (p.hasPermission("uvv.villageinfo")) {
                             sendVillageInfo(sender, _villageManager.getAllVillages());
                         } else {
                             sender.sendMessage("You don't have permission to do that.");
@@ -346,11 +376,23 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                     } else {
                         sendVillageInfo(sender, _villageManager.getAllVillages());
                     }
+                } else if (args[0].equalsIgnoreCase("loaded")) {
+                    sender.sendMessage(" - UVVillagers Villages Loaded - ");
+                    if (sender instanceof Player) {
+                        Player p = (Player) sender;
+                        if (p.hasPermission("uvv.villageinfo")) {
+                            sendVillageInfo(sender, _villageManager.getLoadedVillages());
+                        } else {
+                            sender.sendMessage("You don't have permission to do that.");
+                        }
+                    } else {
+                        sendVillageInfo(sender, _villageManager.getLoadedVillages());
+                    }
                 } else if (args[0].equalsIgnoreCase("nearby")) {
                     sender.sendMessage(" - UVVillagers Nearby Villages - ");
                     if (sender instanceof Player) {
                         Player p = (Player) sender;
-                        if (p.hasPermission("uvv.nearby")) {
+                        if (p.hasPermission("uvv.villageinfo")) {
                             sendVillageInfo(sender, _villageManager.getVillagesNearLocation(p.getLocation(), tributeRange));
                         } else {
                             sender.sendMessage("You don't have permission to do that.");
@@ -362,7 +404,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                     sender.sendMessage(" - UVVillagers Current Village - ");
                     if (sender instanceof Player) {
                         Player p = (Player) sender;
-                        if (p.hasPermission("uvv.nearby")) {
+                        if (p.hasPermission("uvv.villageinfo")) {
                             sendVillageInfo(sender, _villageManager.getClosestVillageToLocation(p.getLocation(), tributeRange));
                         } else {
                             sender.sendMessage("You don't have permission to do that.");
@@ -497,7 +539,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
             if (_playerVillagesProximity.containsKey(name)) {
                 // If so, check to see if we've already alerted the player that he's near this village
                 String current = _playerVillagesProximity.get(name);
-                if (village.getName().equalsIgnoreCase(current)) {
+                if (!village.getName().equalsIgnoreCase(current)) {
                     // No? Alert him!
                     event.getPlayer().sendMessage("You're near " + village.getName() + "! Your popularity with the " + village.getPopulation() + " villagers here is " + getRank(village.getPlayerReputation(name)).getName() + ".");
                     // Set the player as near this village
@@ -523,15 +565,19 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      */
     @EventHandler
     private void onCreatureSpawnEvent(CreatureSpawnEvent event) {
-        switch (event.getSpawnReason()) {
-            case VILLAGE_INVASION:
-                // VILLAGE_INVASION is only triggered in a zombie siege.
-                // Send this event to the SiegeManager!
-                _siegeManager.trackSpawn(event);
-                break;
-            default:
-                break;
-        }
+            switch (event.getSpawnReason()) {
+                case VILLAGE_INVASION:
+                    // VILLAGE_INVASION is only triggered in a zombie siege.
+                    // Send this event to the SiegeManager!
+                    if (_siegeManager.usingCoreSieges()) {
+                       _siegeManager.trackSpawn(event);
+                    } else {
+                        event.setCancelled(true);
+                    }
+                    break;
+                default:
+                    break;
+            }
     }
 
     /**
@@ -551,6 +597,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      */
     @EventHandler
     private void onUVVillageEvent(UVVillageEvent event) {
+        debug(event.getMessage());
         switch (event.getType()) {
             case SIEGE_BEGAN:
                 getServer().broadcastMessage("A siege began at " + event.getKey());
@@ -578,15 +625,19 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      */
     @EventHandler
     private void onUVTimeEvent(UVTimeEvent event) {
+        debug(event.getMessage());
         switch (event.getType()) {
             case DAWN:
                 // Kick us out of this if we're not dealing with the main world.
                 if (!event.getWorld().getName().equalsIgnoreCase(_villageManager.getWorld().getName())) {
                     return;
                 }
+                debug("Calculating tribute.");
                 calculateTribute(event.getWorld());
+                debug("Ending active sieges.");
                 _siegeManager.endSiege();
                 break;
+
             case DUSK:
                 // Kick us out of this if we're not dealing with the main world.
                 if (!event.getWorld().getName().equalsIgnoreCase(_villageManager.getWorld().getName())) {
@@ -598,7 +649,20 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 
                 // TODO: clear pending tributes list
                 // clear active siege just in case something is missing
+                debug("Clearing siege data.");
                 _siegeManager.clearSiege();
+                break;
+            case MIDNIGHT: 
+                if (!event.getWorld().getName().equalsIgnoreCase(_villageManager.getWorld().getName())) {
+                    return;
+                }
+                if(!_siegeManager.isSiegeActive() && !_siegeManager.usingCoreSieges()) {
+                    debug("Trying to start a siege.");
+                    if (_siegeManager.getChanceOfSiege() > getRandomNumber(0, 99)) {
+                        debug("A siege is happening tonight!");
+                        startSiege();
+                    }
+                }
                 break;
             case CHECK:
                 // Update villages
@@ -609,6 +673,27 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         }
     }
 
+    /**
+     * Forces a siege to start
+     */
+    private void startSiege() {
+        Map<String, UVVillage> loadedVillages = _villageManager.getLoadedVillages();
+        if (loadedVillages.size() > 0) {
+            int index = getRandomNumber(0, loadedVillages.size()-1);
+            UVVillage village = loadedVillages.values().toArray(new UVVillage[loadedVillages.size()])[index];
+
+            int xOffset = getRandomNumber(village.getSize() / -2, village.getSize() / 2);
+            int zOffset = getRandomNumber(village.getSize() / -2, village.getSize() / 2);
+            Location location = village.getLocation();
+            location.setX(location.getX() + xOffset);
+            location.setZ(location.getZ() + zOffset);
+            debug(String.format("Firing up a siege at %s!", location.toString()));
+            _siegeManager.startSiege(location, village);
+        } else {
+            debug("No villages were loaded. So siege tonight!");
+        }
+    }
+    
     /**
      * Runs tribute calculations for a world.
      *
@@ -742,7 +827,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      *
      * @return
      */
-    protected VillageManager getVillageManager() {
+    public VillageManager getVillageManager() {
         return _villageManager;
     }
 
@@ -761,5 +846,11 @@ public final class UVVillagers extends JavaPlugin implements Listener {
             }
         }
         return false;
+    }
+    
+    protected void debug(String message) {
+        if (_debug) {
+            getLogger().info(message);
+        }
     }
 }

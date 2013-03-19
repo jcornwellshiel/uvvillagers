@@ -22,4 +22,4 @@ minPerSiegeKill: 1
 #The maximum tribute granted for killing a zombie siege mob.
 maxPerSiegeKill: 2
 
-debug-enabled: false
+debug: false

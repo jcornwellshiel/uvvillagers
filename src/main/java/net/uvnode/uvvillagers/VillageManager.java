@@ -107,7 +107,9 @@ public class VillageManager {
         Map<String, UVVillage> villages = new HashMap<String, UVVillage>();
         for (Map.Entry<String, UVVillage> villageEntry : _villages.entrySet()) {
             if (villageEntry.getValue().getLocation().getChunk().isLoaded()) {
-                villages.put(villageEntry.getKey(), villageEntry.getValue());
+                if (_plugin.areAnyPlayersInRange(villageEntry.getValue().getLocation(), 128)) {
+                    villages.put(villageEntry.getKey(), villageEntry.getValue());
+                }
             }
         }
         return villages;

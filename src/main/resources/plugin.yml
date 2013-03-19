@@ -1,37 +1,29 @@
 name: UVVillagers
 main: net.uvnode.uvvillagers.UVVillagers
-version: 1.0.4
+version: 1.0.5
 
 commands:
   uvv:
     description: UVVillagers commands
-    usage: /uvv [reload,save,list,nearby,current,rename]
+    usage: /uvv [reload,save,list,nearby,current,siege,siegeinfo,rename]
 
 permissions:
   uvv.*:
     description: Gives access to all UVVillagers commands
     children:
-      uvv.reload: true
-      uvv.save: true
-      uvv.list: true
-      uvv.nearby: true
-      uvv.current: true
+      uvv.admin: true
+      uvv.villageinfo: true
+      uvv.siegeinfo: true
       uvv.rename: true
-  uvv.reload:
-    description: Gives access to reload the UVVillagers configuration from disk.
+  uvv.admin:
+    description: Gives access to reload, save, toggle debug mode, and start sieges.
     default: op
-  uvv.save:
-    description: Gives access to save the UVVillagers configuration to disk.
-    default: op
-  uvv.list:
-    description: Gives access to save the UVVillagers configuration to disk.
+  uvv.villageinfo:
+    description: Gives access to retrieve village info.
     default: true
-  uvv.nearby:
-    description: 
-    default: true
-  uvv.current:
-    description: 
+  uvv.siegeinfo:
+    description: Gives access to siege info.
     default: true
   uvv.rename:
-    description: 
+    description: Rename your village.
     default: true

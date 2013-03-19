@@ -4,11 +4,10 @@
 #   max - max number of this mob that can spawn in a siege.
 #   points - the number of popularity points killing this mob type will grant.
 siege:
-  useCoreSiegeEvent: true
+  useCoreSiegeEvent: false
   nonCoreSiegeChance: 10
-  nonCoreSiegesPerWorld: 1
-  randomSpread: 16
-  randomVerticalSpread: 6
+  randomSpread: 3
+  randomVerticalSpread: 5
   mobs:
     zombie:
       threshold: 1

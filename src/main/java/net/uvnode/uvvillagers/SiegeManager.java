@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.bukkit.Location;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.craftbukkit.libs.jline.internal.Log;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Skeleton;
@@ -33,7 +34,9 @@ public class SiegeManager {
     private int _witherSkeletonPopulationThreshold;
     private int _maxExtraWitherSkeletons;
     private int _killValueWitherSkeletons;
-
+    private boolean _useCoreSieges;
+    private int _nonCoreSiegeChance;
+    
     /**
      * Basic Constructor
      *
@@ -50,6 +53,10 @@ public class SiegeManager {
      * @param siegeSection The configuration section to load from.
      */
     public void loadConfig(ConfigurationSection siegeSection) {
+        _useCoreSieges = siegeSection.getBoolean("useCoreSiegeEvent");
+        
+        _nonCoreSiegeChance = siegeSection.getInt("nonCoreSiegeChance", 1);
+        
         _spawnSpread = siegeSection.getInt("randomSpread", 1);
         _spawnVSpread = siegeSection.getInt("randomVerticalSpread", 2);
 
@@ -120,6 +127,21 @@ public class SiegeManager {
     }
 
     /**
+     * Get whether we're listening for core siege events or not
+     * @return whether we're listening for core siege events
+     */
+    public boolean usingCoreSieges() {
+        return _useCoreSieges;
+    }
+    /**
+     * Get the chance of a non-core siege
+     * @return chance of non-core siege (1-100)
+     */
+    public int getChanceOfSiege() {
+        return _nonCoreSiegeChance;
+    }
+    
+    /**
      * Check to see if a siege is happening.
      *
      * @return True if a siege is active, false if not.
@@ -155,7 +177,7 @@ public class SiegeManager {
      * @param location Location
      * @param village Village
      */
-    private void startSiege(Location location, UVVillage village) {
+    public void startSiege(Location location, UVVillage village) {
         // Create the siege and associate it with the village we found
         _currentSiege = new UVSiege(village);
 
@@ -250,6 +272,8 @@ public class SiegeManager {
             chance = getExtraMobChance(type);
             max = this.getMaxToSpawn(type);
         }
+        if (threshold <= 0) threshold = 1;
+        
         if (population >= threshold) {
             if (getExtraMobChance(type) > 1) {
                 // Generate a random number of extra mobs to possibly spawn
@@ -261,13 +285,24 @@ public class SiegeManager {
                         // Randomly decide whether this mob will spawn.
                         if (chance > _plugin.getRandomNumber(0, 100)) {
                             // Yay! It's spawning!
+
                             numSpawned++;
+
+                            // Randomize the location for this spawn
+                            Location spawnLocation = location;
+                            int xOffset = _plugin.getRandomNumber(_spawnSpread * -1, _spawnSpread);
+                            int yOffset = _plugin.getRandomNumber(_spawnVSpread * -1, _spawnVSpread);
+                            int zOffset = _plugin.getRandomNumber(_spawnSpread * -1, _spawnSpread);
+                            spawnLocation.setX(spawnLocation.getX() + xOffset);
+                            spawnLocation.setY(spawnLocation.getY() + yOffset);
+                            spawnLocation.setZ(spawnLocation.getZ() + zOffset);
+
                             if (skeletonType == SkeletonType.WITHER) {
-                                Skeleton spawn = (Skeleton) location.getWorld().spawnEntity(location, type);
+                                Skeleton spawn = (Skeleton) location.getWorld().spawnEntity(spawnLocation, type);
                                 spawn.setSkeletonType(SkeletonType.WITHER);
                                 addSpawn(spawn);
                             } else {
-                                addSpawn((LivingEntity) location.getWorld().spawnEntity(location, type));
+                                addSpawn((LivingEntity) location.getWorld().spawnEntity(spawnLocation, type));
                             }
                         }
                     }
@@ -392,4 +427,5 @@ public class SiegeManager {
             return null;
         }
     }
+    
 }
