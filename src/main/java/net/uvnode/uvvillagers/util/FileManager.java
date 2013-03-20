@@ -22,7 +22,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
  */
 public class FileManager {
 
-    public final Logger logger = Logger.getLogger("Minecraft");
+    public static final Logger logger = Logger.getLogger("Minecraft");
     private static Plugin plugin;
     private YamlConfiguration fileManager;
     private String fileName;
