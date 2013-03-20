@@ -23,3 +23,7 @@ minPerSiegeKill: 1
 maxPerSiegeKill: 2
 
 debug: false
+
+ironGolemValue: -10
+villagerValue: -20
+babyVillagerValue: -50

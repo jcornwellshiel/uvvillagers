@@ -1,5 +1,6 @@
 package net.uvnode.uvvillagers;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -428,4 +429,13 @@ public class SiegeManager {
         }
     }
     
+    public ArrayList<String> getSiegeInfo() {
+        if (_currentSiege != null) {
+            return _currentSiege.overviewMessage();
+        } else {
+            ArrayList<String> messages = new ArrayList<String>();
+            messages.add("No sieges so far today!");
+            return messages;
+        }
+    }
 }

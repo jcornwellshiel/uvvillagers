@@ -316,9 +316,5 @@ public class VillageManager {
     public World getWorld() {
         return _worldServer.getWorld();
     }
-    /**
-     * Get the world that this VillageManager operates in.
-     *
-     * @return The world the VillageManager operates in.
-     */
+    
 }
