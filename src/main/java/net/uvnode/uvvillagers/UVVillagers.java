@@ -13,6 +13,7 @@ import java.util.Random;
 import java.util.logging.Level;
 
 import net.minecraft.server.v1_4_R1.Village;
+import net.uvnode.uvvillagers.util.FileManager;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -60,8 +61,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
     private boolean tributeCalculating = false;
     private boolean _debug = false;
     
-    private File villageConfigurationFile, siegeConfigurationFile, ranksConfigurationFile;
-    private FileConfiguration villageConfiguration, siegeConfiguration, ranksConfiguration;
+    private FileManager baseConfiguration, villageConfiguration, siegeConfiguration, ranksConfiguration;
     private Integer _villagerValue;
     private Integer _babyVillagerValue;
     private Integer _ironGolemValue;
@@ -80,12 +80,16 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         // Register us to handle events
         getServer().getPluginManager().registerEvents(this, this);
 
-        saveDefaultConfig();
-        
+        baseConfiguration = new FileManager(this, "config.yml");
+        readBaseConfig();
+
+        ranksConfiguration = new FileManager(this, "ranks.yml");
         readRanksConfig();
-        readVillageConfig();
-        readSiegeConfig();
-        loadConfig();
+        
+        villageConfiguration = new FileManager(this, "villages.yml");
+        siegeConfiguration = new FileManager(this, "siege.yml");
+
+        
         startDayTimer();
     }
 
@@ -94,157 +98,28 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      */
     @Override
     public void onDisable() {
-        saveUpdatedConfig();
+        saveUpdatedVillages();
     }
 
     /**
-     * Reloads the siege configuration file
+     * Reads the plugin configuration.
      */
-    private void reloadSiegeConfig() {
-        siegeConfigurationFile = new File(getDataFolder(), "siege.yml");
-
-        if(!siegeConfigurationFile.exists())
-            saveResource("siege.yml", false);
-
-        siegeConfiguration = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "siege.yml"));
-        
-        // Look for defaults in the jar
-        InputStream defConfigStream = this.getResource("siege.yml");
-        if (defConfigStream != null) {
-            YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
-            siegeConfiguration.setDefaults(defConfig);
-        }
-    }
-    
-    /**
-     * Get the rank configuration
-     * @return siege config
-     */
-    private FileConfiguration getSiegeConfig() {
-        if (siegeConfiguration == null)
-            reloadSiegeConfig();
-        return siegeConfiguration;
-    }
-    
-    /** 
-     * Save the siege config file
-     */
-    private void saveSiegeConfig() {
-        if (siegeConfiguration == null || siegeConfigurationFile == null) {
-            return;
-        }
-        try {
-            getSiegeConfig().save(siegeConfigurationFile);
-        } catch (IOException ex) {
-            getLogger().log(Level.SEVERE, "Could not save config to " + siegeConfigurationFile, ex);
-        }
-    }
-    
-    /**
-     * Reloads the village configuration file
-     */
-    private void reloadVillageConfig() {
-        villageConfigurationFile = new File(getDataFolder(), "villages.yml");
-        
-        if(!villageConfigurationFile.exists())
-            saveResource("villages.yml", false);
-        
-        villageConfiguration = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "villages.yml"));
-
-        // Look for defaults in the jar
-        InputStream defConfigStream = this.getResource("villages.yml");
-        if (defConfigStream != null) {
-            YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
-            villageConfiguration.setDefaults(defConfig);
-        }
-    }
-    
-    /**
-     * Get the village configuration
-     * @return village config
-     */
-    private FileConfiguration getVillageConfig() {
-        if (villageConfiguration == null)
-            reloadVillageConfig();
-        return villageConfiguration;
-    }
-    
-    /** 
-     * Save the village config file
-     */
-    private void saveVillageConfig() {
-        if (villageConfiguration == null || villageConfigurationFile == null) {
-            return;
-        }
-        try {
-            getVillageConfig().save(villageConfigurationFile);
-        } catch (IOException ex) {
-            getLogger().log(Level.SEVERE, "Could not save config to " + villageConfigurationFile, ex);
-        }
-    }
-    
-    /**
-     * Reloads the rank configuration file
-     */
-    private void reloadRanksConfig() {
-        ranksConfigurationFile = new File(getDataFolder(), "ranks.yml");
-            
-        if(!ranksConfigurationFile.exists())
-            saveResource("ranks.yml", false);
-        
-        ranksConfiguration = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "ranks.yml"));
-        // Look for defaults in the jar
-        InputStream defConfigStream = this.getResource("ranks.yml");
-        if (defConfigStream != null) {
-            YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
-            ranksConfiguration.setDefaults(defConfig);
-        }
-    }
-    
-    /**
-     * Get the rank configuration
-     * @return ranks config
-     */
-    private FileConfiguration getRanksConfig() {
-        if (ranksConfiguration == null)
-            reloadRanksConfig();
-        return ranksConfiguration;
-    }
-    
-    /** 
-     * Save the rank config file
-     */
-    private void saveRanksConfig() {
-        if (ranksConfiguration == null || ranksConfigurationFile == null) {
-            return;
-        }
-        try {
-            getRanksConfig().save(ranksConfigurationFile);
-        } catch (IOException ex) {
-            getLogger().log(Level.SEVERE, "Could not save config to " + ranksConfigurationFile, ex);
-        }
-    }
-    
-    /**
-     * Loads the plugin configuration.
-     */
-    private void loadConfig() {
-        _ironGolemValue = getConfig().getInt("ironGolemValue", 10);
-        _villagerValue = getConfig().getInt("villagerValue", 20);
-        _babyVillagerValue = getConfig().getInt("babyVillagerValue", 50);
-        tributeRange = getConfig().getInt("tributeRange", 64);
-        villagerCount = getConfig().getInt("villagerCount", 20);
-        minPerVillagerCount = getConfig().getInt("minPerVillagerCount", 0);
-        maxPerVillagerCount = getConfig().getInt("maxPerVillagerCount", 3);
-        baseSiegeBonus = getConfig().getInt("baseSiegeBonus", 1);
-        minPerSiegeKill = getConfig().getInt("minPerSiegeKill", 1);
-        maxPerSiegeKill = getConfig().getInt("maxPerSiegeKill", getConfig().getDefaults().getInt("maxPerSiegeKill", 2));
-        _debug = getConfig().getBoolean("debug", false);
+    private void readBaseConfig() {
+        _ironGolemValue = baseConfiguration.getInt("ironGolemValue");
+        _villagerValue = baseConfiguration.getInt("villagerValue");
+        _babyVillagerValue = baseConfiguration.getInt("babyVillagerValue");
+        tributeRange = baseConfiguration.getInt("tributeRange");
+        villagerCount = baseConfiguration.getInt("villagerCount");
+        minPerVillagerCount = baseConfiguration.getInt("minPerVillagerCount");
+        maxPerVillagerCount = baseConfiguration.getInt("maxPerVillagerCount");
+        baseSiegeBonus = baseConfiguration.getInt("baseSiegeBonus");
+        minPerSiegeKill = baseConfiguration.getInt("minPerSiegeKill");
+        maxPerSiegeKill = baseConfiguration.getInt("maxPerSiegeKill");
+        _debug = baseConfiguration.getBoolean("debug");
         if (_debug) debug("Debug enabled.");
 
-        getLogger().info(String.format("%d reputation ranks loaded.", _reputationRanks.size()));
 
-        getLogger().info("Configuration loaded.");
+        getLogger().info("Base configuration loaded.");
     }
     
     /**
@@ -253,22 +128,23 @@ public final class UVVillagers extends JavaPlugin implements Listener {
     private void readRanksConfig() {
         _reputationRanks.clear();
 
-        Map<String, Object> rankMap = getRanksConfig().getConfigurationSection("ranks").getValues(false);
+        Map<String, Object> rankMap = ranksConfiguration.getConfigSection("ranks").getValues(false);
 
         for (Map.Entry<String, Object> rank : rankMap.entrySet()) {
             String name = rank.getKey();
-            int threshold = getRanksConfig().getInt("ranks." + name + ".threshold");
-            double multiplier = getRanksConfig().getDouble("ranks." + name + ".multiplier");
+            int threshold = ranksConfiguration.getInt("ranks." + name + ".threshold");
+            double multiplier = ranksConfiguration.getDouble("ranks." + name + ".multiplier");
             _reputationRanks.add(new UVVillageRank(name, threshold, multiplier));
         }
         Collections.sort(_reputationRanks);
+        getLogger().info(String.format("%d reputation ranks loaded.", _reputationRanks.size()));
     }
     
     /**
      * Reads the village configuration.
      */
     private void readVillageConfig() {
-        _villageManager.loadVillages(getVillageConfig().getConfigurationSection("villages"));
+        _villageManager.loadVillages(villageConfiguration.getConfigSection("villages"));
         getLogger().info(String.format("%d villages loaded.", _villageManager.getAllVillages().size()));
     }
     
@@ -276,19 +152,19 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      * Reads the village configuration.
      */
     private void readSiegeConfig() {
-        _siegeManager.loadConfig(getSiegeConfig().getConfigurationSection("siege"));
+        _siegeManager.loadConfig(siegeConfiguration.getConfigSection("siege"));
     }
 
     /**
      * Updates the configuration file and saves it.
      */
-    private void saveUpdatedConfig() {
-        this.getVillageConfig().createSection("villages", _villageManager.saveVillages());
+    private void saveUpdatedVillages() {
+        villageConfiguration.createSection("villages", _villageManager.saveVillages());
         getLogger().info(String.format("Saving %d villages", _villageManager.getAllVillages().size()));
-        //saveRanksConfig();
-        saveVillageConfig();
-        //saveSiegeConfig();
-        //saveConfig();
+        if (villageConfiguration.saveFile())
+            getLogger().info("Save successful.");
+        else
+            getLogger().warning("Save failed.");
     }
 
     /**
@@ -345,18 +221,20 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                         if (p.hasPermission("uvv.admin")) {
                             if (args.length > 1 && args[1].equalsIgnoreCase("villages")) {
                                 sender.sendMessage("Reloading villages from disk...");
-                                reloadVillageConfig();
+                                // Reload the config from disk.
+                                villageConfiguration.loadFile();
+                                // Process the new config.
                                 readVillageConfig();
                             } else {
                                 sender.sendMessage("Reloading config data...");
                                 // Reload the config from disk.
-                                reloadConfig();
-                                reloadRanksConfig();
-                                reloadSiegeConfig();
+                                baseConfiguration.loadFile();
+                                ranksConfiguration.loadFile();
+                                siegeConfiguration.loadFile();
                                 // Process the new config.
+                                readBaseConfig();
                                 readRanksConfig();
                                 readSiegeConfig();
-                                loadConfig();
                             }
                         } else {
                             sender.sendMessage("You don't have permission to do that.");
@@ -364,18 +242,20 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                     } else {
                         if (args.length > 1 && args[1].equalsIgnoreCase("villages")) {
                             sender.sendMessage("Reloading villages from disk...");
-                            reloadVillageConfig();
+                            // Reload the config from disk.
+                            villageConfiguration.loadFile();
+                            // Process the new config.
                             readVillageConfig();
                         } else {
                             sender.sendMessage("Reloading config data...");
                             // Reload the config from disk.
-                            reloadConfig();
-                            reloadRanksConfig();
-                            reloadSiegeConfig();
+                            baseConfiguration.loadFile();
+                            ranksConfiguration.loadFile();
+                            siegeConfiguration.loadFile();
                             // Process the new config.
+                            readBaseConfig();
                             readRanksConfig();
                             readSiegeConfig();
-                            loadConfig();
                         }
                     }
                 } else if (args[0].equalsIgnoreCase("debug")) {
@@ -388,13 +268,13 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                         Player p = (Player) sender;
                         if (p.hasPermission("uvv.admin")) {
                             sender.sendMessage("Saving...");
-                            saveUpdatedConfig();
+                            saveUpdatedVillages();
                         } else {
                             sender.sendMessage("You don't have permission to do that.");
                         }
                     } else {
                         sender.sendMessage("Saving...");
-                        saveUpdatedConfig();
+                        saveUpdatedVillages();
                     }
                 } else if (args[0].equalsIgnoreCase("startsiege")) {
                     if (sender instanceof Player) {
@@ -812,7 +692,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 
                     int numVillagerGroups = (population - (population % villagerCount)) / villagerCount;
 
-                    getLogger().info(" - Villagers: " + population + " (" + numVillagerGroups + " tribute groups)");
+                    debug(String.format(" - Villagers: %d (%d tribute groups)", population, numVillagerGroups));
 
                     // If this village was the one sieged, give the kill bonus and an extra survival "base siege" thankfulness bonus
                     if (_siegeManager.isSiegeActive() && village.getKey() == _siegeManager.getVillage().getName()) {
@@ -821,22 +701,22 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                         siegeKillTributeAmount = killBonus;
                         villageTributeAmount += siegeKillTributeAmount;
                     }
-                    getLogger().info(" - Siege Defense Bonus: " + siegeBonus);
-                    getLogger().info(" - Siege Kills Bonus: " + siegeKillTributeAmount);
+                    debug(String.format(" - Siege Defense Bonus: %d", siegeBonus));
+                    debug(String.format(" - Siege Kills Bonus: %d", siegeKillTributeAmount));
 
                     // Give a random bonus per villager count
                     for (int i = 0; i < numVillagerGroups; i++) {
                         int groupTribute = getRandomNumber(minPerVillagerCount, maxPerVillagerCount);
-                        getLogger().info(" - Village Group " + i + ": " + groupTribute);
+                        debug(String.format(" - Village Group %d: %d", i, groupTribute));
                         villageTributeAmount += groupTribute;
                     }
-                    getLogger().info(" - Total Before Multiplier: " + villageTributeAmount);
+                    debug(String.format(" - Total Before Multiplier: %d", villageTributeAmount));
 
                     // Apply rank multiplier
                     double multiplier = getRank(village.getValue().getPlayerReputation(player.getName())).getMultiplier();
-                    getLogger().info(" - Reputation: " + village.getValue().getPlayerReputation(player.getName()));
-                    getLogger().info(" - Rank: " + getRank(village.getValue().getPlayerReputation(player.getName())).getName());
-                    getLogger().info(" - Multiplier: " + multiplier);
+                    debug(String.format(" - Reputation: %s", village.getValue().getPlayerReputation(player.getName())));
+                    debug(String.format(" - Rank: %s", getRank(village.getValue().getPlayerReputation(player.getName())).getName()));
+                    debug(String.format(" - Multiplier: %.2f", multiplier));
                     tributeAmount += (int) villageTributeAmount * multiplier;
 
                 }
@@ -848,7 +728,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                         ItemStack items = new ItemStack(Material.EMERALD, tributeAmount);
                         player.getInventory().addItem(items);
                         player.sendMessage("Grateful villagers gave you " + tributeAmount + " emeralds!");
-                        getLogger().info(player.getName() + " received " + tributeAmount + " emeralds.");
+                        debug(String.format("%s received %d emeralds.", player.getName(), tributeAmount));
                     } else {
                         player.sendMessage("The villagers didn't have any emeralds for you today.");
                     }
