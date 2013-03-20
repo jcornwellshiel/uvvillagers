@@ -37,17 +37,17 @@ siege:
     blaze:
       threshold: 40
       chance: 100
-      points: 1
+      points: 10
       max: 10
     witch:
       threshold: 40
       chance: 40
-      points: 1
+      points: 10
       max: 10
     magma_cube:
       threshold: 60
       chance: 0
-      points: 1
+      points: 10
       max: 10
     wither_skeleton:
       threshold: 60
@@ -57,20 +57,20 @@ siege:
     enderman:
       threshold: 60
       chance: 0
-      points: 1
+      points: 10
       max: 100
     ghast:
       threshold: 80
       chance: 0
-      points: 1
-      max: 100
-    wither:
-      threshold: 150
-      chance: 0
-      points: 1
-      max: 100
-    ender_dragon:
-      threshold: 150
-      chance: 0
-      points: 1
+      points: 100
       max: 3
+    wither:
+      threshold: 200
+      chance: 0
+      points: 500
+      max: 1
+    ender_dragon:
+      threshold: 200
+      chance: 0
+      points: 500
+      max: 1
