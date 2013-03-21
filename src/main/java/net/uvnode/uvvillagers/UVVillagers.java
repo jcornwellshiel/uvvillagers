@@ -1,8 +1,5 @@
 package net.uvnode.uvvillagers;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -10,9 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.logging.Level;
 
-import net.minecraft.server.v1_4_R1.Village;
 import net.uvnode.uvvillagers.util.FileManager;
 
 import org.bukkit.Location;
@@ -22,8 +17,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
@@ -32,7 +25,6 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.ItemStack;
 
-import org.bukkit.craftbukkit.v1_4_R1.CraftWorld;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Villager;
 
@@ -48,6 +40,8 @@ public final class UVVillagers extends JavaPlugin implements Listener {
     private SiegeManager _siegeManager;
     private Random rng = new Random();
     private Map<String, String> _playerVillagesProximity = new HashMap<String, String>();
+    private Map<String, Integer> _consecutiveTicksInProximity = new HashMap<String, Integer>();
+
     //UVTributeMode tributeMode;
     private List<UVVillageRank> _reputationRanks = new ArrayList<UVVillageRank>();
     private int tributeRange,
@@ -58,7 +52,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
             minPerSiegeKill,
             maxPerSiegeKill,
             timerInterval = 100;
-    private boolean tributeCalculating = false;
+    private ArrayList<String> tributeCalculating = new ArrayList<String>();
     private boolean _debug = false;
     
     private FileManager baseConfiguration, villageConfiguration, siegeConfiguration, ranksConfiguration;
@@ -74,7 +68,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         // Initialize the village and siege manager objects
-        _villageManager = new VillageManager(this, ((CraftWorld) getServer().getWorlds().get(0)).getHandle());
+        _villageManager = new VillageManager(this);
         _siegeManager = new SiegeManager(this);
 
         // Register us to handle events
@@ -438,14 +432,9 @@ public final class UVVillagers extends JavaPlugin implements Listener {
     private void sendVillageInfo(CommandSender sender, UVVillage village) {
         String rankString = "";
         if (sender instanceof Player) {
-            rankString = " (" + getRank(village.getPlayerReputation(sender.getName())).getName() + ")";
+            rankString = String.format(" (%s)", getRank(village.getPlayerReputation(sender.getName())).getName());
         }
-        sender.sendMessage(
-                village.getName()
-                + rankString + ": "
-                + village.getDoors() + " doors, "
-                + village.getPopulation() + " villagers, "
-                + village.getSize() + " block size.");
+        sender.sendMessage(String.format("%s%s: %d doors, %d villagers, %d block size.", village.getName(), rankString, village.getDoors(), village.getPopulation(), village.getSize()));
     }
 
     /**
@@ -459,42 +448,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         if (event.getTo().getWorld() != getServer().getWorlds().get(0)) {
             return;
         }
-
-        // Get closest core village
-        Village coreVillage = _villageManager.getClosestCoreVillageToLocation(event.getTo(), tributeRange);
-
-        // Get player name
-        String name = event.getPlayer().getName();
-        // If a village is nearby
-        if (coreVillage != null) {
-            Location coreVillageLocation = new Location(event.getTo().getWorld(), coreVillage.getCenter().x, coreVillage.getCenter().y, coreVillage.getCenter().z);
-            // Do we have a UVVillage object for this village?
-            UVVillage village = _villageManager.getClosestVillageToLocation(coreVillageLocation, coreVillage.getSize());
-            if (village == null) {
-                village = _villageManager.discoverVillage(coreVillageLocation, coreVillage, event.getPlayer());
-                event.getPlayer().sendMessage("You discovered " + village.getName());
-            }
-            // Do we have a record for this player?
-            if (_playerVillagesProximity.containsKey(name)) {
-                // If so, check to see if we've already alerted the player that he's near this village
-                String current = _playerVillagesProximity.get(name);
-                if (!village.getName().equalsIgnoreCase(current)) {
-                    // No? Alert him!
-                    event.getPlayer().sendMessage("You're near " + village.getName() + "! Your popularity with the " + village.getPopulation() + " villagers here is " + getRank(village.getPlayerReputation(name)).getName() + ".");
-                    // Set the player as near this village
-                    _playerVillagesProximity.put(name, village.getName());
-                }
-            } else {
-                // if no record, alert him!
-                event.getPlayer().sendMessage("You're near " + village.getName() + "! Your popularity with the " + village.getPopulation() + " villagers here is " + getRank(village.getPlayerReputation(name)).getName() + ".");
-                // Set the player as near this village
-                _playerVillagesProximity.put(name, village.getName());
-            }
-
-        } else {
-            // The player has left the village!
-            _playerVillagesProximity.put(name, "");
-        }
+        _villageManager.updatePlayerProximity(event.getTo(), event.getPlayer(), tributeRange);
     }
 
     /**
@@ -586,34 +540,21 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         debug(event.getMessage());
         switch (event.getType()) {
             case DAWN:
-                // Kick us out of this if we're not dealing with the main world.
-                if (!event.getWorld().getName().equalsIgnoreCase(_villageManager.getWorld().getName())) {
-                    return;
-                }
+                // Calculate tributes
                 debug("Calculating tribute.");
                 calculateTribute(event.getWorld());
+                // End siege tracking.
                 debug("Ending active sieges.");
                 _siegeManager.endSiege();
                 break;
 
             case DUSK:
-                // Kick us out of this if we're not dealing with the main world.
-                if (!event.getWorld().getName().equalsIgnoreCase(_villageManager.getWorld().getName())) {
-                    return;
-                }
-                //duskHandler(event);
-
-                //getServer().broadcastMessage("Dusk has arrived in world " + event.getWorld().getName() + "!");
-
-                // TODO: clear pending tributes list
                 // clear active siege just in case something is missing
                 debug("Clearing siege data.");
                 _siegeManager.clearSiege();
                 break;
             case MIDNIGHT: 
-                if (!event.getWorld().getName().equalsIgnoreCase(_villageManager.getWorld().getName())) {
-                    return;
-                }
+                // Try to start a siege if using custom sieges
                 if(!_siegeManager.isSiegeActive() && !_siegeManager.usingCoreSieges()) {
                     debug("Trying to start a siege.");
                     if (_siegeManager.getChanceOfSiege() > getRandomNumber(0, 99)) {
@@ -625,6 +566,8 @@ public final class UVVillagers extends JavaPlugin implements Listener {
             case CHECK:
                 // Update villages
                 _villageManager.matchVillagesToCore();
+                // Tick village proximities
+                _villageManager.tickProximityReputations(event.getWorld());
                 break;
             default:
                 break;
@@ -658,9 +601,10 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      * @param world The world for which to calculate
      */
     private void calculateTribute(World world) {
-        if (!tributeCalculating) {
+        
+        if (!tributeCalculating.contains(world.getName())) {
             // TODO: ADD MULTIWORLD SUPPORT!
-            tributeCalculating = true;
+            tributeCalculating.add(world.getName());
 
             // Make sure the villages are up to date
             _villageManager.matchVillagesToCore();
@@ -683,11 +627,11 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                     }
                 }
 
-                getLogger().info(player.getName() + ": ");
+                debug(String.format("%s: ", player.getName()));
 
                 for (Map.Entry<String, UVVillage> village : villages.entrySet()) {
                     int villageTributeAmount = 0, siegeBonus = 0, siegeKillTributeAmount = 0;
-                    getLogger().info(" - " + village.getKey());
+                    debug(String.format(" - %s", village.getKey()));
                     int population = village.getValue().getPopulation();
 
                     int numVillagerGroups = (population - (population % villagerCount)) / villagerCount;
@@ -695,7 +639,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                     debug(String.format(" - Villagers: %d (%d tribute groups)", population, numVillagerGroups));
 
                     // If this village was the one sieged, give the kill bonus and an extra survival "base siege" thankfulness bonus
-                    if (_siegeManager.isSiegeActive() && village.getKey() == _siegeManager.getVillage().getName()) {
+                    if (_siegeManager.isSiegeActive() && village.getKey().equalsIgnoreCase(_siegeManager.getVillage().getName())) {
                         siegeBonus = numVillagerGroups * baseSiegeBonus;
                         villageTributeAmount += siegeBonus;
                         siegeKillTributeAmount = killBonus;
@@ -738,7 +682,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 
             }
         }
-        tributeCalculating = false;
+        tributeCalculating.remove(world.getName());
     }
 
     /**
@@ -811,4 +755,5 @@ public final class UVVillagers extends JavaPlugin implements Listener {
             getLogger().info(message);
         }
     }
+
 }

@@ -1,5 +1,6 @@
 package net.uvnode.uvvillagers;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,6 +18,9 @@ public class UVVillage {
     private int _doors;
     private Location _location;
     private Map<String, Integer> _playerReputations = new HashMap<String, Integer>();
+    private Map<String, Date> _playerArrived = new HashMap<String, Date>();
+    private Map<String, Integer> _playerTicksHere = new HashMap<String, Integer>();
+    private Map<String, Integer> _playerTicksGone = new HashMap<String, Integer>();
     private int _population;
     private int _size;
     private Village _villageCore;
@@ -249,5 +253,65 @@ public class UVVillage {
             }
         }
         return topPlayer;
+    }
+    
+    /**
+     * Marks the player as here in this village.
+     * @param playerName
+     */
+    public void setPlayerHere(String playerName) {
+        // If not listed as here already, mark here.
+        if (!_playerTicksHere.containsKey(playerName)) {
+            _playerTicksHere.put(playerName, 0);
+        }
+        // Player is no longer gone.
+        if (_playerTicksGone.containsKey(playerName)) {
+            _playerTicksGone.remove(playerName);
+        }
+    }
+
+    /**
+     * Marks the player as not in this village.
+     * @param playerName
+     */
+    public void setPlayerGone(String playerName) {
+        // If not listed as gone already, mark gone.
+        if (!_playerTicksGone.containsKey(playerName)) {
+            _playerTicksGone.put(playerName, 0);
+        }
+        // Player is no longer here.
+        if (_playerTicksHere.containsKey(playerName)) {
+            _playerTicksHere.remove(playerName);
+        }
+    }
+    
+    public void tickPlayerPresence(String playerName) {
+        if (_playerTicksHere.containsKey(playerName)) {
+            // If the player is here, increment here counter.
+            _playerTicksHere.put(playerName, _playerTicksHere.get(playerName) + 1);
+        } else if (_playerTicksGone.containsKey(playerName)) {
+            // If the player is gone, increment gone counter.
+            _playerTicksGone.put(playerName, _playerTicksGone.get(playerName) + 1);
+        }
+    }
+    
+    public boolean isPlayerHere(String playerName) {
+        return _playerTicksHere.containsKey(playerName);
+    }
+    
+    public int getPlayerTicksHere(String playerName) {
+        if (_playerTicksHere.containsKey(playerName)) {
+            return _playerTicksHere.get(playerName);
+        } else {
+            return 0;
+        }
+    }
+    
+    public int getPlayerTicksGone(String playerName) {
+        if (_playerTicksGone.containsKey(playerName)) {
+            return _playerTicksGone.get(playerName);
+        } else {
+            return 0;
+        }
     }
 }

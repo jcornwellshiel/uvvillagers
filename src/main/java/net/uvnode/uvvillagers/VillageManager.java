@@ -1,6 +1,8 @@
 package net.uvnode.uvvillagers;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.bukkit.Location;
@@ -10,6 +12,7 @@ import org.bukkit.entity.Player;
 
 import net.minecraft.server.v1_4_R1.Village;
 import net.minecraft.server.v1_4_R1.WorldServer;
+import org.bukkit.craftbukkit.v1_4_R1.CraftWorld;
 
 /**
  * Manages UVVillage objects and events.
@@ -19,18 +22,19 @@ import net.minecraft.server.v1_4_R1.WorldServer;
 public class VillageManager {
 
     private UVVillagers _plugin;
-    private WorldServer _worldServer;
     private Map<String, UVVillage> _villages;
-
+    private Map<String, String> _playerVillagesProximity = new HashMap<String, String>();
+    private Map<String, Integer> _consecutiveTicksInProximity = new HashMap<String, Integer>();
+    private boolean _matchRunning = false;
+    
     /**
      * Basic Constructor
      *
      * @param plugin The UVVillagers plugin reference.
      * @param worldServer The WorldServer object for the world being managed.
      */
-    public VillageManager(UVVillagers plugin, WorldServer worldServer) {
+    public VillageManager(UVVillagers plugin) {
         _plugin = plugin;
-        _worldServer = worldServer;
         _villages = new HashMap<String, UVVillage>();
     }
 
@@ -43,7 +47,8 @@ public class VillageManager {
      * @return Core Minecraft Village object. Null if none found.
      */
     public Village getClosestCoreVillageToLocation(Location location, int maxDistance) {
-        return _worldServer.villages.getClosestVillage(location.getBlockX(), location.getBlockY(), location.getBlockZ(), maxDistance);
+        WorldServer worldServer = ((CraftWorld)location.getWorld()).getHandle();
+        return worldServer.villages.getClosestVillage(location.getBlockX(), location.getBlockY(), location.getBlockZ(), maxDistance);
     }
 
     /**
@@ -174,31 +179,40 @@ public class VillageManager {
      * village (if there is one).
      */
     public void matchVillagesToCore() {
-        for (Map.Entry<String, UVVillage> villageEntry : _villages.entrySet()) {
-            // Is this village's chunk loaded? (cheaper than the player check, so we do it first)
-            if (villageEntry.getValue().getLocation().getChunk().isLoaded()) {
+        if (!_matchRunning) {
+            _matchRunning = true;
+            List<String> markedForAbandon = new ArrayList<String>();
+            for (Map.Entry<String, UVVillage> villageEntry : _villages.entrySet()) {
+                    // Is this village's chunk loaded? (cheaper than the player check, so we do it first)
+                    if (villageEntry.getValue().getLocation().getChunk().isLoaded()) {
 
-                // Just because the chunk is loaded doesn't mean the village is, apparently.
-                // Check if any players are near enough for the core village object to be loaded.
-                if (_plugin.areAnyPlayersInRange(villageEntry.getValue().getLocation(), 128)) {
+                    // Just because the chunk is loaded doesn't mean the village is, apparently.
+                    // Check if any players are near enough for the core village object to be loaded.
+                    if (_plugin.areAnyPlayersInRange(villageEntry.getValue().getLocation(), 64)) {
 
-                    // If it's loaded, find the nearest core village.
-                    Village closest = getClosestCoreVillageToLocation(villageEntry.getValue().getLocation(), 64);
-                    if (closest == null) {
-                        // No nearby 
-                        abandonVillage(villageEntry.getKey());
-                    } else {
-                        // Found one! Run an update!
-                        villageEntry.getValue().setVillageCore(closest);
-                        int result = villageEntry.getValue().updateVillageDataFromCore();
-                        if (result > 0) {
-                            // Update returned that something has changed. Throw an UPDATED event!
-                            UVVillageEvent event = new UVVillageEvent(villageEntry.getValue(), villageEntry.getKey(), UVVillageEventType.UPDATED);
-                            _plugin.getServer().getPluginManager().callEvent(event);
+                        // If it's loaded, find the nearest core village.
+                        Village closest = getClosestCoreVillageToLocation(villageEntry.getValue().getLocation(), 64);
+                        if (closest == null) {
+                            // No nearby village where there should be. Mark for abandon.
+                            markedForAbandon.add(villageEntry.getKey());
+                        } else {
+                            // Found one! Run an update!
+                            villageEntry.getValue().setVillageCore(closest);
+                            int result = villageEntry.getValue().updateVillageDataFromCore();
+                            if (result > 0) {
+                                // Update returned that something has changed. Throw an UPDATED event!
+                                UVVillageEvent event = new UVVillageEvent(villageEntry.getValue(), villageEntry.getKey(), UVVillageEventType.UPDATED);
+                                _plugin.getServer().getPluginManager().callEvent(event);
+                            }
                         }
                     }
                 }
             }
+            // Abandon the villages marked for abandoning
+            for (String villageKey : markedForAbandon) {
+                abandonVillage(villageKey);
+            }
+            _matchRunning = false;
         }
 
     }
@@ -252,7 +266,6 @@ public class VillageManager {
                 _villages.put(villageEntry.getKey(), village);
             }
         } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
@@ -308,13 +321,102 @@ public class VillageManager {
         return map;
     }
 
-    /**
-     * Get the world that this VillageManager operates in.
-     *
-     * @return The world the VillageManager operates in.
-     */
-    public World getWorld() {
-        return _worldServer.getWorld();
+    public void updatePlayerProximity(Location location, Player player, Integer maxDistance) {
+        
+        // Get closest core village
+        Village coreVillage = getClosestCoreVillageToLocation(location, maxDistance);
+        
+        // Is this player's new location near a core village?
+        if (coreVillage != null) {
+            // Yes, it's near a core village. 
+            // Get the location.
+            Location coreVillageLocation = new Location(location.getWorld(), coreVillage.getCenter().x, coreVillage.getCenter().y, coreVillage.getCenter().z);
+            
+            // Get closest UVVillage.
+            UVVillage village = this.getClosestVillageToLocation(coreVillageLocation, maxDistance);
+            // Did we find a UVVillage for our core village?
+            if (village != null) {
+                // Yes, we found a UVVillage.
+                // Do nothing.
+            } else {
+                // No, no UVVillage. 
+                // Discover one, and get it.
+                village = discoverVillage(coreVillageLocation, coreVillage, player);
+                // Announce that the player has discovered a lovely new UVVillage.
+                player.sendMessage(String.format("You discovered %s!", village.getName()));
+            }
+            
+            // Was this player listed as at this UVVillage already?
+            if (village.isPlayerHere(player.getName())) {
+                // Yes.
+                // Do nothing.
+            } else {
+                // No, the village didn't know he was here yet.
+                // Announce to the player that he's in a new UVVillage.
+                player.sendMessage(String.format("You're near %s! Your reputation with the %d villagers here is %s.", village.getName(), village.getPopulation(), _plugin.getRank(village.getPlayerReputation(player.getName())).getName()));
+                // Tell the village that the player is present.
+                village.setPlayerHere(player.getName());
+                // Loop through all the villages
+                for (Map.Entry<String, UVVillage> villageEntry : _villages.entrySet()) {
+                    // Tell the villages we're not in that the player is gone.
+                    if (!villageEntry.getKey().equalsIgnoreCase(village.getName())) {
+                        villageEntry.getValue().setPlayerGone(player.getName());
+                    }
+                }
+            }
+        } else {
+            // No, it's not near a core village.
+            // Tell all villages that this player isn't near them.
+            for (Map.Entry<String, UVVillage> villageEntry : _villages.entrySet()) {
+                villageEntry.getValue().setPlayerGone(player.getName());
+            }
+        }
+    }
+    
+    public void tickProximityReputations(World world) {
+        // Step through each village
+        for (Map.Entry<String, UVVillage> villageEntry : _villages.entrySet()) {
+            UVVillage village = villageEntry.getValue();
+            // Only process this village if we're processing its world this tick.
+            if (world.getName().equalsIgnoreCase(village.getLocation().getWorld().getName())) {
+                // Get the players online in the village's world
+                List<Player> players = village.getLocation().getWorld().getPlayers();
+                // Step through them.
+                for (Player player : players) {
+                    // Tell the village to tick for the player.
+                    village.tickPlayerPresence(player.getName());
+
+                    // If the player is in the village...
+                    if (village.isPlayerHere(player.getName())) {
+                        // And the player has been here a multiple of 12 ticks
+                        int ticksHere = village.getPlayerTicksHere(player.getName());
+                        if (ticksHere > 0 && ticksHere%12 == 0) {
+                            // Bump his reputation up.
+                            village.modifyPlayerReputation(player.getName(), 1);
+                            _plugin.debug(String.format("Increased %s's reputation with %s by 1 for being present for %d ticks.", 
+                                                        player.getName(), 
+                                                        village.getName(),
+                                                        village.getPlayerTicksHere(player.getName())));
+                        }
+
+                    } else { // If the player is NOT in the village...
+                        // And the player has been gone a multiple of 24 ticks
+                        int ticksGone = village.getPlayerTicksGone(player.getName());
+                        if (ticksGone > 0 && ticksGone%24 == 0) {
+                            // And his reputation is positive.
+                            if (village.getPlayerReputation(player.getName()) > 0) {
+                                // Bump his reputation down.
+                                village.modifyPlayerReputation(player.getName(), -1);
+                                _plugin.debug(String.format("Decreased %s's reputation with %s by 1 for being away for %d ticks.", 
+                                                            player.getName(), 
+                                                            village.getName(), 
+                                                            village.getPlayerTicksGone(player.getName())));
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
     
 }
