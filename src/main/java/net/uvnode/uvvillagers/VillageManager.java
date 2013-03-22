@@ -14,13 +14,16 @@ import net.minecraft.server.v1_4_R1.Village;
 import net.minecraft.server.v1_4_R1.WorldServer;
 import org.bukkit.craftbukkit.v1_4_R1.CraftWorld;
 
+//import net.minecraft.server.v1_5_R2.Village;
+//import net.minecraft.server.v1_5_R2.WorldServer;
+//import org.bukkit.craftbukkit.v1_5_R2.CraftWorld;
+
 /**
  * Manages UVVillage objects and events.
  *
  * @author James Cornwell-Shiel
  */
 public class VillageManager {
-
     private UVVillagers _plugin;
     private Map<String, UVVillage> _villages;
     private Map<String, String> _playerVillagesProximity = new HashMap<String, String>();
@@ -114,6 +117,20 @@ public class VillageManager {
             if (villageEntry.getValue().getLocation().getChunk().isLoaded()) {
                 if (_plugin.areAnyPlayersInRange(villageEntry.getValue().getLocation(), 128)) {
                     villages.put(villageEntry.getKey(), villageEntry.getValue());
+                }
+            }
+        }
+        return villages;
+    }
+    
+    public Map<String, UVVillage> getLoadedVillages(World world) {
+        Map<String, UVVillage> villages = new HashMap<String, UVVillage>();
+        for (Map.Entry<String, UVVillage> villageEntry : _villages.entrySet()) {
+            if (world.getName().equalsIgnoreCase(villageEntry.getValue().getLocation().getWorld().getName())) {
+                if(villageEntry.getValue().getLocation().getChunk().isLoaded()) {
+                    if (_plugin.areAnyPlayersInRange(villageEntry.getValue().getLocation(), 128)) {
+                        villages.put(villageEntry.getKey(), villageEntry.getValue());
+                    }
                 }
             }
         }
@@ -390,7 +407,7 @@ public class VillageManager {
                     if (village.isPlayerHere(player.getName())) {
                         // And the player has been here a multiple of 12 ticks
                         int ticksHere = village.getPlayerTicksHere(player.getName());
-                        if (ticksHere > 0 && ticksHere%12 == 0) {
+                        if (ticksHere > 0 && ticksHere%60 == 0) {
                             // Bump his reputation up.
                             village.modifyPlayerReputation(player.getName(), 1);
                             _plugin.debug(String.format("Increased %s's reputation with %s by 1 for being present for %d ticks.", 
@@ -400,9 +417,9 @@ public class VillageManager {
                         }
 
                     } else { // If the player is NOT in the village...
-                        // And the player has been gone a multiple of 24 ticks
+                        // And the player has been gone a multiple of 240 ticks
                         int ticksGone = village.getPlayerTicksGone(player.getName());
-                        if (ticksGone > 0 && ticksGone%24 == 0) {
+                        if (ticksGone > 0 && ticksGone%240 == 0) {
                             // And his reputation is positive.
                             if (village.getPlayerReputation(player.getName()) > 0) {
                                 // Bump his reputation down.
@@ -418,5 +435,4 @@ public class VillageManager {
             }
         }
     }
-    
 }

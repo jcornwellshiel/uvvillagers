@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.craftbukkit.libs.jline.internal.Log;
 import org.bukkit.entity.EntityType;
@@ -22,19 +23,13 @@ import org.bukkit.event.entity.EntityDeathEvent;
 public class SiegeManager {
 
     private UVVillagers _plugin;
-    private UVSiege _currentSiege;
-    private Map<EntityType, Integer> _populationThresholds = new HashMap<EntityType, Integer>();
-    private Map<EntityType, Integer> _killValues = new HashMap<EntityType, Integer>();
-    private Map<EntityType, Integer> _chanceOfExtraMobs = new HashMap<EntityType, Integer>();
-    private Map<EntityType, Integer> _maxExtraMobs = new HashMap<EntityType, Integer>();
-    @SuppressWarnings("unused")
+    private Map<String, UVSiege> _currentSieges = new HashMap<String, UVSiege>();;
+    private Map<String, Integer> _populationThresholds = new HashMap<String, Integer>();
+    private Map<String, Integer> _killValues = new HashMap<String, Integer>();
+    private Map<String, Integer> _chanceOfExtraMobs = new HashMap<String, Integer>();
+    private Map<String, Integer> _maxExtraMobs = new HashMap<String, Integer>();
     private int _spawnSpread;
-    @SuppressWarnings("unused")
     private int _spawnVSpread;
-    private int _chanceOfExtraWitherSkeleton;
-    private int _witherSkeletonPopulationThreshold;
-    private int _maxExtraWitherSkeletons;
-    private int _killValueWitherSkeletons;
     private boolean _useCoreSieges;
     private int _nonCoreSiegeChance;
     
@@ -44,8 +39,7 @@ public class SiegeManager {
      * @param plugin The UVVillagers plugin
      */
     public SiegeManager(UVVillagers plugin) {
-        _plugin = plugin;
-        _currentSiege = null;
+        _plugin = plugin;;
     }
 
     /**
@@ -61,70 +55,71 @@ public class SiegeManager {
         _spawnSpread = siegeSection.getInt("randomSpread", 1);
         _spawnVSpread = siegeSection.getInt("randomVerticalSpread", 2);
 
-        _chanceOfExtraMobs.put(EntityType.ZOMBIE, siegeSection.getInt("mobs.zombie.chance", 100));
-        _populationThresholds.put(EntityType.ZOMBIE, siegeSection.getInt("mobs.zombie.threshold", 1));
-        _maxExtraMobs.put(EntityType.ZOMBIE, siegeSection.getInt("mobs.zombie.max", 100));
-        _killValues.put(EntityType.ZOMBIE, siegeSection.getInt("mobs.zombie.value", 1));
+        _chanceOfExtraMobs.put("ZOMBIE", siegeSection.getInt("mobs.zombie.chance"));
+        _populationThresholds.put("ZOMBIE", siegeSection.getInt("mobs.zombie.threshold"));
+        _maxExtraMobs.put("ZOMBIE", siegeSection.getInt("mobs.zombie.max"));
+        _killValues.put("ZOMBIE", siegeSection.getInt("mobs.zombie.value"));
 
-        _chanceOfExtraMobs.put(EntityType.SKELETON, siegeSection.getInt("mobs.skeleton.chance", 0));
-        _populationThresholds.put(EntityType.SKELETON, siegeSection.getInt("mobs.skeleton.threshold", 20));
-        _maxExtraMobs.put(EntityType.SKELETON, siegeSection.getInt("mobs.skeleton.max", 50));
-        _killValues.put(EntityType.SKELETON, siegeSection.getInt("mobs.skeleton.value", 1));
+        _chanceOfExtraMobs.put("SKELETON_NORMAL", siegeSection.getInt("mobs.skeleton.chance"));
+        _populationThresholds.put("SKELETON_NORMAL", siegeSection.getInt("mobs.skeleton.threshold"));
+        _maxExtraMobs.put("SKELETON_NORMAL", siegeSection.getInt("mobs.skeleton.max"));
+        _killValues.put("SKELETON_NORMAL", siegeSection.getInt("mobs.skeleton.value"));
 
-        _chanceOfExtraMobs.put(EntityType.SPIDER, siegeSection.getInt("mobs.spider.chance", 0));
-        _populationThresholds.put(EntityType.SPIDER, siegeSection.getInt("mobs.spider.threshold", 20));
-        _maxExtraMobs.put(EntityType.SPIDER, siegeSection.getInt("mobs.spider.max", 50));
-        _killValues.put(EntityType.SPIDER, siegeSection.getInt("mobs.spider.value", 1));
+        _chanceOfExtraMobs.put("SPIDER", siegeSection.getInt("mobs.spider.chance"));
+        _populationThresholds.put("SPIDER", siegeSection.getInt("mobs.spider.threshold"));
+        _maxExtraMobs.put("SPIDER", siegeSection.getInt("mobs.spider.max"));
+        _killValues.put("SPIDER", siegeSection.getInt("mobs.spider.value"));
 
-        _chanceOfExtraMobs.put(EntityType.CAVE_SPIDER, siegeSection.getInt("mobs.cave_spider.chance", 0));
-        _populationThresholds.put(EntityType.CAVE_SPIDER, siegeSection.getInt("mobs.cave_spider.threshold", 20));
-        _maxExtraMobs.put(EntityType.CAVE_SPIDER, siegeSection.getInt("mobs.cave_spider.max", 50));
-        _killValues.put(EntityType.CAVE_SPIDER, siegeSection.getInt("mobs.cave_spider.value", 5));
+        _chanceOfExtraMobs.put("CAVE_SPIDER", siegeSection.getInt("mobs.cave_spider.chance"));
+        _populationThresholds.put("CAVE_SPIDER", siegeSection.getInt("mobs.cave_spider.threshold"));
+        _maxExtraMobs.put("CAVE_SPIDER", siegeSection.getInt("mobs.cave_spider.max"));
+        _killValues.put("CAVE_SPIDER", siegeSection.getInt("mobs.cave_spider.value"));
 
-        _chanceOfExtraMobs.put(EntityType.PIG_ZOMBIE, siegeSection.getInt("mobs.pig_zombie.chance", 0));
-        _populationThresholds.put(EntityType.PIG_ZOMBIE, siegeSection.getInt("mobs.pig_zombie.threshold", 20));
-        _maxExtraMobs.put(EntityType.PIG_ZOMBIE, siegeSection.getInt("mobs.pig_zombie.max", 50));
-        _killValues.put(EntityType.PIG_ZOMBIE, siegeSection.getInt("mobs.pig_zombie.value", 5));
+        _chanceOfExtraMobs.put("PIG_ZOMBIE", siegeSection.getInt("mobs.pig_zombie.chance"));
+        _populationThresholds.put("PIG_ZOMBIE", siegeSection.getInt("mobs.pig_zombie.threshold"));
+        _maxExtraMobs.put("PIG_ZOMBIE", siegeSection.getInt("mobs.pig_zombie.max"));
+        _killValues.put("PIG_ZOMBIE", siegeSection.getInt("mobs.pig_zombie.value"));
 
-        _chanceOfExtraMobs.put(EntityType.BLAZE, siegeSection.getInt("mobs.blaze.chance", 0));
-        _populationThresholds.put(EntityType.BLAZE, siegeSection.getInt("mobs.blaze.threshold", 20));
-        _maxExtraMobs.put(EntityType.BLAZE, siegeSection.getInt("mobs.blaze.max", 50));
-        _killValues.put(EntityType.BLAZE, siegeSection.getInt("mobs.blaze.value", 10));
+        _chanceOfExtraMobs.put("BLAZE", siegeSection.getInt("mobs.blaze.chance"));
+        _populationThresholds.put("BLAZE", siegeSection.getInt("mobs.blaze.threshold"));
+        _maxExtraMobs.put("BLAZE", siegeSection.getInt("mobs.blaze.max"));
+        _killValues.put("BLAZE", siegeSection.getInt("mobs.blaze.value"));
 
-        _chanceOfExtraMobs.put(EntityType.WITCH, siegeSection.getInt("mobs.witch.chance", 0));
-        _populationThresholds.put(EntityType.WITCH, siegeSection.getInt("mobs.witch.threshold", 20));
-        _maxExtraMobs.put(EntityType.WITCH, siegeSection.getInt("mobs.witch.max", 50));
-        _killValues.put(EntityType.WITCH, siegeSection.getInt("mobs.witch.value", 10));
+        _chanceOfExtraMobs.put("WITCH", siegeSection.getInt("mobs.witch.chance"));
+        _populationThresholds.put("WITCH", siegeSection.getInt("mobs.witch.threshold"));
+        _maxExtraMobs.put("WITCH", siegeSection.getInt("mobs.witch.max"));
+        _killValues.put("WITCH", siegeSection.getInt("mobs.witch.value"));
 
-        _chanceOfExtraMobs.put(EntityType.MAGMA_CUBE, siegeSection.getInt("mobs.magma_cube.chance", 0));
-        _populationThresholds.put(EntityType.MAGMA_CUBE, siegeSection.getInt("mobs.magma_cube.threshold", 20));
-        _maxExtraMobs.put(EntityType.MAGMA_CUBE, siegeSection.getInt("mobs.magma_cube.max", 50));
-        _killValues.put(EntityType.MAGMA_CUBE, siegeSection.getInt("mobs.magma_cube.value", 10));
+        _chanceOfExtraMobs.put("MAGMA_CUBE", siegeSection.getInt("mobs.magma_cube.chance"));
+        _populationThresholds.put("MAGMA_CUBE", siegeSection.getInt("mobs.magma_cube.threshold"));
+        _maxExtraMobs.put("MAGMA_CUBE", siegeSection.getInt("mobs.magma_cube.max"));
+        _killValues.put("MAGMA_CUBE", siegeSection.getInt("mobs.magma_cube.value"));
+        
+        _chanceOfExtraMobs.put("SKELETON_WITHER", siegeSection.getInt("mobs.wither_skeleton.chance"));
+        _populationThresholds.put("SKELETON_WITHER", siegeSection.getInt("mobs.wither_skeleton.threshold"));
+        _maxExtraMobs.put("SKELETON_WITHER", siegeSection.getInt("mobs.wither_skeleton.max"));
+        _killValues.put("SKELETON_WITHER", siegeSection.getInt("mobs.wither_skeleton.value"));
 
-        _chanceOfExtraWitherSkeleton = siegeSection.getInt("mobs.wither_skeleton.chance", 0);
-        _witherSkeletonPopulationThreshold = siegeSection.getInt("mobs.wither_skeleton.threshold", 20);
-        _maxExtraWitherSkeletons = siegeSection.getInt("wither_skeleton.max", 50);
-        _killValueWitherSkeletons = siegeSection.getInt("mobs.wither_skeleton.value", 10);
+        _chanceOfExtraMobs.put("ENDERMAN", siegeSection.getInt("mobs.enderman.chance"));
+        _populationThresholds.put("ENDERMAN", siegeSection.getInt("mobs.enderman.threshold"));
+        _maxExtraMobs.put("ENDERMAN", siegeSection.getInt("mobs.enderman.max"));
+        _killValues.put("ENDERMAN", siegeSection.getInt("mobs.enderman.value"));
 
-        _chanceOfExtraMobs.put(EntityType.ENDERMAN, siegeSection.getInt("mobs.enderman.chance", 0));
-        _populationThresholds.put(EntityType.ENDERMAN, siegeSection.getInt("mobs.enderman.threshold", 20));
-        _maxExtraMobs.put(EntityType.ENDERMAN, siegeSection.getInt("mobs.enderman.max", 50));
-        _killValues.put(EntityType.ENDERMAN, siegeSection.getInt("mobs.enderman.value", 10));
+        _chanceOfExtraMobs.put("GHAST", siegeSection.getInt("mobs.ghast.chance"));
+        _populationThresholds.put("GHAST", siegeSection.getInt("mobs.ghast.threshold"));
+        _maxExtraMobs.put("GHAST", siegeSection.getInt("mobs.ghast.max"));
+        _killValues.put("GHAST", siegeSection.getInt("mobs.ghast.value"));
 
-        _chanceOfExtraMobs.put(EntityType.GHAST, siegeSection.getInt("mobs.ghast.chance", 0));
-        _populationThresholds.put(EntityType.GHAST, siegeSection.getInt("mobs.ghast.threshold", 20));
-        _maxExtraMobs.put(EntityType.GHAST, siegeSection.getInt("mobs.ghast.max", 50));
-        _killValues.put(EntityType.GHAST, siegeSection.getInt("mobs.ghast.value", 100));
+        _chanceOfExtraMobs.put("WITHER", siegeSection.getInt("mobs.wither.chance"));
+        _populationThresholds.put("WITHER", siegeSection.getInt("mobs.wither.threshold"));
+        _maxExtraMobs.put("WITHER", siegeSection.getInt("mobs.wither.max"));
+        _killValues.put("WITHER", siegeSection.getInt("mobs.wither.value"));
 
-        _chanceOfExtraMobs.put(EntityType.WITHER, siegeSection.getInt("mobs.wither.chance", 0));
-        _populationThresholds.put(EntityType.WITHER, siegeSection.getInt("mobs.wither.threshold", 20));
-        _maxExtraMobs.put(EntityType.WITHER, siegeSection.getInt("mobs.wither.max", 50));
-        _killValues.put(EntityType.WITHER, siegeSection.getInt("mobs.wither.value", 500));
-
-        _chanceOfExtraMobs.put(EntityType.ENDER_DRAGON, siegeSection.getInt("mobs.ender_dragon.chance", 0));
-        _populationThresholds.put(EntityType.ENDER_DRAGON, siegeSection.getInt("mobs.ender_dragon.threshold", 20));
-        _maxExtraMobs.put(EntityType.ENDER_DRAGON, siegeSection.getInt("mobs.ender_dragon.max", 50));
-        _killValues.put(EntityType.ENDER_DRAGON, siegeSection.getInt("mobs.ender_dragon.value", 500));
+        _chanceOfExtraMobs.put("ENDER_DRAGON", siegeSection.getInt("mobs.ender_dragon.chance"));
+        _populationThresholds.put("ENDER_DRAGON", siegeSection.getInt("mobs.ender_dragon.threshold"));
+        _maxExtraMobs.put("ENDER_DRAGON", siegeSection.getInt("mobs.ender_dragon.max"));
+        _killValues.put("ENDER_DRAGON", siegeSection.getInt("mobs.ender_dragon.value"));
+        _plugin.getLogger().info(String.format("Loaded %d siege mob definitions (%d %d %d %d)", _chanceOfExtraMobs.size(), _populationThresholds.size(), _maxExtraMobs.size(), _killValues.size(), _chanceOfExtraMobs.size()));
     }
 
     /**
@@ -147,18 +142,18 @@ public class SiegeManager {
      *
      * @return True if a siege is active, false if not.
      */
-    public boolean isSiegeActive() {
-        return (_currentSiege != null);
+    public boolean isSiegeActive(World world) {
+        return (_currentSieges.containsKey(world.getName()));
     }
 
     /**
      * Trigger end-of-siege processing
      */
-    public void endSiege() {
+    public void endSiege(World world) {
         // If there was a siege, do stuff. Otherwise do nothing.
-        if (isSiegeActive()) {
+        if (isSiegeActive(world)) {
             // Throw a SIEGE_ENDED event!
-            UVVillageEvent event = new UVVillageEvent(_currentSiege.getVillage(), _currentSiege.getVillage().getName(), UVVillageEventType.SIEGE_ENDED, _currentSiege.overviewMessage());
+            UVVillageEvent event = new UVVillageEvent(_currentSieges.get(world.getName()).getVillage(), _currentSieges.get(world.getName()).getVillage().getName(), UVVillageEventType.SIEGE_ENDED, _currentSieges.get(world.getName()).overviewMessage());
             _plugin.getServer().getPluginManager().callEvent(event);
         }
     }
@@ -166,9 +161,10 @@ public class SiegeManager {
     /**
      * Null out the current siege.
      */
-    public void clearSiege() {
+    public void clearSiege(World world) {
         // Null out the siege object
-        _currentSiege = null;
+        if (_currentSieges.containsKey(world.getName()))
+            _currentSieges.remove(world.getName());
 
     }
 
@@ -180,7 +176,7 @@ public class SiegeManager {
      */
     public void startSiege(Location location, UVVillage village) {
         // Create the siege and associate it with the village we found
-        _currentSiege = new UVSiege(village);
+        _currentSieges.put(location.getWorld().getName(), new UVSiege(village));
 
         // Throw a SIEGE_BEGAN event!
         UVVillageEvent event = new UVVillageEvent(village, village.getName(), UVVillageEventType.SIEGE_BEGAN);
@@ -197,8 +193,8 @@ public class SiegeManager {
      * @param event CreatureSpawnEvent
      */
     public void trackSpawn(CreatureSpawnEvent event) {
-        // Is there an active siege?
-        if (!isSiegeActive()) {
+        // Is there an active siege in this world?
+        if (!isSiegeActive(event.getLocation().getWorld())) {
             // No! Find the village closest to the siege...
             UVVillage village = _plugin.getVillageManager().getClosestVillageToLocation(event.getLocation(), 32);
 
@@ -225,7 +221,9 @@ public class SiegeManager {
      */
     private void addSpawn(LivingEntity entity) {
         // TODO Randomly buff the entity
-        _currentSiege.addSpawn(entity);
+        if(_currentSieges.containsKey(entity.getLocation().getWorld().getName())) {
+            _currentSieges.get(entity.getLocation().getWorld().getName()).addSpawn(entity);
+        }
     }
 
     /**
@@ -235,9 +233,9 @@ public class SiegeManager {
      */
     private void spawnMoreMobs(Location location) {
         // Make sure we didn't call this by mistake... 
-        if (_currentSiege != null && _currentSiege.getVillage() != null) {
+        if (_currentSieges.get(location.getWorld().getName()) != null && _currentSieges.get(location.getWorld().getName()).getVillage() != null) {
             // Grab the population
-            int population = _currentSiege.getVillage().getPopulation();
+            int population = _currentSieges.get(location.getWorld().getName()).getVillage().getPopulation();
             // Try to spawn various types
             trySpawn(location, population, EntityType.ZOMBIE, null);
             trySpawn(location, population, EntityType.SKELETON, SkeletonType.NORMAL);
@@ -251,6 +249,8 @@ public class SiegeManager {
             trySpawn(location, population, EntityType.GHAST, null);
             trySpawn(location, population, EntityType.WITHER, null);
             trySpawn(location, population, EntityType.ENDER_DRAGON, null);
+        } else {
+            _plugin.debug("We can't spawn! :(");
         }
     }
 
@@ -264,19 +264,20 @@ public class SiegeManager {
      */
     private void trySpawn(Location location, int population, EntityType type, SkeletonType skeletonType) {
         int threshold, chance, max;
+        String typeString = type.toString();
         if (skeletonType != null) {
-            threshold = _witherSkeletonPopulationThreshold;
-            chance = _chanceOfExtraWitherSkeleton;
-            max = _maxExtraWitherSkeletons;
-        } else {
-            threshold = getPopulationThreshold(type);
-            chance = getExtraMobChance(type);
-            max = this.getMaxToSpawn(type);
+            typeString += "_" + skeletonType.toString();
         }
+        threshold = getPopulationThreshold(typeString);
+        chance = getExtraMobChance(typeString);
+        max = getMaxToSpawn(typeString);
+
+        _plugin.debug(String.format("Trying to spawn %s: %d of %d villagers needed, %d percent chance, max %d", type.toString(), population, threshold, chance, max));
+
         if (threshold <= 0) threshold = 1;
         
         if (population >= threshold) {
-            if (getExtraMobChance(type) > 1) {
+            if (chance > 0) {
                 // Generate a random number of extra mobs to possibly spawn
                 int count = _plugin.getRandomNumber(1, (int) (population / threshold) + 1);
                 int numSpawned = 0;
@@ -290,9 +291,9 @@ public class SiegeManager {
                             numSpawned++;
 
                             // Randomize the location for this spawn
-                            Location spawnLocation = location;
+                            Location spawnLocation = location.clone();
                             int xOffset = _plugin.getRandomNumber(_spawnSpread * -1, _spawnSpread);
-                            int yOffset = _plugin.getRandomNumber(_spawnVSpread * -1, _spawnVSpread);
+                            int yOffset = _plugin.getRandomNumber(0, _spawnVSpread);
                             int zOffset = _plugin.getRandomNumber(_spawnSpread * -1, _spawnSpread);
                             spawnLocation.setX(spawnLocation.getX() + xOffset);
                             spawnLocation.setY(spawnLocation.getY() + yOffset);
@@ -308,6 +309,8 @@ public class SiegeManager {
                         }
                     }
                 }
+                _plugin.debug(String.format("Spawned %d %ss.", numSpawned, type.toString()));
+
             }
         }
 
@@ -319,7 +322,7 @@ public class SiegeManager {
      * @param type mob type
      * @return chance out of 100
      */
-    private int getExtraMobChance(EntityType type) {
+    private int getExtraMobChance(String type) {
         if (_chanceOfExtraMobs.containsKey(type)) {
             return _chanceOfExtraMobs.get(type);
         } else {
@@ -333,7 +336,7 @@ public class SiegeManager {
      * @param type mob type
      * @return max
      */
-    private int getMaxToSpawn(EntityType type) {
+    private int getMaxToSpawn(String type) {
         if (_maxExtraMobs.containsKey(type)) {
             return _maxExtraMobs.get(type);
         } else {
@@ -347,7 +350,7 @@ public class SiegeManager {
      * @param type
      * @return minimum population
      */
-    private int getPopulationThreshold(EntityType type) {
+    private int getPopulationThreshold(String type) {
         if (_populationThresholds.containsKey(type)) {
             return _populationThresholds.get(type);
         } else {
@@ -362,17 +365,15 @@ public class SiegeManager {
      * @return point value
      */
     private Integer getKillValue(LivingEntity entity) {
-        // Is it a skeleton?
+        String typeString = entity.getType().toString();
+        // Is it a skeleton? If so add skeleton type
         if (entity.getType() == EntityType.SKELETON) {
-            // It's a skeleton... is it a wither skeleton?
-            if (((Skeleton) entity).getSkeletonType() == SkeletonType.WITHER) {
-                return _killValueWitherSkeletons;
-            }
+            typeString += "_" + ((Skeleton) entity).getSkeletonType().toString();
         }
-        // If it's not a wither skeleton, check to see if we have a proper kill value for this mob
-        if (_killValues.containsKey(entity.getType())) {
+        
+        if (_killValues.containsKey(typeString)) {
             // Yes! Return it!
-            return _killValues.get(entity.getType());
+            return _killValues.get(typeString);
         } else {
             // Return 0! No points for unknowns!
             return 0;
@@ -385,17 +386,18 @@ public class SiegeManager {
      * @param event mob death event
      */
     public void checkDeath(EntityDeathEvent event) {
+        String worldName = event.getEntity().getLocation().getWorld().getName();
         // If there's an active siege being tracked, check to see if the mob killed is part of the siege 
-        if (_currentSiege != null) {
+        if (_currentSieges.get(worldName) != null) {
             // There's a siege. Is this entity part of the siege?
-            if (_currentSiege.checkEntityId(event.getEntity().getEntityId())) {
-                _currentSiege.killMob();
+            if (_currentSieges.get(worldName).checkEntityId(event.getEntity().getEntityId())) {
+                _currentSieges.get(worldName).killMob();
                 // Was it killed by a player?
                 if (event.getEntity().getKiller() != null) {
                     // Yep, add it to the siege's kill list 
-                    _currentSiege.addPlayerKill(event.getEntity().getKiller().getName(), getKillValue(event.getEntity()));
+                    _currentSieges.get(worldName).addPlayerKill(event.getEntity().getKiller().getName(), getKillValue(event.getEntity()));
                     // And bump up the player's reputation with the village for the kill
-                    _currentSiege.getVillage().modifyPlayerReputation(event.getEntity().getKiller().getName(), getKillValue(event.getEntity()));
+                    _currentSieges.get(worldName).getVillage().modifyPlayerReputation(event.getEntity().getKiller().getName(), getKillValue(event.getEntity()));
                 }
             }
         }
@@ -408,9 +410,9 @@ public class SiegeManager {
      * @param name player name
      * @return kill count
      */
-    public int getPlayerKills(String name) {
-        if (isSiegeActive()) {
-            return _currentSiege.getPlayerKills(name);
+    public int getPlayerKills(String name, World world) {
+        if (isSiegeActive(world)) {
+            return _currentSieges.get(world.getName()).getPlayerKills(name);
         } else {
             return 0;
         }
@@ -421,17 +423,17 @@ public class SiegeManager {
      *
      * @return village object
      */
-    public UVVillage getVillage() {
-        if (isSiegeActive()) {
-            return _currentSiege.getVillage();
+    public UVVillage getVillage(World world) {
+        if (isSiegeActive(world)) {
+            return _currentSieges.get(world.getName()).getVillage();
         } else {
             return null;
         }
     }
     
-    public ArrayList<String> getSiegeInfo() {
-        if (_currentSiege != null) {
-            return _currentSiege.overviewMessage();
+    public ArrayList<String> getSiegeInfo(World world) {
+        if (_currentSieges.get(world.getName()) != null) {
+            return _currentSieges.get(world.getName()).overviewMessage();
         } else {
             ArrayList<String> messages = new ArrayList<String>();
             messages.add("No sieges so far today!");

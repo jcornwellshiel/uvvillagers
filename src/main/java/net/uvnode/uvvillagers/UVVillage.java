@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import net.minecraft.server.v1_4_R1.Village;
+//import net.minecraft.server.v1_5_R2.Village;
 
 import org.bukkit.Location;
 

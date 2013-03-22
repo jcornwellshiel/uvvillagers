@@ -82,7 +82,8 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         
         villageConfiguration = new FileManager(this, "villages.yml");
         siegeConfiguration = new FileManager(this, "siege.yml");
-
+        readVillageConfig();
+        readSiegeConfig();
         
         startDayTimer();
     }
@@ -275,7 +276,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                         Player p = (Player) sender;
                         if (p.hasPermission("uvv.admin")) {
                             sender.sendMessage("Starting a siege...");
-                            startSiege();
+                            startSiege(p.getWorld());
                         } else {
                             sender.sendMessage("You don't have permission to do that.");
                         }
@@ -288,14 +289,17 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                     if (sender instanceof Player) {
                         Player p = (Player) sender;
                         if (p.hasPermission("uvv.siegeinfo")) {
-                            ArrayList<String> messages = _siegeManager.getSiegeInfo();
+                            ArrayList<String> messages = _siegeManager.getSiegeInfo(p.getLocation().getWorld());
                             sender.sendMessage(messages.toArray(new String[messages.size()]));
                         } else {
                             sender.sendMessage("You don't have permission to do that.");
                         }
                     } else {
-                        ArrayList<String> messages = _siegeManager.getSiegeInfo();
-                        sender.sendMessage(messages.toArray(new String[messages.size()]));
+                        List<World> worlds = getServer().getWorlds();
+                        for (World world : worlds) {
+                            ArrayList<String> messages = _siegeManager.getSiegeInfo(world);
+                            sender.sendMessage(messages.toArray(new String[messages.size()]));
+                        }
                     }
                 } else if (args[0].equalsIgnoreCase("list")) {
                     sender.sendMessage(" - UVVillagers Village List - ");
@@ -545,21 +549,21 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                 calculateTribute(event.getWorld());
                 // End siege tracking.
                 debug("Ending active sieges.");
-                _siegeManager.endSiege();
+                _siegeManager.endSiege(event.getWorld());
                 break;
 
             case DUSK:
                 // clear active siege just in case something is missing
                 debug("Clearing siege data.");
-                _siegeManager.clearSiege();
+                _siegeManager.clearSiege(event.getWorld());
                 break;
             case MIDNIGHT: 
                 // Try to start a siege if using custom sieges
-                if(!_siegeManager.isSiegeActive() && !_siegeManager.usingCoreSieges()) {
+                if(!_siegeManager.isSiegeActive(event.getWorld()) && !_siegeManager.usingCoreSieges()) {
                     debug("Trying to start a siege.");
                     if (_siegeManager.getChanceOfSiege() > getRandomNumber(0, 99)) {
                         debug("A siege is happening tonight!");
-                        startSiege();
+                        startSiege(event.getWorld());
                     }
                 }
                 break;
@@ -574,21 +578,26 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         }
     }
 
+    private void startSiege() {
+        List<World> worlds = getServer().getWorlds();
+        for (World world : worlds) {
+            startSiege(world);
+        }
+    }
     /**
      * Forces a siege to start
      */
-    private void startSiege() {
-        Map<String, UVVillage> loadedVillages = _villageManager.getLoadedVillages();
+    private void startSiege(World world) {
+        Map<String, UVVillage> loadedVillages = _villageManager.getLoadedVillages(world);
         if (loadedVillages.size() > 0) {
             int index = getRandomNumber(0, loadedVillages.size()-1);
             UVVillage village = loadedVillages.values().toArray(new UVVillage[loadedVillages.size()])[index];
-
+            
             int xOffset = getRandomNumber(village.getSize() / -2, village.getSize() / 2);
             int zOffset = getRandomNumber(village.getSize() / -2, village.getSize() / 2);
-            Location location = village.getLocation();
-            location.setX(location.getX() + xOffset);
-            location.setZ(location.getZ() + zOffset);
-            debug(String.format("Firing up a siege at %s!", location.toString()));
+            debug(String.format("Random offset X=%d Y=%d", xOffset, zOffset));
+            Location location = village.getLocation().clone().add(xOffset, 0, zOffset);
+            debug(String.format("Firing up a siege at %s in %s (%s)!", location.toString(), village.getName(), village.getLocation().toString()));
             _siegeManager.startSiege(location, village);
         } else {
             debug("No villages were loaded. So siege tonight!");
@@ -620,8 +629,8 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                 Map<String, UVVillage> villages = _villageManager.getVillagesNearLocation(player.getLocation(), tributeRange);
 
                 // if a siege is active, calculate siege tribute bonuses  
-                if (_siegeManager.isSiegeActive()) {
-                    int kills = _siegeManager.getPlayerKills(player.getName());
+                if (_siegeManager.isSiegeActive(world)) {
+                    int kills = _siegeManager.getPlayerKills(player.getName(), world);
                     for (int i = 0; i < kills; i++) {
                         killBonus += getRandomNumber(minPerSiegeKill, maxPerSiegeKill);
                     }
@@ -639,7 +648,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                     debug(String.format(" - Villagers: %d (%d tribute groups)", population, numVillagerGroups));
 
                     // If this village was the one sieged, give the kill bonus and an extra survival "base siege" thankfulness bonus
-                    if (_siegeManager.isSiegeActive() && village.getKey().equalsIgnoreCase(_siegeManager.getVillage().getName())) {
+                    if (_siegeManager.isSiegeActive(world) && village.getKey().equalsIgnoreCase(_siegeManager.getVillage(world).getName())) {
                         siegeBonus = numVillagerGroups * baseSiegeBonus;
                         villageTributeAmount += siegeBonus;
                         siegeKillTributeAmount = killBonus;
