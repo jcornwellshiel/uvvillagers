@@ -1,6 +1,5 @@
 package net.uvnode.uvvillagers;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,7 +18,6 @@ public class UVVillage {
     private int _doors;
     private Location _location;
     private Map<String, Integer> _playerReputations = new HashMap<String, Integer>();
-    private Map<String, Date> _playerArrived = new HashMap<String, Date>();
     private Map<String, Integer> _playerTicksHere = new HashMap<String, Integer>();
     private Map<String, Integer> _playerTicksGone = new HashMap<String, Integer>();
     private int _population;
@@ -195,6 +193,8 @@ public class UVVillage {
             _population = _villageCore.getPopulationCount();
             dataChanged = true;
         }
+        
+        setCorePlayerPopularities();
 
         return 0 + (geometryChanged ? 1 : 0) + (dataChanged ? 2 : 0);
     }
@@ -213,6 +213,7 @@ public class UVVillage {
         }
         currentRep += amount;
         _playerReputations.put(name, currentRep);
+        setCorePopularity(name, (currentRep>=0?10:-30));
         return currentRep;
     }
 
@@ -313,6 +314,21 @@ public class UVVillage {
             return _playerTicksGone.get(playerName);
         } else {
             return 0;
+        }
+    }
+    
+    public void setCorePopularity(String playerName, int value) {
+        if(_villageCore != null)
+            _villageCore.a(playerName, value);
+    }
+
+    private void setCorePlayerPopularities() {
+        for (Map.Entry<String, Integer> repEntry : _playerReputations.entrySet()) {
+            if (repEntry.getValue() >= 0) {
+                setCorePopularity(repEntry.getKey(), 10);
+            } else {
+                setCorePopularity(repEntry.getKey(), -30);
+            }
         }
     }
 }

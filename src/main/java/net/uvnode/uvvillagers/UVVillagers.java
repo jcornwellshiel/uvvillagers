@@ -2,7 +2,6 @@ package net.uvnode.uvvillagers;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +26,8 @@ import org.bukkit.inventory.ItemStack;
 
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Villager;
+import org.bukkit.event.world.WorldInitEvent;
+import org.bukkit.event.world.WorldLoadEvent;
 
 /**
  * @author James Cornwell-Shiel
@@ -39,8 +40,6 @@ public final class UVVillagers extends JavaPlugin implements Listener {
     private VillageManager _villageManager;
     private SiegeManager _siegeManager;
     private Random rng = new Random();
-    private Map<String, String> _playerVillagesProximity = new HashMap<String, String>();
-    private Map<String, Integer> _consecutiveTicksInProximity = new HashMap<String, Integer>();
 
     //UVTributeMode tributeMode;
     private List<UVVillageRank> _reputationRanks = new ArrayList<UVVillageRank>();
@@ -82,7 +81,8 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         
         villageConfiguration = new FileManager(this, "villages.yml");
         siegeConfiguration = new FileManager(this, "siege.yml");
-        readVillageConfig();
+        
+        readVillageConfig(getServer().getWorlds().get(0));
         readSiegeConfig();
         
         startDayTimer();
@@ -135,12 +135,18 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         getLogger().info(String.format("%d reputation ranks loaded.", _reputationRanks.size()));
     }
     
+    
+    private void readAllVillageConfigs() {
+        for (World world : getServer().getWorlds()) {
+            if (world.getName() != null)
+                readVillageConfig(world);
+        }
+    }
     /**
      * Reads the village configuration.
      */
-    private void readVillageConfig() {
-        _villageManager.loadVillages(villageConfiguration.getConfigSection("villages"));
-        getLogger().info(String.format("%d villages loaded.", _villageManager.getAllVillages().size()));
+    private void readVillageConfig(World world) {
+        _villageManager.loadVillages(villageConfiguration.getConfigSection("villages"), world);
     }
     
     /**
@@ -155,7 +161,6 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      */
     private void saveUpdatedVillages() {
         villageConfiguration.createSection("villages", _villageManager.saveVillages());
-        getLogger().info(String.format("Saving %d villages", _villageManager.getAllVillages().size()));
         if (villageConfiguration.saveFile())
             getLogger().info("Save successful.");
         else
@@ -208,6 +213,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      */
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+        
         if (cmd.getName().equalsIgnoreCase("uvv")) {
             if (args.length > 0) {
                 if (args[0].equalsIgnoreCase("reload")) {
@@ -219,7 +225,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                                 // Reload the config from disk.
                                 villageConfiguration.loadFile();
                                 // Process the new config.
-                                readVillageConfig();
+                                readAllVillageConfigs();
                             } else {
                                 sender.sendMessage("Reloading config data...");
                                 // Reload the config from disk.
@@ -240,7 +246,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                             // Reload the config from disk.
                             villageConfiguration.loadFile();
                             // Process the new config.
-                            readVillageConfig();
+                            readAllVillageConfigs();
                         } else {
                             sender.sendMessage("Reloading config data...");
                             // Reload the config from disk.
@@ -306,7 +312,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                     if (sender instanceof Player) {
                         Player p = (Player) sender;
                         if (p.hasPermission("uvv.villageinfo")) {
-                            sendVillageInfo(sender, _villageManager.getAllVillages());
+                            sendVillageInfo(sender, _villageManager.getAllVillages(p.getLocation().getWorld()));
                         } else {
                             sender.sendMessage("You don't have permission to do that.");
                         }
@@ -365,8 +371,8 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                                 UVVillage village = _villageManager.getClosestVillageToLocation(p.getLocation(), tributeRange);
                                 if (village != null) {
                                     if (village.getTopReputation().equalsIgnoreCase(p.getName())) {
-                                        if (_villageManager.getVillageByKey(newName) == null) {
-                                            if (_villageManager.renameVillage(village.getName(), newName)) {
+                                        if (_villageManager.getVillageByKey(p.getWorld(), newName) == null) {
+                                            if (_villageManager.renameVillage(p.getWorld(), village.getName(), newName)) {
                                                 sender.sendMessage("Village renamed!");
                                             } else {
                                                 sender.sendMessage("Rename failed for some reason...");
@@ -422,8 +428,10 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      * @param villages A hashmap of village objects.
      */
     private void sendVillageInfo(CommandSender sender, Map<String, UVVillage> villages) {
-        for (Map.Entry<String, UVVillage> villageEntry : villages.entrySet()) {
-            sendVillageInfo(sender, villageEntry.getValue());
+        if (villages != null) {
+            for (Map.Entry<String, UVVillage> villageEntry : villages.entrySet()) {
+                sendVillageInfo(sender, villageEntry.getValue());
+            }
         }
     }
 
@@ -434,11 +442,13 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      * @param village A single village object.
      */
     private void sendVillageInfo(CommandSender sender, UVVillage village) {
-        String rankString = "";
-        if (sender instanceof Player) {
-            rankString = String.format(" (%s)", getRank(village.getPlayerReputation(sender.getName())).getName());
+        if (village != null) {
+            String rankString = "";
+            if (sender instanceof Player) {
+                rankString = String.format(" (%s)", getRank(village.getPlayerReputation(sender.getName())).getName());
+            }
+            sender.sendMessage(String.format("%s%s: %d doors, %d villagers, %d block size.", village.getName(), rankString, village.getDoors(), village.getPopulation(), village.getSize()));
         }
-        sender.sendMessage(String.format("%s%s: %d doors, %d villagers, %d block size.", village.getName(), rankString, village.getDoors(), village.getPopulation(), village.getSize()));
     }
 
     /**
@@ -448,10 +458,6 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      */
     @EventHandler
     private void onPlayerMoveEvent(PlayerMoveEvent event) {
-        // Kick out if not on primary world
-        if (event.getTo().getWorld() != getServer().getWorlds().get(0)) {
-            return;
-        }
         _villageManager.updatePlayerProximity(event.getTo(), event.getPlayer(), tributeRange);
     }
 
@@ -570,12 +576,17 @@ public final class UVVillagers extends JavaPlugin implements Listener {
             case CHECK:
                 // Update villages
                 _villageManager.matchVillagesToCore();
-                // Tick village proximities
+                // Tick village proximities 
                 _villageManager.tickProximityReputations(event.getWorld());
                 break;
             default:
                 break;
         }
+    }
+    
+    @EventHandler
+    private void onWorldLoaded(WorldLoadEvent event) {
+        readVillageConfig(event.getWorld());
     }
 
     private void startSiege() {
