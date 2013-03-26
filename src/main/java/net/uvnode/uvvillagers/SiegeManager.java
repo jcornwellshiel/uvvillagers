@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.craftbukkit.libs.jline.internal.Log;
@@ -14,6 +15,7 @@ import org.bukkit.entity.Skeleton;
 import org.bukkit.entity.Skeleton.SkeletonType;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.inventory.ItemStack;
 
 /**
  * Manages Zombie Siege (Village Siege) enhancements and events.
@@ -298,13 +300,34 @@ public class SiegeManager {
                             spawnLocation.setX(spawnLocation.getX() + xOffset);
                             spawnLocation.setY(spawnLocation.getY() + yOffset);
                             spawnLocation.setZ(spawnLocation.getZ() + zOffset);
-
+                            
+                            // Make sure we're not in the ground
+                            if (!spawnLocation.getBlock().isEmpty())
+                                spawnLocation.setY(spawnLocation.getWorld().getHighestBlockAt(location).getY());
+                            
+                            // If it's a wither skeleton, spawn it and equip it
                             if (skeletonType == SkeletonType.WITHER) {
                                 Skeleton spawn = (Skeleton) location.getWorld().spawnEntity(spawnLocation, type);
                                 spawn.setSkeletonType(SkeletonType.WITHER);
+                                switch(_plugin.getRandomNumber(0, 2)) {
+                                    case 0: 
+                                        spawn.getEquipment().setItemInHand(new ItemStack(Material.STONE_SWORD));
+                                        break;
+                                    case 1: 
+                                        spawn.getEquipment().setItemInHand(new ItemStack(Material.IRON_SWORD));
+                                        break;
+                                    case 2: 
+                                        spawn.getEquipment().setItemInHand(new ItemStack(Material.DIAMOND_SWORD));
+                                        break;
+                                }
                                 addSpawn(spawn);
+                            // Spawn non-wither skeletons and if it's a skeleton, equip it.
                             } else {
-                                addSpawn((LivingEntity) location.getWorld().spawnEntity(spawnLocation, type));
+                                LivingEntity spawn = (LivingEntity) location.getWorld().spawnEntity(spawnLocation, type);
+                                if (type == EntityType.SKELETON)
+                                    spawn.getEquipment().setItemInHand(new ItemStack(Material.BOW));
+                                addSpawn(spawn);
+                                
                             }
                         }
                     }
