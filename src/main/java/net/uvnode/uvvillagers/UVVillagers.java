@@ -60,6 +60,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
     private Integer _babyVillagerValue;
     private Integer _ironGolemValue;
     protected Integer _emeraldTributeItem = -1;
+    protected int _villageMinPopulation = 1;
 
     /**
      * Loads data and runs initialization tasks when enabling the plugin (e.g.
@@ -110,6 +111,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      * Reads the plugin configuration.
      */
     private void readBaseConfig() {
+        _villageMinPopulation = baseConfiguration.getInt("villageMinPopulation");
         _emeraldTributeItem = baseConfiguration.getInt("emeraldTributeItem");
         _ironGolemValue = baseConfiguration.getInt("ironGolemValue");
         _villagerValue = baseConfiguration.getInt("villagerValue");

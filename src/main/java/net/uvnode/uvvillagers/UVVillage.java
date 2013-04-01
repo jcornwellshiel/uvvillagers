@@ -24,6 +24,7 @@ public class UVVillage {
     private int _size;
     private Village _villageCore;
     private String _name;
+    private int _abandonStrikes;
 
     /**
      * Default Constructor
@@ -32,6 +33,7 @@ public class UVVillage {
      * @param village The core village associated with this village
      */
     public UVVillage(Location location, Village village) {
+        _abandonStrikes = 0;
         _location = location;
         _villageCore = village;
         if (_villageCore != null) {
@@ -55,6 +57,7 @@ public class UVVillage {
         _size = size;
         _playerReputations = playerReputations;
         _villageCore = null;
+        _abandonStrikes = 0;
     }
 
     /**
@@ -330,5 +333,17 @@ public class UVVillage {
                 setCorePopularity(repEntry.getKey(), -30);
             }
         }
+    }
+    
+    public Integer addAbandonStrike() {
+        _abandonStrikes++;
+        return _abandonStrikes;
+    }
+    public void clearAbandonStrikes() {
+        _abandonStrikes = 0;
+    }
+    
+    public Integer getAbandonStrikes() {
+        return _abandonStrikes;
     }
 }

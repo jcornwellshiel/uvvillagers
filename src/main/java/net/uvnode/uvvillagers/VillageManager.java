@@ -27,7 +27,6 @@ public class VillageManager {
     private UVVillagers _plugin;
     private Map<String, Map<String, UVVillage>> _villages;
     private boolean _matchRunning = false;
-    private List<UVVillage> _markedForAbandonOnce = new ArrayList<UVVillage>();
     /**
      * Basic Constructor
      *
@@ -49,7 +48,45 @@ public class VillageManager {
      */
     public Village getClosestCoreVillageToLocation(Location location, int maxDistance) {
         WorldServer worldServer = ((CraftWorld)location.getWorld()).getHandle();
-        return worldServer.villages.getClosestVillage(location.getBlockX(), location.getBlockY(), location.getBlockZ(), maxDistance);
+        Village closest = null;
+        double closestDistance = maxDistance * maxDistance;
+        
+        // TODO: Loop through worldServer.villages.getVillages()
+        List<Village> coreVillages = worldServer.villages.getVillages();
+        for (Village coreVillage : coreVillages) {
+            double centerToEdgeDistanceSquared = coreVillage.getSize() * coreVillage.getSize();
+            double distance = location.distanceSquared(new Location (location.getWorld(), coreVillage.getCenter().x,coreVillage.getCenter().y, coreVillage.getCenter().z)) - centerToEdgeDistanceSquared;
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                closest = coreVillage;
+            }
+        }
+        return closest;
+        //return worldServer.villages.getClosestVillage(location.getBlockX(), location.getBlockY(), location.getBlockZ(), maxDistance);
+    }
+
+    public List<Village> getCoreVillagesNearLocation(Location location, int maxDistance) {
+        WorldServer worldServer = ((CraftWorld)location.getWorld()).getHandle();
+        List<Village> nearby = new ArrayList<Village>();
+        double closestDistance = maxDistance * maxDistance;
+        
+        // TODO: Loop through worldServer.villages.getVillages()
+        List<Village> coreVillages = worldServer.villages.getVillages();
+        for (Village coreVillage : coreVillages) {
+            double centerToEdgeDistanceSquared = coreVillage.getSize() * coreVillage.getSize();
+            double distance = location.distanceSquared(new Location (location.getWorld(), coreVillage.getCenter().x,coreVillage.getCenter().y, coreVillage.getCenter().z)) - centerToEdgeDistanceSquared;
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                nearby.add(coreVillage);
+            }
+        }
+        return nearby;
+        //return worldServer.villages.getClosestVillage(location.getBlockX(), location.getBlockY(), location.getBlockZ(), maxDistance);
+    }
+    
+    public List<Village> getLoadedCoreVillages(World world) {
+        WorldServer worldServer = ((CraftWorld)world).getHandle();
+        return worldServer.villages.getVillages();
     }
 
     /**
@@ -246,7 +283,9 @@ public class VillageManager {
                             Village closest = getClosestCoreVillageToLocation(villageEntry.getValue().getLocation(), 64);
                             if (closest == null) {
                                 // No nearby village where there should be. Mark for abandon.
-                                markedForAbandon.add(villageEntry.getValue());
+                                villageEntry.getValue().addAbandonStrike();
+                                if (villageEntry.getValue().getAbandonStrikes() > 3)
+                                    markedForAbandon.add(villageEntry.getValue());
                             } else {
                                 // Found one! Run an update!
                                 villageEntry.getValue().setVillageCore(closest);
@@ -257,26 +296,19 @@ public class VillageManager {
                                     _plugin.getServer().getPluginManager().callEvent(event);
                                 }
                                 // And remove this from the potential abandons list
-                                _markedForAbandonOnce.remove(villageEntry.getValue());
+                                villageEntry.getValue().clearAbandonStrikes();
                             }
                         } else {
-                            if (_markedForAbandonOnce.contains(villageEntry.getValue()))
-                                _markedForAbandonOnce.remove(villageEntry.getValue());
+                            villageEntry.getValue().clearAbandonStrikes();
                         }
                     } else {
-                        if (_markedForAbandonOnce.contains(villageEntry.getValue()))
-                            _markedForAbandonOnce.remove(villageEntry.getValue());
+                        villageEntry.getValue().clearAbandonStrikes();
                     }
                 }
             }
             // Abandon the villages marked for abandoning
             for (UVVillage village : markedForAbandon) {
-                if (_markedForAbandonOnce.contains(village)) {
-                    _markedForAbandonOnce.remove(village);
-                    abandonVillage(village.getLocation().getWorld(), village.getName());
-                } else {
-                    _markedForAbandonOnce.add(village);
-                }
+                abandonVillage(village.getLocation().getWorld(), village.getName());
             }
             _matchRunning = false;
         }
@@ -421,8 +453,8 @@ public class VillageManager {
             if (village != null) {
                 // Yes, we found a UVVillage.
                 // Do nothing.
-            } else {
-                // No, no UVVillage. 
+            } else if (coreVillage.getPopulationCount() > _plugin._villageMinPopulation) {
+                // No, no UVVillage, and the core village's population is over the minimum. Discover!
                 // Discover one, and get it.
                 village = discoverVillage(coreVillageLocation, coreVillage, player);
                 // Announce that the player has discovered a lovely new UVVillage.

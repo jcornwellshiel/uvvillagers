@@ -29,3 +29,5 @@ villagerValue: -20
 babyVillagerValue: -50
 
 emeraldTributeItem: 388
+
+villageMinPopulation: 1
