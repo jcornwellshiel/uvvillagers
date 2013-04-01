@@ -27,3 +27,5 @@ debug: false
 ironGolemValue: -10
 villagerValue: -20
 babyVillagerValue: -50
+
+emeraldTributeItem: 388
