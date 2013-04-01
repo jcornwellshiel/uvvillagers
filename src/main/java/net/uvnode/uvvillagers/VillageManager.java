@@ -259,7 +259,13 @@ public class VillageManager {
                                 // And remove this from the potential abandons list
                                 _markedForAbandonOnce.remove(villageEntry.getValue());
                             }
+                        } else {
+                            if (_markedForAbandonOnce.contains(villageEntry.getValue()))
+                                _markedForAbandonOnce.remove(villageEntry.getValue());
                         }
+                    } else {
+                        if (_markedForAbandonOnce.contains(villageEntry.getValue()))
+                            _markedForAbandonOnce.remove(villageEntry.getValue());
                     }
                 }
             }

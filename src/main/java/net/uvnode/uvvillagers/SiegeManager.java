@@ -8,7 +8,6 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.craftbukkit.libs.jline.internal.Log;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Skeleton;
@@ -60,68 +59,68 @@ public class SiegeManager {
         _chanceOfExtraMobs.put("ZOMBIE", siegeSection.getInt("mobs.zombie.chance"));
         _populationThresholds.put("ZOMBIE", siegeSection.getInt("mobs.zombie.threshold"));
         _maxExtraMobs.put("ZOMBIE", siegeSection.getInt("mobs.zombie.max"));
-        _killValues.put("ZOMBIE", siegeSection.getInt("mobs.zombie.value"));
+        _killValues.put("ZOMBIE", siegeSection.getInt("mobs.zombie.points"));
 
         _chanceOfExtraMobs.put("SKELETON_NORMAL", siegeSection.getInt("mobs.skeleton.chance"));
         _populationThresholds.put("SKELETON_NORMAL", siegeSection.getInt("mobs.skeleton.threshold"));
         _maxExtraMobs.put("SKELETON_NORMAL", siegeSection.getInt("mobs.skeleton.max"));
-        _killValues.put("SKELETON_NORMAL", siegeSection.getInt("mobs.skeleton.value"));
+        _killValues.put("SKELETON_NORMAL", siegeSection.getInt("mobs.skeleton.points"));
 
         _chanceOfExtraMobs.put("SPIDER", siegeSection.getInt("mobs.spider.chance"));
         _populationThresholds.put("SPIDER", siegeSection.getInt("mobs.spider.threshold"));
         _maxExtraMobs.put("SPIDER", siegeSection.getInt("mobs.spider.max"));
-        _killValues.put("SPIDER", siegeSection.getInt("mobs.spider.value"));
+        _killValues.put("SPIDER", siegeSection.getInt("mobs.spider.points"));
 
         _chanceOfExtraMobs.put("CAVE_SPIDER", siegeSection.getInt("mobs.cave_spider.chance"));
         _populationThresholds.put("CAVE_SPIDER", siegeSection.getInt("mobs.cave_spider.threshold"));
         _maxExtraMobs.put("CAVE_SPIDER", siegeSection.getInt("mobs.cave_spider.max"));
-        _killValues.put("CAVE_SPIDER", siegeSection.getInt("mobs.cave_spider.value"));
+        _killValues.put("CAVE_SPIDER", siegeSection.getInt("mobs.cave_spider.points"));
 
         _chanceOfExtraMobs.put("PIG_ZOMBIE", siegeSection.getInt("mobs.pig_zombie.chance"));
         _populationThresholds.put("PIG_ZOMBIE", siegeSection.getInt("mobs.pig_zombie.threshold"));
         _maxExtraMobs.put("PIG_ZOMBIE", siegeSection.getInt("mobs.pig_zombie.max"));
-        _killValues.put("PIG_ZOMBIE", siegeSection.getInt("mobs.pig_zombie.value"));
+        _killValues.put("PIG_ZOMBIE", siegeSection.getInt("mobs.pig_zombie.points"));
 
         _chanceOfExtraMobs.put("BLAZE", siegeSection.getInt("mobs.blaze.chance"));
         _populationThresholds.put("BLAZE", siegeSection.getInt("mobs.blaze.threshold"));
         _maxExtraMobs.put("BLAZE", siegeSection.getInt("mobs.blaze.max"));
-        _killValues.put("BLAZE", siegeSection.getInt("mobs.blaze.value"));
+        _killValues.put("BLAZE", siegeSection.getInt("mobs.blaze.points"));
 
         _chanceOfExtraMobs.put("WITCH", siegeSection.getInt("mobs.witch.chance"));
         _populationThresholds.put("WITCH", siegeSection.getInt("mobs.witch.threshold"));
         _maxExtraMobs.put("WITCH", siegeSection.getInt("mobs.witch.max"));
-        _killValues.put("WITCH", siegeSection.getInt("mobs.witch.value"));
+        _killValues.put("WITCH", siegeSection.getInt("mobs.witch.points"));
 
         _chanceOfExtraMobs.put("MAGMA_CUBE", siegeSection.getInt("mobs.magma_cube.chance"));
         _populationThresholds.put("MAGMA_CUBE", siegeSection.getInt("mobs.magma_cube.threshold"));
         _maxExtraMobs.put("MAGMA_CUBE", siegeSection.getInt("mobs.magma_cube.max"));
-        _killValues.put("MAGMA_CUBE", siegeSection.getInt("mobs.magma_cube.value"));
+        _killValues.put("MAGMA_CUBE", siegeSection.getInt("mobs.magma_cube.points"));
         
         _chanceOfExtraMobs.put("SKELETON_WITHER", siegeSection.getInt("mobs.wither_skeleton.chance"));
         _populationThresholds.put("SKELETON_WITHER", siegeSection.getInt("mobs.wither_skeleton.threshold"));
         _maxExtraMobs.put("SKELETON_WITHER", siegeSection.getInt("mobs.wither_skeleton.max"));
-        _killValues.put("SKELETON_WITHER", siegeSection.getInt("mobs.wither_skeleton.value"));
+        _killValues.put("SKELETON_WITHER", siegeSection.getInt("mobs.wither_skeleton.points"));
 
         _chanceOfExtraMobs.put("ENDERMAN", siegeSection.getInt("mobs.enderman.chance"));
         _populationThresholds.put("ENDERMAN", siegeSection.getInt("mobs.enderman.threshold"));
         _maxExtraMobs.put("ENDERMAN", siegeSection.getInt("mobs.enderman.max"));
-        _killValues.put("ENDERMAN", siegeSection.getInt("mobs.enderman.value"));
+        _killValues.put("ENDERMAN", siegeSection.getInt("mobs.enderman.points"));
 
         _chanceOfExtraMobs.put("GHAST", siegeSection.getInt("mobs.ghast.chance"));
         _populationThresholds.put("GHAST", siegeSection.getInt("mobs.ghast.threshold"));
         _maxExtraMobs.put("GHAST", siegeSection.getInt("mobs.ghast.max"));
-        _killValues.put("GHAST", siegeSection.getInt("mobs.ghast.value"));
+        _killValues.put("GHAST", siegeSection.getInt("mobs.ghast.points"));
 
         _chanceOfExtraMobs.put("WITHER", siegeSection.getInt("mobs.wither.chance"));
         _populationThresholds.put("WITHER", siegeSection.getInt("mobs.wither.threshold"));
         _maxExtraMobs.put("WITHER", siegeSection.getInt("mobs.wither.max"));
-        _killValues.put("WITHER", siegeSection.getInt("mobs.wither.value"));
+        _killValues.put("WITHER", siegeSection.getInt("mobs.wither.points"));
 
         _chanceOfExtraMobs.put("ENDER_DRAGON", siegeSection.getInt("mobs.ender_dragon.chance"));
         _populationThresholds.put("ENDER_DRAGON", siegeSection.getInt("mobs.ender_dragon.threshold"));
         _maxExtraMobs.put("ENDER_DRAGON", siegeSection.getInt("mobs.ender_dragon.max"));
-        _killValues.put("ENDER_DRAGON", siegeSection.getInt("mobs.ender_dragon.value"));
-        _plugin.getLogger().info(String.format("Loaded %d siege mob definitions (%d %d %d %d)", _chanceOfExtraMobs.size(), _populationThresholds.size(), _maxExtraMobs.size(), _killValues.size(), _chanceOfExtraMobs.size()));
+        _killValues.put("ENDER_DRAGON", siegeSection.getInt("mobs.ender_dragon.points"));
+        _plugin.getLogger().info(String.format("Loaded %d siege mob definitions.", _chanceOfExtraMobs.size(), _populationThresholds.size(), _maxExtraMobs.size(), _killValues.size(), _chanceOfExtraMobs.size()));
     }
 
     /**
@@ -388,17 +387,24 @@ public class SiegeManager {
      * @return point value
      */
     private Integer getKillValue(LivingEntity entity) {
+        _plugin.debug(_killValues.toString());
+        _plugin.debug(_killValues.keySet().toString());
+        _plugin.debug(_killValues.keySet().toArray().toString());
         String typeString = entity.getType().toString();
+        _plugin.debug(typeString);
         // Is it a skeleton? If so add skeleton type
         if (entity.getType() == EntityType.SKELETON) {
             typeString += "_" + ((Skeleton) entity).getSkeletonType().toString();
         }
+        _plugin.debug(typeString);
         
         if (_killValues.containsKey(typeString)) {
             // Yes! Return it!
             return _killValues.get(typeString);
         } else {
             // Return 0! No points for unknowns!
+            _plugin.debug("Kill value not found");
+
             return 0;
         }
     }
@@ -421,6 +427,7 @@ public class SiegeManager {
                     _currentSieges.get(worldName).addPlayerKill(event.getEntity().getKiller().getName(), getKillValue(event.getEntity()));
                     // And bump up the player's reputation with the village for the kill
                     _currentSieges.get(worldName).getVillage().modifyPlayerReputation(event.getEntity().getKiller().getName(), getKillValue(event.getEntity()));
+                    _plugin.debug(String.format("%s gained %d rep with %s for killing a %s.", event.getEntity().getKiller().getName(), getKillValue(event.getEntity()), _currentSieges.get(worldName).getVillage().getName(), event.getEntity().getType().getName()));
                 }
             }
         }

@@ -1,5 +1,6 @@
 package net.uvnode.uvvillagers;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -26,8 +27,8 @@ import org.bukkit.inventory.ItemStack;
 
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Villager;
-import org.bukkit.event.world.WorldInitEvent;
 import org.bukkit.event.world.WorldLoadEvent;
+import org.mcstats.Metrics;
 
 /**
  * @author James Cornwell-Shiel
@@ -58,7 +59,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
     private Integer _villagerValue;
     private Integer _babyVillagerValue;
     private Integer _ironGolemValue;
-    
+    protected Integer _emeraldTributeItem = -1;
 
     /**
      * Loads data and runs initialization tasks when enabling the plugin (e.g.
@@ -86,6 +87,15 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         readSiegeConfig();
         
         startDayTimer();
+/*
+        //Start plugin metrics
+        try {
+            Metrics metrics = new Metrics(this);
+            metrics.start();
+        } catch (IOException e) {
+            // Failed to submit the stats :-(
+        }
+*/
     }
 
     /**
@@ -100,6 +110,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      * Reads the plugin configuration.
      */
     private void readBaseConfig() {
+        _emeraldTributeItem = baseConfiguration.getInt("emeraldTributeItem");
         _ironGolemValue = baseConfiguration.getInt("ironGolemValue");
         _villagerValue = baseConfiguration.getInt("villagerValue");
         _babyVillagerValue = baseConfiguration.getInt("babyVillagerValue");
@@ -689,10 +700,16 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                 // But for now... just award the tribute directly.
                 if (villages.size() > 0) {
                     if (tributeAmount > 0) {
-                        ItemStack items = new ItemStack(Material.EMERALD, tributeAmount);
+                        ItemStack items;
+                        if (_emeraldTributeItem > 0 && Material.getMaterial(_emeraldTributeItem) != null) {
+                            items = new ItemStack(Material.getMaterial(_emeraldTributeItem), tributeAmount);
+                        } else {
+                            items = new ItemStack(Material.EMERALD, tributeAmount);
+                        }
                         player.getInventory().addItem(items);
-                        player.sendMessage("Grateful villagers gave you " + tributeAmount + " emeralds!");
-                        debug(String.format("%s received %d emeralds.", player.getName(), tributeAmount));
+                                                
+                        player.sendMessage("Grateful villagers gave you " + tributeAmount + " " + items.getType().name() + "!");
+                        debug(String.format("%s received %d %s.", player.getName(), tributeAmount, items.getType().name()));
                     } else {
                         player.sendMessage("The villagers didn't have any emeralds for you today.");
                     }
