@@ -24,15 +24,15 @@ import org.bukkit.inventory.ItemStack;
 public class SiegeManager {
 
     private UVVillagers _plugin;
-    private Map<String, UVSiege> _currentSieges = new HashMap<String, UVSiege>();;
-    private Map<String, Integer> _populationThresholds = new HashMap<String, Integer>();
-    private Map<String, Integer> _killValues = new HashMap<String, Integer>();
-    private Map<String, Integer> _chanceOfExtraMobs = new HashMap<String, Integer>();
-    private Map<String, Integer> _maxExtraMobs = new HashMap<String, Integer>();
-    private int _spawnSpread;
-    private int _spawnVSpread;
-    private boolean _useCoreSieges;
-    private int _nonCoreSiegeChance;
+    protected Map<String, UVSiege> _currentSieges = new HashMap<String, UVSiege>();;
+    protected Map<String, Integer> _populationThresholds = new HashMap<String, Integer>();
+    protected Map<String, Integer> _killValues = new HashMap<String, Integer>();
+    protected Map<String, Integer> _chanceOfExtraMobs = new HashMap<String, Integer>();
+    protected Map<String, Integer> _maxExtraMobs = new HashMap<String, Integer>();
+    protected int _spawnSpread;
+    protected int _spawnVSpread;
+    protected boolean _useCoreSieges;
+    protected int _nonCoreSiegeChance;
     
     /**
      * Basic Constructor
@@ -344,7 +344,7 @@ public class SiegeManager {
      * @param type mob type
      * @return chance out of 100
      */
-    private int getExtraMobChance(String type) {
+    protected int getExtraMobChance(String type) {
         if (_chanceOfExtraMobs.containsKey(type)) {
             return _chanceOfExtraMobs.get(type);
         } else {
@@ -358,7 +358,7 @@ public class SiegeManager {
      * @param type mob type
      * @return max
      */
-    private int getMaxToSpawn(String type) {
+    protected int getMaxToSpawn(String type) {
         if (_maxExtraMobs.containsKey(type)) {
             return _maxExtraMobs.get(type);
         } else {
@@ -372,7 +372,7 @@ public class SiegeManager {
      * @param type
      * @return minimum population
      */
-    private int getPopulationThreshold(String type) {
+    protected int getPopulationThreshold(String type) {
         if (_populationThresholds.containsKey(type)) {
             return _populationThresholds.get(type);
         } else {
@@ -386,7 +386,8 @@ public class SiegeManager {
      * @param entity mob type
      * @return point value
      */
-    private Integer getKillValue(LivingEntity entity) {
+    protected Integer getKillValue(LivingEntity entity) {
+        
         _plugin.debug(_killValues.toString());
         _plugin.debug(_killValues.keySet().toString());
         _plugin.debug(_killValues.keySet().toArray().toString());

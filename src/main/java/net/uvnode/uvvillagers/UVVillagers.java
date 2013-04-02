@@ -7,8 +7,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import net.minecraft.server.v1_4_R1.Village;
 
 import net.uvnode.uvvillagers.util.FileManager;
+import org.bukkit.ChatColor;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -229,7 +231,16 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         
         if (cmd.getName().equalsIgnoreCase("uvv")) {
             if (args.length > 0) {
-                if (args[0].equalsIgnoreCase("reload")) {
+                if (args[0].equalsIgnoreCase("dump")) {
+                    if (sender instanceof Player) {
+                        Player p = (Player) sender;
+                        if (p.hasPermission("uvv.admin")) {
+                            dumpDataToSender(sender, args);
+                        }
+                    } else {
+                        dumpDataToSender(sender, args);
+                    }
+                } else if (args[0].equalsIgnoreCase("reload")) {
                     if (sender instanceof Player) {
                         Player p = (Player) sender;
                         if (p.hasPermission("uvv.admin")) {
@@ -434,6 +445,50 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         return false;
     }
 
+    private void dumpDataToSender(CommandSender sender, String[] args) {
+        if (args.length > 1) {
+            if (args[1].equalsIgnoreCase("corevillages")) {
+                sender.sendMessage("Core Villages Loaded");
+                for (World world : getServer().getWorlds()) {
+                    sender.sendMessage(" - " + world.getName());
+                    for (Village coreVillage : _villageManager.getLoadedCoreVillages(world)) {
+                        sender.sendMessage(String.format("   - %d %d %d: %d doors, %d villagers, %d size", coreVillage.getCenter().x, coreVillage.getCenter().y, coreVillage.getCenter().z, coreVillage.getDoorCount(), coreVillage.getPopulationCount(), coreVillage.getSize()));
+                    }
+                }
+                
+            } else if (args[1].equalsIgnoreCase("villages")) {
+                sender.sendMessage("UVVillages");
+                for (World world : getServer().getWorlds()) {
+                    sender.sendMessage(" - " + world.getName());
+                    Map<String, UVVillage> villages = _villageManager.getAllVillages(world);
+                    if (villages != null && villages.size() > 0) {
+                        for (Map.Entry<String, UVVillage> villageEntry : villages.entrySet()) {
+                            sender.sendMessage(String.format("   - %d %d %d: %d doors, %d villagers, %d size", 
+                                    villageEntry.getValue().getLocation().getBlockX(), 
+                                    villageEntry.getValue().getLocation().getBlockY(), 
+                                    villageEntry.getValue().getLocation().getBlockZ(), 
+                                    villageEntry.getValue().getDoors(),
+                                    villageEntry.getValue().getPopulation(),
+                                    villageEntry.getValue().getSize()));
+                            Map<String, Integer> reputations = villageEntry.getValue().getPlayerReputations();
+                            for (Map.Entry<String, Integer> reputationEntry : reputations.entrySet()) {
+                                sender.sendMessage(String.format("     - %s: %d reputation (%s)", reputationEntry.getKey(), reputationEntry.getValue(), this.getRank(reputationEntry.getValue()).getName()));
+                            }
+                        }
+                    }
+                }
+            } else if (args[1].equalsIgnoreCase("siege")) {
+                sender.sendMessage("Siege Config");
+                for (String key : _siegeManager._killValues.keySet()) {
+                    String color = ((_siegeManager.getExtraMobChance(key) > 0)?ChatColor.GREEN:ChatColor.GRAY).toString();
+                    sender.sendMessage(String.format("%s - %s: 1 per %d villagers has a %d percent chance to spawn. Max %d. Players get %d for a killing blow.", color, key, _siegeManager.getPopulationThreshold(key), _siegeManager.getExtraMobChance(key), _siegeManager.getMaxToSpawn(key), _siegeManager._killValues.get(key)));
+                }
+            }
+        } else {
+            sender.sendMessage("Please specify corevillages, villages, siege, or core.");
+        }
+    }
+    
     /**
      * Sends village information to the sender
      *
@@ -504,7 +559,6 @@ public final class UVVillagers extends JavaPlugin implements Listener {
     @EventHandler
     private void onEntityDeathEvent(EntityDeathEvent event) {
         _siegeManager.checkDeath(event);
-        
         if (event.getEntity().getKiller() != null) {
             if (event.getEntity().getType() == EntityType.VILLAGER) {
                 UVVillage village = _villageManager.getClosestVillageToLocation(event.getEntity().getLocation(), 16);
