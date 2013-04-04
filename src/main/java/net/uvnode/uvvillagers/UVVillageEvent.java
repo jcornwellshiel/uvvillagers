@@ -68,6 +68,20 @@ public class UVVillageEvent extends Event {
             return null;
         }
     }
+    
+    /**
+     * Gets message associated with the MERGED type
+     *
+     * @return message arraylist
+     */
+    @SuppressWarnings("unchecked")
+    public String getMergeMessage() {
+        if (_data instanceof String) {
+            return (String) _data;
+        } else {
+            return null;
+        }
+    }
 
     /**
      * Get the old name related to a RENAMED event

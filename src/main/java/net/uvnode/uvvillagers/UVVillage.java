@@ -1,12 +1,21 @@
 package net.uvnode.uvvillagers;
 
+import java.text.DateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import net.minecraft.server.v1_5_R2.Navigation;
 
-import net.minecraft.server.v1_4_R1.Village;
-//import net.minecraft.server.v1_5_R2.Village;
+//import net.minecraft.server.v1_4_R1.Village;
+import net.minecraft.server.v1_5_R2.Village;
 
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.craftbukkit.v1_5_R2.entity.CraftVillager;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.ItemFrame;
+import org.bukkit.entity.Villager;
 
 /**
  * Custom village stuff
@@ -14,10 +23,12 @@ import org.bukkit.Location;
  * @author James Cornwell-Shiel
  */
 public class UVVillage {
-
+    private static UVVillagers _plugin;
     private int _doors;
+    private Date _created;
     private Location _location;
     private Map<String, Integer> _playerReputations = new HashMap<String, Integer>();
+    private Map<String, Integer> _playerEmeraldTributesPending = new HashMap<String, Integer>();
     private Map<String, Integer> _playerTicksHere = new HashMap<String, Integer>();
     private Map<String, Integer> _playerTicksGone = new HashMap<String, Integer>();
     private int _population;
@@ -25,6 +36,9 @@ public class UVVillage {
     private Village _villageCore;
     private String _name;
     private int _abandonStrikes;
+    private CraftVillager _mayor = null;
+    private ItemFrame _mayorSign;
+    private Location _mayorSignLocation = null;
 
     /**
      * Default Constructor
@@ -32,7 +46,8 @@ public class UVVillage {
      * @param location The location of the village
      * @param village The core village associated with this village
      */
-    public UVVillage(Location location, Village village) {
+    public UVVillage(Location location, Village village, UVVillagers plugin) {
+        _plugin = plugin;
         _abandonStrikes = 0;
         _location = location;
         _villageCore = village;
@@ -50,7 +65,8 @@ public class UVVillage {
      * @param size
      * @param playerReputations
      */
-    public UVVillage(Location location, int doors, int population, int size, Map<String, Integer> playerReputations) {
+    public UVVillage(Location location, int doors, int population, int size, Map<String, Integer> playerReputations, UVVillagers plugin) {
+        _plugin = plugin;
         _location = location;
         _doors = doors;
         _population = population;
@@ -60,6 +76,41 @@ public class UVVillage {
         _abandonStrikes = 0;
     }
 
+    public Integer collectEmeraldTribute(String player) {
+        if (_playerEmeraldTributesPending.containsKey(player)) {
+            Integer tribute = _playerEmeraldTributesPending.get(player);
+            _playerEmeraldTributesPending.remove(player);
+            return tribute;
+        } else
+            return 0;
+    }
+    public void clearEmeraldTributes() {
+        _playerEmeraldTributesPending.clear();
+    }
+    public void setEmeraldTribute(String player, Integer amount) {
+        _playerEmeraldTributesPending.put(player, amount);
+    }
+    
+    public Date getCreated() {
+        return _created;
+    }
+    public String getCreatedString() {
+        return DateFormat.getDateTimeInstance().format(_created);
+    }
+    public void setCreated(Date created) {
+        _created = created;
+    }
+    public void setCreated(String created) {
+        try {
+        _created = DateFormat.getDateTimeInstance().parse(created);
+        } catch (Exception e) {
+            _created = new Date();
+        }
+    }
+    public void setCreated() {
+        _created = new Date();
+    }
+    
     /**
      * Get the number of doors in the village.
      *
@@ -121,6 +172,8 @@ public class UVVillage {
      */
     public void setName(String name) {
         _name = name;
+        if (getMayor() != null)
+            setMayor(getMayor());
     }
 
     /**
@@ -216,7 +269,7 @@ public class UVVillage {
         }
         currentRep += amount;
         _playerReputations.put(name, currentRep);
-        setCorePopularity(name, (currentRep>=0?10:-30));
+        setCorePopularity(name, currentRep);
         return currentRep;
     }
 
@@ -232,6 +285,10 @@ public class UVVillage {
         } else {
             return 0;
         }
+    }
+    
+    public boolean isPlayerKnown(String name) {
+        return _playerReputations.containsKey(name);
     }
 
     /**
@@ -322,16 +379,12 @@ public class UVVillage {
     
     public void setCorePopularity(String playerName, int value) {
         if(_villageCore != null)
-            _villageCore.a(playerName, value);
+            _villageCore.a(playerName, _plugin.getRank(value).isHostile()?-30:10);
     }
 
     private void setCorePlayerPopularities() {
         for (Map.Entry<String, Integer> repEntry : _playerReputations.entrySet()) {
-            if (repEntry.getValue() >= 0) {
-                setCorePopularity(repEntry.getKey(), 10);
-            } else {
-                setCorePopularity(repEntry.getKey(), -30);
-            }
+            setCorePopularity(repEntry.getKey(), repEntry.getValue());
         }
     }
     
@@ -346,4 +399,66 @@ public class UVVillage {
     public Integer getAbandonStrikes() {
         return _abandonStrikes;
     }
+
+    public void setMayorSign(ItemFrame mayorSign) {
+        _mayorSign = mayorSign;
+        _mayorSignLocation = mayorSign.getLocation();
+    }
+    
+    public void setMayorSign(Location mayorSignLocation) {
+        _mayorSignLocation = mayorSignLocation;
+        if (_mayorSignLocation.getWorld().isChunkLoaded(_mayorSignLocation.getChunk())) {
+            for (Entity entity : _mayorSignLocation.getWorld().getEntitiesByClass(ItemFrame.class)) {
+                if (entity.getLocation().equals(mayorSignLocation) && ((ItemFrame)entity).getItem().getType() == Material.EMERALD) {
+                    _mayorSign = (ItemFrame) entity;
+                }
+            }
+        }
+    }
+    
+    public ItemFrame getMayorSign() {
+        if (_mayorSign == null) {
+            if (_mayorSignLocation != null) {
+                if (_mayorSignLocation.getWorld().isChunkLoaded(_mayorSignLocation.getChunk())) {
+                    for (Entity entity : _mayorSignLocation.getWorld().getEntities()) {
+                        if (entity.getType() == EntityType.ITEM_FRAME && entity.getLocation().distanceSquared(_mayorSignLocation) < 4 && ((ItemFrame)entity).getItem().getType() == Material.EMERALD) {
+                            _mayorSign = (ItemFrame) entity;
+                        }
+                    }
+                }
+            }
+        }
+        return _mayorSign;
+    }
+    
+    public Location getMayorSignLocation() {
+        if (_mayorSignLocation != null)
+            return _mayorSignLocation.getBlock().getLocation();
+        else
+            return null;
+    }
+    
+    public void setMayor(Villager mayor) {
+        _mayor = (CraftVillager) mayor;
+        String name = String.format("Mayor of %s", _name);
+        if (name.length() > 32)
+            name = name.substring(0, 29) + "...";
+        _mayor.setCustomName(name);
+        _mayor.setCustomNameVisible(true);
+    }
+    
+    public Villager getMayor() {
+        if (_mayor != null && !_mayor.isDead())
+            return _mayor;
+        else
+            return null;
+    }
+    
+    public void moveMayor() {
+        if (_mayor != null && _mayorSign != null && _mayor.getLocation().distanceSquared(_mayorSign.getLocation()) > 64) {
+            Navigation nav = _mayor.getHandle().getNavigation();
+            nav.a(_mayorSign.getLocation().getBlockX(),_mayorSign.getLocation().getBlockY(),_mayorSign.getLocation().getBlockZ(), 0.3f);
+        }
+    }
+
 }

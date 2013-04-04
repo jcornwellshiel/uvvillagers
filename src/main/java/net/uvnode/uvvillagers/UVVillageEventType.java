@@ -33,5 +33,9 @@ public enum UVVillageEventType {
     /**
      * A village was renamed.
      */
-    RENAMED
+    RENAMED,
+    /**
+     * A village was merged into another village.
+     */
+    MERGED
 }

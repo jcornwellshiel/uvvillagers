@@ -7,7 +7,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import net.minecraft.server.v1_4_R1.Village;
+//import net.minecraft.server.v1_4_R1.Village;
+import net.minecraft.server.v1_5_R2.Village;
 
 import net.uvnode.uvvillagers.util.FileManager;
 import org.bukkit.ChatColor;
@@ -19,6 +20,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.craftbukkit.v1_5_R2.entity.CraftVillager;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
@@ -28,7 +31,9 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.ItemStack;
 
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.Villager;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.world.WorldLoadEvent;
 import org.mcstats.Metrics;
 
@@ -42,6 +47,9 @@ public final class UVVillagers extends JavaPlugin implements Listener {
 
     private VillageManager _villageManager;
     private SiegeManager _siegeManager;
+    private DynmapManager _dynmapManager;
+    private FileManager baseConfiguration, villageConfiguration, siegeConfiguration, ranksConfiguration;
+
     private Random rng = new Random();
 
     //UVTributeMode tributeMode;
@@ -57,12 +65,15 @@ public final class UVVillagers extends JavaPlugin implements Listener {
     private ArrayList<String> tributeCalculating = new ArrayList<String>();
     private boolean _debug = false;
     
-    private FileManager baseConfiguration, villageConfiguration, siegeConfiguration, ranksConfiguration;
     private Integer _villagerValue;
     private Integer _babyVillagerValue;
     private Integer _ironGolemValue;
     protected Integer _emeraldTributeItem = -1;
+    protected String _tributeType = "emerald", _tributeMethod = "direct";
     protected int _villageMinPopulation = 1;
+    protected int _minStartingReputation;
+    protected int _maxStartingReputation;
+    protected int _discoverBonus;
 
     /**
      * Loads data and runs initialization tasks when enabling the plugin (e.g.
@@ -89,6 +100,9 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         readVillageConfig(getServer().getWorlds().get(0));
         readSiegeConfig();
         
+        _dynmapManager = new DynmapManager(this);
+        _dynmapManager.enable();
+        
         startDayTimer();
 /*
         //Start plugin metrics
@@ -106,6 +120,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      */
     @Override
     public void onDisable() {
+        _dynmapManager.disable();
         saveUpdatedVillages();
     }
 
@@ -113,8 +128,12 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      * Reads the plugin configuration.
      */
     private void readBaseConfig() {
-        _villageMinPopulation = baseConfiguration.getInt("villageMinPopulation");
+        _minStartingReputation = baseConfiguration.getInt("maxStartingReputation");
+        _maxStartingReputation = baseConfiguration.getInt("maxStartingReputation");
+        _discoverBonus = baseConfiguration.getInt("discoverBonus");
         _emeraldTributeItem = baseConfiguration.getInt("emeraldTributeItem");
+        _tributeMethod = baseConfiguration.getString("tributeMethod");
+        _tributeType = baseConfiguration.getString("tributeType");
         _ironGolemValue = baseConfiguration.getInt("ironGolemValue");
         _villagerValue = baseConfiguration.getInt("villagerValue");
         _babyVillagerValue = baseConfiguration.getInt("babyVillagerValue");
@@ -144,7 +163,9 @@ public final class UVVillagers extends JavaPlugin implements Listener {
             String name = rank.getKey();
             int threshold = ranksConfiguration.getInt("ranks." + name + ".threshold");
             double multiplier = ranksConfiguration.getDouble("ranks." + name + ".multiplier");
-            _reputationRanks.add(new UVVillageRank(name, threshold, multiplier));
+            boolean isHostile = ranksConfiguration.getBoolean("ranks." + name + ".isHostile", false);
+            boolean canTrade = ranksConfiguration.getBoolean("ranks." + name + ".canTrade", true);
+            _reputationRanks.add(new UVVillageRank(name, threshold, multiplier, isHostile, canTrade));
         }
         Collections.sort(_reputationRanks);
         getLogger().info(String.format("%d reputation ranks loaded.", _reputationRanks.size()));
@@ -601,6 +622,9 @@ public final class UVVillagers extends JavaPlugin implements Listener {
             case ABANDONED:
                 getServer().broadcastMessage("The village " + event.getKey() + " is no more.");
                 break;
+            case MERGED:
+                getServer().broadcastMessage("The village " + event.getKey() + " was absorbed into " + event.getMergeMessage() + ".");
+                break;
             default:
 
                 break;
@@ -629,6 +653,8 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                 // clear active siege just in case something is missing
                 debug("Clearing siege data.");
                 _siegeManager.clearSiege(event.getWorld());
+                if (_tributeMethod.equalsIgnoreCase("mayor"))
+                    _villageManager.clearTributes(event.getWorld());
                 break;
             case MIDNIGHT: 
                 // Try to start a siege if using custom sieges
@@ -642,9 +668,13 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                 break;
             case CHECK:
                 // Update villages
-                _villageManager.matchVillagesToCore();
+                _villageManager.matchVillagesToCore(event.getWorld());
+                // Check for villages that need to merge
+                _villageManager.checkForMerge(event.getWorld());
                 // Tick village proximities 
                 _villageManager.tickProximityReputations(event.getWorld());
+                // Tick mayor movement 
+                _villageManager.tickMayorMovement(event.getWorld());
                 break;
             default:
                 break;
@@ -656,6 +686,77 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         readVillageConfig(event.getWorld());
     }
 
+    @EventHandler
+    private void onPlayerInteractEntityEvent(PlayerInteractEntityEvent event) {
+        if (event.getRightClicked().getType() == EntityType.VILLAGER) {
+            CraftVillager villager = (CraftVillager) event.getRightClicked();
+            UVVillage village = _villageManager.getClosestVillageToLocation(villager.getLocation(), 8);
+            if (village != null) {
+                // Is it a mayor?
+                if (villager.isCustomNameVisible()) {
+                    String name = villager.getCustomName();
+                    if (name.contains("Mayor of")) {
+                        getLogger().info(event.getPlayer().getName() + " talked to " + name + " in " + village.getName());
+                        if (_tributeType.equalsIgnoreCase("emerald") && _tributeMethod.equalsIgnoreCase("mayor")) {
+                            giveEmeraldTribute(event.getPlayer(), village.collectEmeraldTribute(event.getPlayer().getName()));
+                            event.setCancelled(true);
+                        }
+                    }
+                } else {
+                    // Is the player's reputation high enough to trade with this village?
+                    UVVillageRank rank = getRank(village.getPlayerReputation(event.getPlayer().getName()));
+                    if (!rank.canTrade()) {
+                        event.setCancelled(true);
+                        event.getPlayer().sendMessage(String.format("Your reputation with %s is not high enough to trade.", village.getName()));
+                    }
+                }
+            }
+        } else if (event.getRightClicked().getType() == EntityType.ITEM_FRAME) {
+            if (event.getPlayer().getItemInHand().getType() == Material.EMERALD && 
+                    ((ItemFrame)event.getRightClicked()).getItem().getType() == Material.AIR) {
+                
+                UVVillage village = _villageManager.getClosestVillageToLocation(event.getRightClicked().getLocation(), 8);
+                Villager nearestVillager = null;
+                double nearestDistanceSquared = 64;
+                if (village != null) {
+                    
+                    if (village.getMayor() != null) {
+                        event.getPlayer().sendMessage(String.format("%s already has a Mayor!", village.getName()));
+                        event.setCancelled(true);
+                        return;
+                    }
+                    if (!village.getTopReputation().equalsIgnoreCase(event.getPlayer().getName())) {
+                        event.getPlayer().sendMessage(String.format("Only the player with the highest village reputation can choose a Mayor! Current that's %s.", village.getTopReputation()));
+                        event.setCancelled(true);
+                        return;
+                    }
+                    
+                    List<Entity> entitiesNearby = event.getRightClicked().getNearbyEntities(8, 8, 8);
+                    for (Entity entity : entitiesNearby) {
+                        if (entity.getType() == EntityType.VILLAGER) {
+                            double nearestDistance = entity.getLocation().distanceSquared(event.getRightClicked().getLocation());
+                            if (nearestDistance < nearestDistanceSquared)
+                            nearestVillager = (Villager) entity;
+                            nearestDistanceSquared = nearestDistance;
+                        }
+                    }
+                    if (nearestVillager == null) {
+                        event.getPlayer().sendMessage(String.format("No villagers were near enough to be appointed Mayor of %s.", village.getName()));
+                    } else {
+                        village.setMayorSign((ItemFrame) event.getRightClicked());
+                        village.setMayor(nearestVillager);
+                        getLogger().info("Mayor is " + nearestVillager.getEntityId());
+                        
+                        event.getPlayer().sendMessage(String.format("You've appointed a new Mayor of %s!", village.getName()));
+                    }
+                }
+            }
+            //event.getRightClicked().getLocation()
+            // Check for emerald itemframe on chest or above door
+        }
+    }
+    
+    
     private void startSiege() {
         List<World> worlds = getServer().getWorlds();
         for (World world : worlds) {
@@ -694,85 +795,84 @@ public final class UVVillagers extends JavaPlugin implements Listener {
             tributeCalculating.add(world.getName());
 
             // Make sure the villages are up to date
-            _villageManager.matchVillagesToCore();
+            _villageManager.matchVillagesToCore(world);
 
             // Get the player list
             List<Player> players = world.getPlayers();
 
             // Step through the players
             for (Player player : players) {
-                int tributeAmount = 0, killBonus = 0;
+                if (player.hasPermission("uvv.tribute")) {
+                    int tributeAmount = 0, killBonus = 0;
 
-                // Get the villages within tribute range of the player
-                Map<String, UVVillage> villages = _villageManager.getVillagesNearLocation(player.getLocation(), tributeRange);
+                    // Get the villages within tribute range of the player
+                    Map<String, UVVillage> villages = _villageManager.getVillagesNearLocation(player.getLocation(), tributeRange);
 
-                // if a siege is active, calculate siege tribute bonuses  
-                if (_siegeManager.isSiegeActive(world)) {
-                    int kills = _siegeManager.getPlayerKills(player.getName(), world);
-                    for (int i = 0; i < kills; i++) {
-                        killBonus += getRandomNumber(minPerSiegeKill, maxPerSiegeKill);
-                    }
-                }
-
-                debug(String.format("%s: ", player.getName()));
-
-                for (Map.Entry<String, UVVillage> village : villages.entrySet()) {
-                    int villageTributeAmount = 0, siegeBonus = 0, siegeKillTributeAmount = 0;
-                    debug(String.format(" - %s", village.getKey()));
-                    int population = village.getValue().getPopulation();
-
-                    int numVillagerGroups = (population - (population % villagerCount)) / villagerCount;
-
-                    debug(String.format(" - Villagers: %d (%d tribute groups)", population, numVillagerGroups));
-
-                    // If this village was the one sieged, give the kill bonus and an extra survival "base siege" thankfulness bonus
-                    if (_siegeManager.isSiegeActive(world) && village.getKey().equalsIgnoreCase(_siegeManager.getVillage(world).getName())) {
-                        siegeBonus = numVillagerGroups * baseSiegeBonus;
-                        villageTributeAmount += siegeBonus;
-                        siegeKillTributeAmount = killBonus;
-                        villageTributeAmount += siegeKillTributeAmount;
-                    }
-                    debug(String.format(" - Siege Defense Bonus: %d", siegeBonus));
-                    debug(String.format(" - Siege Kills Bonus: %d", siegeKillTributeAmount));
-
-                    // Give a random bonus per villager count
-                    for (int i = 0; i < numVillagerGroups; i++) {
-                        int groupTribute = getRandomNumber(minPerVillagerCount, maxPerVillagerCount);
-                        debug(String.format(" - Village Group %d: %d", i, groupTribute));
-                        villageTributeAmount += groupTribute;
-                    }
-                    debug(String.format(" - Total Before Multiplier: %d", villageTributeAmount));
-
-                    // Apply rank multiplier
-                    double multiplier = getRank(village.getValue().getPlayerReputation(player.getName())).getMultiplier();
-                    debug(String.format(" - Reputation: %s", village.getValue().getPlayerReputation(player.getName())));
-                    debug(String.format(" - Rank: %s", getRank(village.getValue().getPlayerReputation(player.getName())).getName()));
-                    debug(String.format(" - Multiplier: %.2f", multiplier));
-                    tributeAmount += (int) villageTributeAmount * multiplier;
-
-                }
-                // TO-DO: Save the tribute amount for each player/village so that receive it next time the player talks to a villager in that village.
-                // This will force players to interact with every village that they are to get credit for.
-                // But for now... just award the tribute directly.
-                if (villages.size() > 0) {
-                    if (tributeAmount > 0) {
-                        ItemStack items;
-                        if (_emeraldTributeItem > 0 && Material.getMaterial(_emeraldTributeItem) != null) {
-                            items = new ItemStack(Material.getMaterial(_emeraldTributeItem), tributeAmount);
-                        } else {
-                            items = new ItemStack(Material.EMERALD, tributeAmount);
+                    // if a siege is active, calculate siege tribute bonuses  
+                    if (_siegeManager.isSiegeActive(world)) {
+                        int kills = _siegeManager.getPlayerKills(player.getName(), world);
+                        for (int i = 0; i < kills; i++) {
+                            killBonus += getRandomNumber(minPerSiegeKill, maxPerSiegeKill);
                         }
-                        player.getInventory().addItem(items);
-                                                
-                        player.sendMessage("Grateful villagers gave you " + tributeAmount + " " + items.getType().name() + "!");
-                        debug(String.format("%s received %d %s.", player.getName(), tributeAmount, items.getType().name()));
-                    } else {
-                        player.sendMessage("The villagers didn't have any emeralds for you today.");
                     }
-                } else {
-                    player.sendMessage("You weren't near any villages large enough to pay you tribute.");
-                }
 
+                    debug(String.format("%s: ", player.getName()));
+
+                    for (Map.Entry<String, UVVillage> village : villages.entrySet()) {
+                        int villageTributeAmount = 0, siegeBonus = 0, siegeKillTributeAmount = 0;
+                        debug(String.format(" - %s", village.getKey()));
+                        int population = village.getValue().getPopulation();
+
+                        int numVillagerGroups = (population - (population % villagerCount)) / villagerCount;
+
+                        debug(String.format(" - Villagers: %d (%d tribute groups)", population, numVillagerGroups));
+
+                        // If this village was the one sieged, give the kill bonus and an extra survival "base siege" thankfulness bonus
+                        if (_siegeManager.isSiegeActive(world) && village.getKey().equalsIgnoreCase(_siegeManager.getVillage(world).getName())) {
+                            siegeBonus = numVillagerGroups * baseSiegeBonus;
+                            villageTributeAmount += siegeBonus;
+                            siegeKillTributeAmount = killBonus;
+                            villageTributeAmount += siegeKillTributeAmount;
+                        }
+                        debug(String.format(" - Siege Defense Bonus: %d", siegeBonus));
+                        debug(String.format(" - Siege Kills Bonus: %d", siegeKillTributeAmount));
+
+                        // Give a random bonus per villager count
+                        for (int i = 0; i < numVillagerGroups; i++) {
+                            int groupTribute = getRandomNumber(minPerVillagerCount, maxPerVillagerCount);
+                            debug(String.format(" - Village Group %d: %d", i, groupTribute));
+                            villageTributeAmount += groupTribute;
+                        }
+                        debug(String.format(" - Total Before Multiplier: %d", villageTributeAmount));
+
+                        // Apply rank multiplier
+                        double multiplier = getRank(village.getValue().getPlayerReputation(player.getName())).getMultiplier();
+                        debug(String.format(" - Reputation: %s", village.getValue().getPlayerReputation(player.getName())));
+                        debug(String.format(" - Rank: %s", getRank(village.getValue().getPlayerReputation(player.getName())).getName()));
+                        debug(String.format(" - Multiplier: %.2f", multiplier));
+                        tributeAmount += (int) (villageTributeAmount * multiplier);
+                        if (_tributeMethod.equalsIgnoreCase("mayor")) {
+                            village.getValue().setEmeraldTribute(player.getName(), ((int) (villageTributeAmount * multiplier)));
+                            if (villageTributeAmount * multiplier > 0) {
+                                if (village.getValue().getMayor() != null) {
+                                    player.sendMessage("The Mayor of " + village.getValue().getName() + " has a tribute waiting for you!");
+                                } else {
+                                    player.sendMessage("The village of " + village.getValue().getName() + " has a tribute for you, but no mayor. Create a Mayor!");
+                                    player.sendMessage("(To create a Mayor, just place an item frame near a villager and insert an emerald!)");
+                                }
+                            }
+                        }
+
+                    }
+                    
+                    if (villages.size() > 0) {
+                        if (_tributeMethod.equalsIgnoreCase("direct") && _tributeType.equalsIgnoreCase("emerald")) {
+                            giveEmeraldTribute(player, (Integer) tributeAmount);
+                        }
+                    } else {
+                        player.sendMessage("You weren't near any villages large enough to pay you tribute.");
+                    }
+                }
             }
         }
         tributeCalculating.remove(world.getName());
@@ -812,7 +912,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
             current = _reputationRanks.get(0);
         }
         if (current == null) {
-            current = new UVVillageRank("unknown", Integer.MIN_VALUE, 0);
+            current = new UVVillageRank("unknown", Integer.MIN_VALUE, 0, false, true);
         }
         return current;
     }
@@ -847,6 +947,23 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         if (_debug) {
             getLogger().info(message);
         }
+    }
+
+    private void giveEmeraldTribute(Player player, Integer tributeAmount) {
+        if (tributeAmount > 0) {
+           ItemStack items;
+           if (_emeraldTributeItem > 0 && Material.getMaterial(_emeraldTributeItem) != null) {
+               items = new ItemStack(Material.getMaterial(_emeraldTributeItem), tributeAmount);
+           } else {
+               items = new ItemStack(Material.EMERALD, tributeAmount);
+           }
+           player.getInventory().addItem(items);
+
+           player.sendMessage("Grateful villagers gave you " + tributeAmount + " " + items.getType().name() + "!");
+           debug(String.format("%s received %d %s.", player.getName(), tributeAmount, items.getType().name()));
+       } else {
+           player.sendMessage("The villagers didn't have any emeralds for you today.");
+       }
     }
 
 }
