@@ -4,7 +4,7 @@
 
     <groupId>net.uvnode</groupId>
     <artifactId>UVVillagers</artifactId>
-    <version>1.1.9</version>
+    <version>1.1.11</version>
     <packaging>jar</packaging>
 
     <name>UVVillagers</name>
