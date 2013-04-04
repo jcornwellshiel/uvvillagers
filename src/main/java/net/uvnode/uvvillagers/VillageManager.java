@@ -232,12 +232,13 @@ public class VillageManager {
         UVVillage newVillage = new UVVillage(location, village, _plugin);
         newVillage.setCreated();
         // Name it! "[player]ville @ X,Y,Z"
-        String name = player.getName() + "ville @ " + location.getBlockX() + "," + location.getBlockY() + "," + location.getBlockZ();
+        String name = String.format(_plugin.getLanguageManager().getString("village_default_name"), player.getName(), location.getBlockX(), location.getBlockY(), location.getBlockZ());
         newVillage.setName(name);
 
         // Grant discoverer bonus rep!
-        newVillage.modifyPlayerReputation(player.getName(), _plugin.getRandomNumber(_plugin._minStartingReputation, _plugin._maxStartingReputation) + _plugin._discoverBonus);
-
+        if (player.hasPermission("uvv.reputation")) {
+            newVillage.modifyPlayerReputation(player.getName(), _plugin.getRandomNumber(_plugin._minStartingReputation, _plugin._maxStartingReputation) + _plugin._discoverBonus);
+        }
         // Do we have villages in this world yet?
         if (!_villages.containsKey(location.getWorld().getName())) {
             _villages.put(location.getWorld().getName(), new HashMap<String, UVVillage>());
@@ -475,7 +476,7 @@ public class VillageManager {
                 // Discover one, and get it.
                 village = discoverVillage(coreVillageLocation, coreVillage, player);
                 // Announce that the player has discovered a lovely new UVVillage.
-                player.sendMessage(String.format("You discovered %s!", village.getName()));
+                player.sendMessage(String.format(_plugin.getLanguageManager().getString("village_discovered"), village.getName()));
             }
 
             if (village == null) {
@@ -483,7 +484,7 @@ public class VillageManager {
                     for (Map.Entry<String, UVVillage> villageEntry : worldEntry.getValue().entrySet()) {
                         // If the player was in this village previously, let them know they left.
                         if (villageEntry.getValue().isPlayerHere(player.getName())) {
-                            player.sendMessage(String.format("You are no longer near %s.", villageEntry.getValue().getName()));
+                            player.sendMessage(String.format(_plugin.getLanguageManager().getString("village_leave"), villageEntry.getValue().getName()));
                         }
                         villageEntry.getValue().setPlayerGone(player.getName());
                     }
@@ -522,7 +523,7 @@ public class VillageManager {
                 }
                 // No, the village didn't know he was here yet.
                 // Announce to the player that he's in a new UVVillage.
-                player.sendMessage(String.format("You're near %s! Your reputation with the %d villagers here is %s.", village.getName(), village.getPopulation(), _plugin.getRank(village.getPlayerReputation(player.getName())).getName()));
+                player.sendMessage(String.format(_plugin.getLanguageManager().getString("village_enter"), village.getName(), _plugin.getRank(village.getPlayerReputation(player.getName())).getName()));
                 // Tell the village that the player is present.
                 village.setPlayerHere(player.getName());
                 // Loop through all the villages
@@ -532,7 +533,7 @@ public class VillageManager {
                         if (!villageEntry.getKey().equalsIgnoreCase(village.getName())) {
                             // If the player was in this village previously, let them know they left.
                             if (villageEntry.getValue().isPlayerHere(player.getName())) {
-                                player.sendMessage(String.format("You are no longer near %s.", villageEntry.getValue().getName()));
+                                player.sendMessage(String.format(_plugin.getLanguageManager().getString("village_leave"), villageEntry.getValue().getName()));
                             }
                             villageEntry.getValue().setPlayerGone(player.getName());
                         }
@@ -546,7 +547,7 @@ public class VillageManager {
                 for (Map.Entry<String, UVVillage> villageEntry : worldEntry.getValue().entrySet()) {
                     // If the player was in this village previously, let them know they left.
                     if (villageEntry.getValue().isPlayerHere(player.getName())) {
-                        player.sendMessage(String.format("You are no longer near %s.", villageEntry.getValue().getName()));
+                        player.sendMessage(String.format(_plugin.getLanguageManager().getString("village_leave"), villageEntry.getValue().getName()));
                     }
                     villageEntry.getValue().setPlayerGone(player.getName());
                 }
@@ -565,34 +566,36 @@ public class VillageManager {
                     List<Player> players = village.getLocation().getWorld().getPlayers();
                     // Step through them.
                     for (Player player : players) {
-                        // Tell the village to tick for the player.
-                        village.tickPlayerPresence(player.getName());
+                        if (player.hasPermission("uvv.reputation")) {
+                            // Tell the village to tick for the player.
+                            village.tickPlayerPresence(player.getName());
 
-                        // If the player is in the village...
-                        if (village.isPlayerHere(player.getName())) {
-                            // And the player has been here a multiple of 12 ticks
-                            int ticksHere = village.getPlayerTicksHere(player.getName());
-                            if (ticksHere > 0 && ticksHere % 60 == 0) {
-                                // Bump his reputation up.
-                                village.modifyPlayerReputation(player.getName(), 1);
-                                _plugin.debug(String.format("Increased %s's reputation with %s by 1 for being present for %d ticks.",
-                                        player.getName(),
-                                        village.getName(),
-                                        village.getPlayerTicksHere(player.getName())));
-                            }
-
-                        } else { // If the player is NOT in the village...
-                            // And the player has been gone a multiple of 240 ticks
-                            int ticksGone = village.getPlayerTicksGone(player.getName());
-                            if (ticksGone > 0 && ticksGone % 240 == 0) {
-                                // And his reputation is positive.
-                                if (village.getPlayerReputation(player.getName()) > 0) {
-                                    // Bump his reputation down.
-                                    village.modifyPlayerReputation(player.getName(), -1);
-                                    _plugin.debug(String.format("Decreased %s's reputation with %s by 1 for being away for %d ticks.",
+                            // If the player is in the village...
+                            if (village.isPlayerHere(player.getName())) {
+                                // And the player has been here a multiple of 12 ticks
+                                int ticksHere = village.getPlayerTicksHere(player.getName());
+                                if (ticksHere > 0 && ticksHere % 60 == 0) {
+                                    // Bump his reputation up.
+                                    village.modifyPlayerReputation(player.getName(), 1);
+                                    _plugin.debug(String.format("Increased %s's reputation with %s by 1 for being present for %d ticks.",
                                             player.getName(),
                                             village.getName(),
-                                            village.getPlayerTicksGone(player.getName())));
+                                            village.getPlayerTicksHere(player.getName())));
+                                }
+
+                            } else { // If the player is NOT in the village...
+                                // And the player has been gone a multiple of 240 ticks
+                                int ticksGone = village.getPlayerTicksGone(player.getName());
+                                if (ticksGone > 0 && ticksGone % 240 == 0) {
+                                    // And his reputation is positive.
+                                    if (village.getPlayerReputation(player.getName()) > 0) {
+                                        // Bump his reputation down.
+                                        village.modifyPlayerReputation(player.getName(), -1);
+                                        _plugin.debug(String.format("Decreased %s's reputation with %s by 1 for being away for %d ticks.",
+                                                player.getName(),
+                                                village.getName(),
+                                                village.getPlayerTicksGone(player.getName())));
+                                    }
                                 }
                             }
                         }

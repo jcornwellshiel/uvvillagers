@@ -427,7 +427,10 @@ public class SiegeManager {
                     // Yep, add it to the siege's kill list 
                     _currentSieges.get(worldName).addPlayerKill(event.getEntity().getKiller().getName(), getKillValue(event.getEntity()));
                     // And bump up the player's reputation with the village for the kill
-                    _currentSieges.get(worldName).getVillage().modifyPlayerReputation(event.getEntity().getKiller().getName(), getKillValue(event.getEntity()));
+                    
+                    if (event.getEntity().getKiller().hasPermission("uvv.reputation")) {
+                        _currentSieges.get(worldName).getVillage().modifyPlayerReputation(event.getEntity().getKiller().getName(), getKillValue(event.getEntity()));
+                    }
                     _plugin.debug(String.format("%s gained %d rep with %s for killing a %s.", event.getEntity().getKiller().getName(), getKillValue(event.getEntity()), _currentSieges.get(worldName).getVillage().getName(), event.getEntity().getType().getName()));
                 }
             }

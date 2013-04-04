@@ -48,8 +48,9 @@ public final class UVVillagers extends JavaPlugin implements Listener {
     private VillageManager _villageManager;
     private SiegeManager _siegeManager;
     private DynmapManager _dynmapManager;
-    private FileManager baseConfiguration, villageConfiguration, siegeConfiguration, ranksConfiguration;
-
+    private FileManager baseConfiguration, villageConfiguration, siegeConfiguration, ranksConfiguration, languageConfiguration;
+    private LanguageManager _languageManager;
+    
     private Random rng = new Random();
 
     //UVTributeMode tributeMode;
@@ -100,6 +101,9 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         readVillageConfig(getServer().getWorlds().get(0));
         readSiegeConfig();
         
+        languageConfiguration = new FileManager(this, "language.yml");
+        _languageManager = new LanguageManager(languageConfiguration.getConfigSection("strings").getValues(false));
+        
         _dynmapManager = new DynmapManager(this);
         _dynmapManager.enable();
         
@@ -128,7 +132,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      * Reads the plugin configuration.
      */
     private void readBaseConfig() {
-        _minStartingReputation = baseConfiguration.getInt("maxStartingReputation");
+        _minStartingReputation = baseConfiguration.getInt("minStartingReputation");
         _maxStartingReputation = baseConfiguration.getInt("maxStartingReputation");
         _discoverBonus = baseConfiguration.getInt("discoverBonus");
         _emeraldTributeItem = baseConfiguration.getInt("emeraldTributeItem");
@@ -336,7 +340,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                         startSiege();
                     }
                 } else if (args[0].equalsIgnoreCase("siegeinfo")) {
-                    sender.sendMessage(" - UVVillagers Siege Info - ");
+                    sender.sendMessage(ChatColor.GOLD + " - UVVillagers Siege Info - ");
                     if (sender instanceof Player) {
                         Player p = (Player) sender;
                         if (p.hasPermission("uvv.siegeinfo")) {
@@ -353,7 +357,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                         }
                     }
                 } else if (args[0].equalsIgnoreCase("list")) {
-                    sender.sendMessage(" - UVVillagers Village List - ");
+                    sender.sendMessage(ChatColor.GOLD + " - UVVillagers Village List - ");
                     if (sender instanceof Player) {
                         Player p = (Player) sender;
                         if (p.hasPermission("uvv.villageinfo")) {
@@ -365,7 +369,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                         sendVillageInfo(sender, _villageManager.getAllVillages());
                     }
                 } else if (args[0].equalsIgnoreCase("loaded")) {
-                    sender.sendMessage(" - UVVillagers Villages Loaded - ");
+                    sender.sendMessage(ChatColor.GOLD + " - UVVillagers Villages Loaded - ");
                     if (sender instanceof Player) {
                         Player p = (Player) sender;
                         if (p.hasPermission("uvv.villageinfo")) {
@@ -377,7 +381,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                         sendVillageInfo(sender, _villageManager.getLoadedVillages());
                     }
                 } else if (args[0].equalsIgnoreCase("nearby")) {
-                    sender.sendMessage(" - UVVillagers Nearby Villages - ");
+                    sender.sendMessage(ChatColor.GOLD + " - UVVillagers Nearby Villages - ");
                     if (sender instanceof Player) {
                         Player p = (Player) sender;
                         if (p.hasPermission("uvv.villageinfo")) {
@@ -386,10 +390,10 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                             sender.sendMessage("You don't have permission to do that.");
                         }
                     } else {
-                        sender.sendMessage("No location to work from...");
+                        sender.sendMessage("Silly console, you can't do that!");
                     }
                 } else if (args[0].equalsIgnoreCase("current")) {
-                    sender.sendMessage(" - UVVillagers Current Village - ");
+                    sender.sendMessage(ChatColor.GOLD + " - UVVillagers Current Village - ");
                     if (sender instanceof Player) {
                         Player p = (Player) sender;
                         if (p.hasPermission("uvv.villageinfo")) {
@@ -398,10 +402,10 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                             sender.sendMessage("You don't have permission to do that.");
                         }
                     } else {
-                        sender.sendMessage("No location to work from...");
+                        sender.sendMessage("Silly console, you can't do that!");
                     }
                 } else if (args[0].equalsIgnoreCase("rename")) {
-                    sender.sendMessage(" - UVVillagers Rename Village - ");
+                    sender.sendMessage(ChatColor.GOLD + " - UVVillagers Rename Village - ");
                     if (sender instanceof Player) {
                         Player p = (Player) sender;
                         if (p.hasPermission("uvv.rename")) {
@@ -418,57 +422,62 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                                     if (village.getTopReputation().equalsIgnoreCase(p.getName())) {
                                         if (_villageManager.getVillageByKey(p.getWorld(), newName) == null) {
                                             if (_villageManager.renameVillage(p.getWorld(), village.getName(), newName)) {
-                                                sender.sendMessage("Village renamed!");
+                                                sender.sendMessage(ChatColor.DARK_GREEN + String.format(getLanguageManager().getString("village_rename_success"), village.getName()));
                                             } else {
-                                                sender.sendMessage("Rename failed for some reason...");
+                                                sender.sendMessage(ChatColor.DARK_RED + String.format(getLanguageManager().getString("village_rename_failure")));
                                             }
                                             sendVillageInfo(sender, _villageManager.getVillagesNearLocation(p.getLocation(), tributeRange));
                                         } else {
-                                            sender.sendMessage("There's already a village named " + newName);
+                                            sender.sendMessage(ChatColor.DARK_RED + String.format(getLanguageManager().getString("village_rename_duplicate"), newName));
                                         }
                                     } else {
-                                        sender.sendMessage("You must be the most reputable player with a village to rename it! Currently that's " + village.getTopReputation());
+                                        sender.sendMessage(ChatColor.DARK_RED + String.format(getLanguageManager().getString("village_rename_not_top_rep"), village.getTopReputation()));
                                     }
 
                                 } else {
-                                    sender.sendMessage("You're not near a village!");
+                                    sender.sendMessage(ChatColor.DARK_RED + String.format(getLanguageManager().getString("village_rename_no_village")));
                                 }
                             } else {
-                                sender.sendMessage("You must provide a name!");
+                                sender.sendMessage(ChatColor.DARK_RED + String.format(getLanguageManager().getString("village_rename_no_name")));
                             }
                         } else {
                             sender.sendMessage("You don't have permission to do that.");
                         }
                     } else {
-                        sender.sendMessage("No location to work from...");
+                        sender.sendMessage("Silly console, you can't do that!");
                     }
                 } else {
-                    sender.sendMessage(" - UVVillagers - ");
-                    sender.sendMessage("Command not found. Try one of the following:");
-                    sender.sendMessage(" /uvv save");
-                    sender.sendMessage(" /uvv reload");
-                    sender.sendMessage(" /uvv list");
-                    sender.sendMessage(" /uvv nearby");
-                    sender.sendMessage(" /uvv rename New Village Name");
+                    sendHelp(sender);
                 }
             } else {
-                // Default action
-                sender.sendMessage(" - UVVillagers - ");
-                sender.sendMessage("Try one of the following:");
-                sender.sendMessage(" /uvv save");
-                sender.sendMessage(" /uvv reload");
-                sender.sendMessage(" /uvv list");
-                sender.sendMessage(" /uvv nearby");
-                sender.sendMessage(" /uvv rename New Village Name");
+                sendHelp(sender);
             }
             return true;
         }
         return false;
     }
 
+    private void sendHelp(CommandSender sender) {
+        sender.sendMessage(ChatColor.GOLD + " - UVVillagers Help - ");
+        sender.sendMessage(ChatColor.GRAY + "Try one of the following:");
+        sender.sendMessage(ChatColor.GRAY + " /uvv save");
+        sender.sendMessage(ChatColor.GRAY + " /uvv reload");
+        sender.sendMessage(ChatColor.GRAY + " /uvv list - lists all villages in this world");
+        sender.sendMessage(ChatColor.GRAY + " /uvv loaded - lists all loaded villages in this world");
+        sender.sendMessage(ChatColor.GRAY + " /uvv nearby - lists villages in tribute range");
+        sender.sendMessage(ChatColor.GRAY + " /uvv current - displays current village info");
+        sender.sendMessage(ChatColor.GRAY + " /uvv rename New Village Name - renames the village you're in");
+        sender.sendMessage(ChatColor.GRAY + " /uvv siegeinfo - prints out the status of the current siege");
+    }
     private void dumpDataToSender(CommandSender sender, String[] args) {
         if (args.length > 1) {
-            if (args[1].equalsIgnoreCase("corevillages")) {
+            if (args[1].equalsIgnoreCase("language")) {
+                sender.sendMessage("Messages Loaded");
+                for (Map.Entry<String, String> stringEntry : getLanguageManager().getAllStrings().entrySet()) {
+                    sender.sendMessage(String.format(" - %s: %s", stringEntry.getKey(), stringEntry.getValue()));
+                }
+                
+            } else if (args[1].equalsIgnoreCase("corevillages")) {
                 sender.sendMessage("Core Villages Loaded");
                 for (World world : getServer().getWorlds()) {
                     sender.sendMessage(" - " + world.getName());
@@ -536,7 +545,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
             if (sender instanceof Player) {
                 rankString = String.format(" (%s)", getRank(village.getPlayerReputation(sender.getName())).getName());
             }
-            sender.sendMessage(String.format("%s%s: %d doors, %d villagers, %d block size.", village.getName(), rankString, village.getDoors(), village.getPopulation(), village.getSize()));
+            sender.sendMessage(ChatColor.GRAY + String.format("%s%s: %d doors, %d villagers, %d block size.", village.getName(), rankString, village.getDoors(), village.getPopulation(), village.getSize()));
         }
     }
 
@@ -610,7 +619,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         debug(event.getMessage());
         switch (event.getType()) {
             case SIEGE_BEGAN:
-                getServer().broadcastMessage("A siege began at " + event.getKey());
+                getServer().broadcastMessage(ChatColor.RED + String.format(getLanguageManager().getString("siege_began"), event.getKey()));
                 break;
             case SIEGE_ENDED:
                 ArrayList<String> messages = event.getSiegeMessage();
@@ -620,10 +629,10 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                 }
                 break;
             case ABANDONED:
-                getServer().broadcastMessage("The village " + event.getKey() + " is no more.");
+                getServer().broadcastMessage(ChatColor.DARK_GRAY + String.format(getLanguageManager().getString("village_abandoned"), event.getKey()));
                 break;
             case MERGED:
-                getServer().broadcastMessage("The village " + event.getKey() + " was absorbed into " + event.getMergeMessage() + ".");
+                getServer().broadcastMessage(ChatColor.GRAY + String.format(getLanguageManager().getString("village_merged"), event.getKey(), event.getMergeMessage()));
                 break;
             default:
 
@@ -696,7 +705,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                 if (villager.isCustomNameVisible()) {
                     String name = villager.getCustomName();
                     if (name.contains("Mayor of")) {
-                        getLogger().info(event.getPlayer().getName() + " talked to " + name + " in " + village.getName());
+                        debug(event.getPlayer().getName() + " talked to " + name + " in " + village.getName());
                         if (_tributeType.equalsIgnoreCase("emerald") && _tributeMethod.equalsIgnoreCase("mayor")) {
                             giveEmeraldTribute(event.getPlayer(), village.collectEmeraldTribute(event.getPlayer().getName()));
                             event.setCancelled(true);
@@ -707,7 +716,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                     UVVillageRank rank = getRank(village.getPlayerReputation(event.getPlayer().getName()));
                     if (!rank.canTrade()) {
                         event.setCancelled(true);
-                        event.getPlayer().sendMessage(String.format("Your reputation with %s is not high enough to trade.", village.getName()));
+                        event.getPlayer().sendMessage(ChatColor.DARK_RED + String.format(getLanguageManager().getString("village_no_trade"), village.getName()));
                     }
                 }
             }
@@ -721,12 +730,12 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                 if (village != null) {
                     
                     if (village.getMayor() != null) {
-                        event.getPlayer().sendMessage(String.format("%s already has a Mayor!", village.getName()));
+                        event.getPlayer().sendMessage(ChatColor.DARK_RED + String.format(getLanguageManager().getString("mayor_already_exists"), village.getName()));
                         event.setCancelled(true);
                         return;
                     }
                     if (!village.getTopReputation().equalsIgnoreCase(event.getPlayer().getName())) {
-                        event.getPlayer().sendMessage(String.format("Only the player with the highest village reputation can choose a Mayor! Current that's %s.", village.getTopReputation()));
+                        event.getPlayer().sendMessage(ChatColor.DARK_RED + String.format(getLanguageManager().getString("mayor_not_top_rep"), village.getTopReputation()));
                         event.setCancelled(true);
                         return;
                     }
@@ -741,13 +750,13 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                         }
                     }
                     if (nearestVillager == null) {
-                        event.getPlayer().sendMessage(String.format("No villagers were near enough to be appointed Mayor of %s.", village.getName()));
+                        event.getPlayer().sendMessage(ChatColor.DARK_RED + String.format(getLanguageManager().getString("mayor_no_villagers"), village.getName()));
                     } else {
                         village.setMayorSign((ItemFrame) event.getRightClicked());
                         village.setMayor(nearestVillager);
-                        getLogger().info("Mayor is " + nearestVillager.getEntityId());
+                        debug("Mayor is " + nearestVillager.getEntityId());
                         
-                        event.getPlayer().sendMessage(String.format("You've appointed a new Mayor of %s!", village.getName()));
+                        event.getPlayer().sendMessage(ChatColor.DARK_GREEN + String.format(getLanguageManager().getString("mayor_created"), village.getName()));
                     }
                 }
             }
@@ -855,9 +864,9 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                             village.getValue().setEmeraldTribute(player.getName(), ((int) (villageTributeAmount * multiplier)));
                             if (villageTributeAmount * multiplier > 0) {
                                 if (village.getValue().getMayor() != null) {
-                                    player.sendMessage("The Mayor of " + village.getValue().getName() + " has a tribute waiting for you!");
+                                    player.sendMessage(String.format(getLanguageManager().getString("tribute_ready"), village.getValue().getName()));
                                 } else {
-                                    player.sendMessage("The village of " + village.getValue().getName() + " has a tribute for you, but no mayor. Create a Mayor!");
+                                    player.sendMessage(String.format(getLanguageManager().getString("tribute_no_mayor"), village.getValue().getName()));
                                     player.sendMessage("(To create a Mayor, just place an item frame near a villager and insert an emerald!)");
                                 }
                             }
@@ -870,7 +879,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                             giveEmeraldTribute(player, (Integer) tributeAmount);
                         }
                     } else {
-                        player.sendMessage("You weren't near any villages large enough to pay you tribute.");
+                        player.sendMessage(String.format(getLanguageManager().getString("tribute_too_far")));
                     }
                 }
             }
@@ -925,6 +934,14 @@ public final class UVVillagers extends JavaPlugin implements Listener {
     public VillageManager getVillageManager() {
         return _villageManager;
     }
+    /**
+     * Utility function to get the VillageManager instance.
+     *
+     * @return
+     */
+    public LanguageManager getLanguageManager() {
+        return _languageManager;
+    }
 
     /**
      * Checks whether any players are online within distance blocks of location
@@ -959,10 +976,10 @@ public final class UVVillagers extends JavaPlugin implements Listener {
            }
            player.getInventory().addItem(items);
 
-           player.sendMessage("Grateful villagers gave you " + tributeAmount + " " + items.getType().name() + "!");
+           player.sendMessage(String.format(getLanguageManager().getString("tribute_emeralds_gain"), tributeAmount, items.getType().name()));
            debug(String.format("%s received %d %s.", player.getName(), tributeAmount, items.getType().name()));
        } else {
-           player.sendMessage("The villagers didn't have any emeralds for you today.");
+           player.sendMessage(String.format(getLanguageManager().getString("tribute_emeralds_none")));
        }
     }
 

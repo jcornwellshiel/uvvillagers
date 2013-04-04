@@ -31,3 +31,9 @@ permissions:
   uvv.rename:
     description: Rename your village.
     default: true
+  uvv.tribute:
+    description: Allows the player to collect UVVillage tributes.
+    default: true
+  uvv.reputation:
+    description: Allows the player to lose/gain UVVillage reputation.
+    default: true
