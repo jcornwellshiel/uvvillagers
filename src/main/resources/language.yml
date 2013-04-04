@@ -1,6 +1,6 @@
 strings:
   village_enter: "Welcome to %s! Your reputation here is %s."
-  village_leave: "You are now leaving %s. The villagers miss you already."
+  village_leave: "You have left %s. The villagers miss you already."
   village_discovered: "You've discovered a new village!"
   village_abandoned: "The village of %s is no more."
   village_merged: "The village of %s has been absorbed by %s!"
@@ -21,5 +21,5 @@ strings:
   tribute_no_mayor: "The villagers of %s would love to pay tribute to you. Create a Mayor so that they can!"
   tribute_emeralds_gain: "The villagers gave you %d %s in tribute to your awesomeness!"
   tribute_emeralds_none: "The villagers had no tribute for you today."
-  siege_started: "Herobrine's minions arise in %s! Defend the villagers!"
+  siege_began: "Herobrine's minions arise in %s! Defend the villagers!"
   siege_ended: "The siege has ended."

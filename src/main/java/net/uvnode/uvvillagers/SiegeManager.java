@@ -182,7 +182,7 @@ public class SiegeManager {
         // Throw a SIEGE_BEGAN event!
         UVVillageEvent event = new UVVillageEvent(village, village.getName(), UVVillageEventType.SIEGE_BEGAN);
         _plugin.getServer().getPluginManager().callEvent(event);
-
+        
         // Spawn bonus mobs!
         spawnMoreMobs(location);
 

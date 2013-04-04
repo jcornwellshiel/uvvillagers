@@ -111,7 +111,7 @@ public class UVSiege {
 
         msgs.add("Zombie Siege Stats:");
         msgs.add(" - Location: " + _village.getName());
-        msgs.add(" - Enemies: " + _spawns.size() + " (" + _mobsLeft + " still alive)");
+        msgs.add(" - Enemies: " + _spawns.size() + " (" + getMobsLeft().size() + " still alive)");
         msgs.add(" - Player Kills: ");
         Iterator<String> playersIterator = _players.keySet().iterator();
         while (playersIterator.hasNext()) {
@@ -134,7 +134,7 @@ public class UVSiege {
      * @return number of siege mobs alive
      */
     public int getNumMobsLeft() {
-        return _mobsLeft;
+        return getMobsLeft().size();
     }
 
     /**
