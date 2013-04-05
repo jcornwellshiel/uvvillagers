@@ -31,13 +31,13 @@ public class DynmapManager implements Listener {
         _plugin = plugin;
     }
     
-    protected void enable() {
+    protected boolean enable() {
         try {
             PluginManager pm = _plugin.getServer().getPluginManager();
             dynmap = pm.getPlugin("dynmap");
             if (dynmap == null) {
                 _plugin.getLogger().severe("Cannot find dynmap!");
-                return;
+                return false;
             }
 
             api = (DynmapAPI) dynmap;
@@ -45,11 +45,14 @@ public class DynmapManager implements Listener {
             if (dynmap.isEnabled()) {
                 _plugin.getLogger().info("Starting up UVVillagers DynmapManager!");
                 activate();
+                return true;
             } else {
                 _plugin.getLogger().info("Dynmap is not enabled! UVVillagers DynmapManager is disabled.");
+                return false;
             }
         } catch (Exception e) {
             e.printStackTrace();
+            return false;
         }
     }
 
@@ -228,6 +231,7 @@ public class DynmapManager implements Listener {
      */
     @EventHandler
     private void onUVVillageEvent(UVVillageEvent event) {
+        _plugin.debug(String.format("%s fired UVVillageEvent %s", event.getKey(), event.getType()));
         switch (event.getType()) {
             case DISCOVERED:
                 createMarker(event.getVillage(), event.getKey());

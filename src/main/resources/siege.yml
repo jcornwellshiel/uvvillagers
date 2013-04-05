@@ -5,7 +5,8 @@
 #   points - the number of popularity points killing this mob type will grant.
 siege:
   useCoreSiegeEvent: false
-  nonCoreSiegeChance: 10
+  nonCoreSiegeChance: 50
+  potionBuffChance: 50
   randomSpread: 3
   randomVerticalSpread: 5
   mobs:
@@ -24,15 +25,20 @@ siege:
       chance: 40
       points: 1
       max: 20
+    wolf:
+      threshold: 20
+      chance: 40
+      points: 5
+      max: 20
     cave_spider:
       threshold: 40
       chance: 40
       points: 10
       max: 20
     pig_zombie:
-      threshold: 1
-      chance: 0
-      points: 1
+      threshold: 20
+      chance: 30
+      points: 3
       max: 20
     blaze:
       threshold: 40
@@ -46,7 +52,7 @@ siege:
       max: 10
     magma_cube:
       threshold: 60
-      chance: 0
+      chance: 40
       points: 10
       max: 10
     wither_skeleton:
@@ -61,7 +67,7 @@ siege:
       max: 100
     ghast:
       threshold: 80
-      chance: 0
+      chance: 20
       points: 100
       max: 3
     wither:

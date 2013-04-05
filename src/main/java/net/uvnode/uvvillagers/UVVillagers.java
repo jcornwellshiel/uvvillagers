@@ -105,7 +105,10 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         _languageManager = new LanguageManager(languageConfiguration.getConfigSection("strings").getValues(false));
         
         _dynmapManager = new DynmapManager(this);
-        _dynmapManager.enable();
+        if(_dynmapManager.enable())
+            getServer().getPluginManager().registerEvents(_dynmapManager, this);
+            
+            
         
         startDayTimer();
 /*
@@ -651,16 +654,16 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         switch (event.getType()) {
             case DAWN:
                 // Calculate tributes
-                debug("Calculating tribute.");
+                debug("Calculating tribute in " + event.getWorld().getName());
                 calculateTribute(event.getWorld());
                 // End siege tracking.
-                debug("Ending active sieges.");
+                debug("Ending active sieges in " + event.getWorld().getName());
                 _siegeManager.endSiege(event.getWorld());
                 break;
 
             case DUSK:
                 // clear active siege just in case something is missing
-                debug("Clearing siege data.");
+                debug("Clearing siege data in " + event.getWorld().getName());
                 _siegeManager.clearSiege(event.getWorld());
                 if (_tributeMethod.equalsIgnoreCase("mayor"))
                     _villageManager.clearTributes(event.getWorld());
@@ -668,9 +671,9 @@ public final class UVVillagers extends JavaPlugin implements Listener {
             case MIDNIGHT: 
                 // Try to start a siege if using custom sieges
                 if(!_siegeManager.isSiegeActive(event.getWorld()) && !_siegeManager.usingCoreSieges()) {
-                    debug("Trying to start a siege.");
+                    debug("Trying to start a siege in " + event.getWorld().getName());
                     if (_siegeManager.getChanceOfSiege() > getRandomNumber(0, 99)) {
-                        debug("A siege is happening tonight!");
+                        debug("A siege is happening tonight in " + event.getWorld().getName());
                         startSiege(event.getWorld());
                     }
                 }
@@ -780,7 +783,6 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         if (loadedVillages.size() > 0) {
             int index = getRandomNumber(0, loadedVillages.size()-1);
             UVVillage village = loadedVillages.values().toArray(new UVVillage[loadedVillages.size()])[index];
-            
             int xOffset = getRandomNumber(village.getSize() / -2, village.getSize() / 2);
             int zOffset = getRandomNumber(village.getSize() / -2, village.getSize() / 2);
             debug(String.format("Random offset X=%d Y=%d", xOffset, zOffset));
@@ -788,7 +790,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
             debug(String.format("Firing up a siege at %s in %s (%s)!", location.toString(), village.getName(), village.getLocation().toString()));
             _siegeManager.startSiege(location, village);
         } else {
-            debug("No villages were loaded. So siege tonight!");
+            debug(String.format("No villages were loaded in %s. No siege tonight!",world.getName()));
         }
     }
     
@@ -864,7 +866,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                             village.getValue().setEmeraldTribute(player.getName(), ((int) (villageTributeAmount * multiplier)));
                             if (villageTributeAmount * multiplier > 0) {
                                 if (village.getValue().getMayor() != null) {
-                                    player.sendMessage(String.format(getLanguageManager().getString("tribute_ready"), village.getValue().getName()));
+                                    player.sendMessage(String.format(getLanguageManager().getString("tribute_mayor_ready"), village.getValue().getName()));
                                 } else {
                                     player.sendMessage(String.format(getLanguageManager().getString("tribute_no_mayor"), village.getValue().getName()));
                                     player.sendMessage("(To create a Mayor, just place an item frame near a villager and insert an emerald!)");

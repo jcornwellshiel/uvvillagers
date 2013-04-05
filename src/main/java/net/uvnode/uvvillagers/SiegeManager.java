@@ -1,6 +1,7 @@
 package net.uvnode.uvvillagers;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -8,13 +9,18 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.craftbukkit.v1_5_R2.inventory.CraftItemStack;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.PigZombie;
 import org.bukkit.entity.Skeleton;
 import org.bukkit.entity.Skeleton.SkeletonType;
+import org.bukkit.entity.Wolf;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 /**
  * Manages Zombie Siege (Village Siege) enhancements and events.
@@ -32,7 +38,7 @@ public class SiegeManager {
     protected int _spawnSpread;
     protected int _spawnVSpread;
     protected boolean _useCoreSieges;
-    protected int _nonCoreSiegeChance;
+    protected int _nonCoreSiegeChance, _potionBuffChance;
     
     /**
      * Basic Constructor
@@ -51,10 +57,12 @@ public class SiegeManager {
     public void loadConfig(ConfigurationSection siegeSection) {
         _useCoreSieges = siegeSection.getBoolean("useCoreSiegeEvent");
         
-        _nonCoreSiegeChance = siegeSection.getInt("nonCoreSiegeChance", 1);
+        _nonCoreSiegeChance = siegeSection.getInt("nonCoreSiegeChance");
         
-        _spawnSpread = siegeSection.getInt("randomSpread", 1);
-        _spawnVSpread = siegeSection.getInt("randomVerticalSpread", 2);
+        _potionBuffChance = siegeSection.getInt("potionBuffChance");
+        
+        _spawnSpread = siegeSection.getInt("randomSpread");
+        _spawnVSpread = siegeSection.getInt("randomVerticalSpread");
 
         _chanceOfExtraMobs.put("ZOMBIE", siegeSection.getInt("mobs.zombie.chance"));
         _populationThresholds.put("ZOMBIE", siegeSection.getInt("mobs.zombie.threshold"));
@@ -323,6 +331,17 @@ public class SiegeManager {
                             // Spawn non-wither skeletons and if it's a skeleton, equip it.
                             } else {
                                 LivingEntity spawn = (LivingEntity) location.getWorld().spawnEntity(spawnLocation, type);
+                                // Give it potion effects
+                                buffMob(spawn, 30);
+                                // If it's a wolf, make it angry
+                                if (type == EntityType.WOLF) {
+                                    ((Wolf) spawn).setAngry(true);
+                                }
+                                // If it's a zombie pigman, make it angry
+                                if (type == EntityType.PIG_ZOMBIE) {
+                                    ((PigZombie) spawn).setAngry(true);
+                                    ((PigZombie) spawn).setAnger(24000);
+                                }
                                 if (type == EntityType.SKELETON)
                                     spawn.getEquipment().setItemInHand(new ItemStack(Material.BOW));
                                 addSpawn(spawn);
@@ -473,5 +492,28 @@ public class SiegeManager {
             messages.add("No sieges so far today!");
             return messages;
         }
+    }
+    
+    private void buffMob(LivingEntity entity, int chance) {
+        Collection<PotionEffect> effects = new ArrayList<PotionEffect>();
+        if(_plugin.getRandomNumber(0, 99) > chance) {
+             effects.add(new PotionEffect(PotionEffectType.INCREASE_DAMAGE, 24000, _plugin.getRandomNumber(1, 5), true));
+        }
+        if(_plugin.getRandomNumber(0, 99) > chance) {
+             effects.add(new PotionEffect(PotionEffectType.JUMP, 24000, _plugin.getRandomNumber(1, 5), true));
+        }
+        if(_plugin.getRandomNumber(0, 99) > chance) {
+             effects.add(new PotionEffect(PotionEffectType.INVISIBILITY, 24000, _plugin.getRandomNumber(1, 5), true));
+        }
+        if(_plugin.getRandomNumber(0, 99) > chance) {
+             effects.add(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, 24000, _plugin.getRandomNumber(1, 5), true));
+        }
+        if(_plugin.getRandomNumber(0, 99) > chance) {
+             effects.add(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 24000, _plugin.getRandomNumber(1, 5), true));
+        }
+        if(_plugin.getRandomNumber(0, 99) > chance) {
+             effects.add(new PotionEffect(PotionEffectType.SPEED, 24000, _plugin.getRandomNumber(1, 5), true));
+        }
+        entity.addPotionEffects(effects);
     }
 }
