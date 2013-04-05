@@ -493,21 +493,13 @@ public class VillageManager {
             }
             // Find missing mayors
             if (village.getMayor() == null) {
-                _plugin.debug("No mayor!");
                 if (village.getMayorSign() != null) {
-                    _plugin.debug("...but we have a sign.");
                     for (Entity entity : village.getMayorSign().getNearbyEntities(16, 16, 16)) {
                         if (entity.getType() == EntityType.VILLAGER) {
                             if (((CraftVillager) entity).isCustomNameVisible() && ((CraftVillager) entity).getCustomName().contains("Mayor of")) {
-                                _plugin.debug("Found a mayor. Making him mayor officially.");
                                 village.setMayor((Villager) entity);
                             }
                         }
-                    }
-                } else {
-                    _plugin.debug("...no sign?!");
-                    if (village.getMayorSignLocation() != null) {
-                        _plugin.debug(village.getMayorSignLocation().toString());
                     }
                 }
             }
