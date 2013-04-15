@@ -496,23 +496,25 @@ public class SiegeManager {
     
     private void buffMob(LivingEntity entity, int chance) {
         Collection<PotionEffect> effects = new ArrayList<PotionEffect>();
-        if(_plugin.getRandomNumber(0, 99) > chance) {
-             effects.add(new PotionEffect(PotionEffectType.INCREASE_DAMAGE, 24000, _plugin.getRandomNumber(1, 5), true));
+        int maxEffects = 2;
+        
+        if(_plugin.getRandomNumber(0, 99) < chance && effects.size() < maxEffects) {
+             effects.add(new PotionEffect(PotionEffectType.INCREASE_DAMAGE, _plugin.getRandomNumber(1, 2000), _plugin.getRandomNumber(1, 2), true));
         }
-        if(_plugin.getRandomNumber(0, 99) > chance) {
-             effects.add(new PotionEffect(PotionEffectType.JUMP, 24000, _plugin.getRandomNumber(1, 5), true));
+        if(_plugin.getRandomNumber(0, 99) < chance && effects.size() < maxEffects) {
+             effects.add(new PotionEffect(PotionEffectType.JUMP, _plugin.getRandomNumber(1, 2000), _plugin.getRandomNumber(1, 2), true));
         }
-        if(_plugin.getRandomNumber(0, 99) > chance) {
-             effects.add(new PotionEffect(PotionEffectType.INVISIBILITY, 24000, _plugin.getRandomNumber(1, 5), true));
+        if(_plugin.getRandomNumber(0, 99) < chance && effects.size() < maxEffects) {
+             effects.add(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, _plugin.getRandomNumber(1, 2000), _plugin.getRandomNumber(1, 2), true));
         }
-        if(_plugin.getRandomNumber(0, 99) > chance) {
-             effects.add(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, 24000, _plugin.getRandomNumber(1, 5), true));
+        if(_plugin.getRandomNumber(0, 99) < chance && effects.size() < maxEffects) {
+             effects.add(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, _plugin.getRandomNumber(1, 2000), _plugin.getRandomNumber(1, 2), true));
         }
-        if(_plugin.getRandomNumber(0, 99) > chance) {
-             effects.add(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 24000, _plugin.getRandomNumber(1, 5), true));
+        if(_plugin.getRandomNumber(0, 99) < chance && effects.size() < maxEffects) {
+             effects.add(new PotionEffect(PotionEffectType.SPEED, _plugin.getRandomNumber(1, 2000), _plugin.getRandomNumber(1, 2), true));
         }
-        if(_plugin.getRandomNumber(0, 99) > chance) {
-             effects.add(new PotionEffect(PotionEffectType.SPEED, 24000, _plugin.getRandomNumber(1, 5), true));
+        if(_plugin.getRandomNumber(0, 99) < chance && effects.size() < maxEffects) {
+             effects.add(new PotionEffect(PotionEffectType.INVISIBILITY, _plugin.getRandomNumber(1, 2000), _plugin.getRandomNumber(1, 2), true));
         }
         entity.addPotionEffects(effects);
     }

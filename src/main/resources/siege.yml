@@ -6,7 +6,12 @@
 siege:
   useCoreSiegeEvent: false
   nonCoreSiegeChance: 50
-  potionBuffChance: 50
+  potionBuffChance:
+    invisibility: 5
+    damage: 5
+    defense: 5
+    fire_resist: 5
+    speed: 5
   randomSpread: 3
   randomVerticalSpread: 5
   mobs:
@@ -27,7 +32,7 @@ siege:
       max: 20
     wolf:
       threshold: 20
-      chance: 40
+      chance: 100
       points: 5
       max: 20
     cave_spider:
