@@ -16,6 +16,14 @@ import org.bukkit.entity.Player;
  */
 public class CommandHandler implements CommandExecutor {
 
+    /**
+     *
+     * @param sender
+     * @param command
+     * @param label
+     * @param arguments
+     * @return
+     */
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] arguments) {
         if (command.getName().equalsIgnoreCase("uvv")) {

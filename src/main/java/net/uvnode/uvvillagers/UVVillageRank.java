@@ -15,6 +15,8 @@ public class UVVillageRank implements Comparable<UVVillageRank> {
      * @param name
      * @param threshold
      * @param multiplier
+     * @param isHostile 
+     * @param canTrade  
      */
     public UVVillageRank(String name, int threshold, double multiplier, boolean isHostile, boolean canTrade) {
         _name = name;
@@ -40,10 +42,18 @@ public class UVVillageRank implements Comparable<UVVillageRank> {
         this._name = name;
     }
     
+    /**
+     *
+     * @return
+     */
     public boolean canTrade() {
         return _canTrade;
     }
 
+    /**
+     *
+     * @return
+     */
     public boolean isHostile() {
         return _isHostile;
     }

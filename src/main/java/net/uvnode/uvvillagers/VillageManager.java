@@ -37,7 +37,6 @@ public class VillageManager {
      * Basic Constructor
      *
      * @param plugin The UVVillagers plugin reference.
-     * @param worldServer The WorldServer object for the world being managed.
      */
     public VillageManager(UVVillagers plugin) {
         _plugin = plugin;
@@ -71,6 +70,12 @@ public class VillageManager {
         //return worldServer.villages.getClosestVillage(location.getBlockX(), location.getBlockY(), location.getBlockZ(), maxDistance);
     }
 
+    /**
+     *
+     * @param location
+     * @param maxDistance
+     * @return
+     */
     public List<Village> getCoreVillagesNearLocation(Location location, int maxDistance) {
         WorldServer worldServer = ((CraftWorld) location.getWorld()).getHandle();
         List<Village> nearby = new ArrayList<Village>();
@@ -90,6 +95,11 @@ public class VillageManager {
         //return worldServer.villages.getClosestVillage(location.getBlockX(), location.getBlockY(), location.getBlockZ(), maxDistance);
     }
 
+    /**
+     *
+     * @param world
+     * @return
+     */
     public List<Village> getLoadedCoreVillages(World world) {
         WorldServer worldServer = ((CraftWorld) world).getHandle();
         return worldServer.villages.getVillages();
@@ -149,6 +159,7 @@ public class VillageManager {
     /**
      * Get a hashmap of all UVVillages
      *
+     * @param world 
      * @return hashmap of all known UVVillages
      */
     public Map<String, UVVillage> getAllVillages(World world) {
@@ -189,6 +200,11 @@ public class VillageManager {
         return villages;
     }
 
+    /**
+     *
+     * @param world
+     * @return
+     */
     public Map<String, UVVillage> getLoadedVillages(World world) {
         Map<String, UVVillage> villages = new HashMap<String, UVVillage>();
         if (_villages.containsKey(world.getName())) {
@@ -208,6 +224,7 @@ public class VillageManager {
     /**
      * Get a UVVillage object by its key.
      *
+     * @param world 
      * @param key The unique key for the village
      * @return A UVVillage object. Null if none is found.
      */
@@ -263,6 +280,7 @@ public class VillageManager {
     /**
      * Delete a UVVillage that no longer has a core village nearby
      *
+     * @param world 
      * @param key The unique key for the village
      */
     public void abandonVillage(World world, String key) {
@@ -279,6 +297,7 @@ public class VillageManager {
     /**
      * Step through our UVVillages and update their data from the nearest core
      * village (if there is one).
+     * @param world 
      */
     public void matchVillagesToCore(World world) {
         List<UVVillage> markedForAbandon = new ArrayList<UVVillage>();
@@ -334,6 +353,7 @@ public class VillageManager {
      * Loads the UVVillages from a configuration section.
      *
      * @param villageConfig The ConfigurationSection that holds the village data
+     * @param world  
      */
     public void loadVillages(ConfigurationSection villageConfig, World world) {
         // Load Village Data
@@ -393,6 +413,7 @@ public class VillageManager {
     /**
      * Renames a village.
      *
+     * @param world 
      * @param oldName The old name of the village.
      * @param newName The new name of the village.
      * @return True if successful, false if renaming failed.
@@ -459,6 +480,12 @@ public class VillageManager {
         return map;
     }
 
+    /**
+     *
+     * @param location
+     * @param player
+     * @param maxDistance
+     */
     public void updatePlayerProximity(Location location, Player player, Integer maxDistance) {
 
         // Get closest core village
@@ -552,6 +579,10 @@ public class VillageManager {
         }
     }
 
+    /**
+     *
+     * @param world
+     */
     public void tickProximityReputations(World world) {
         // Step through each village
         if (_villages.containsKey(world.getName())) {
@@ -602,6 +633,10 @@ public class VillageManager {
         }
     }
 
+    /**
+     *
+     * @param world
+     */
     protected void checkForMerge(World world) {
         List<String> markedForAbandon = new ArrayList<String>();
         if (!_villages.containsKey(world.getName())) {
@@ -655,6 +690,10 @@ public class VillageManager {
         return source;
     }
 
+    /**
+     *
+     * @param world
+     */
     protected void tickMayorMovement(World world) {
         if (_villages.containsKey(world.getName())) {
             for (Map.Entry<String, UVVillage> villageEntry : _villages.get(world.getName()).entrySet()) {

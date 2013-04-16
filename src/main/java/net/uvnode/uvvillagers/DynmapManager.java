@@ -27,10 +27,18 @@ public class DynmapManager implements Listener {
     int normalColor = 0x009900;
     int siegeColor = 0xFF0000;
     boolean _enabled = false;
+    /**
+     *
+     * @param plugin
+     */
     public DynmapManager(UVVillagers plugin) {
         _plugin = plugin;
     }
     
+    /**
+     *
+     * @return
+     */
     protected boolean enable() {
         try {
             PluginManager pm = _plugin.getServer().getPluginManager();
@@ -60,6 +68,9 @@ public class DynmapManager implements Listener {
         }
     }
 
+    /**
+     *
+     */
     protected void disable() {
         if (set != null) {
             set.deleteMarkerSet();
@@ -280,6 +291,10 @@ public class DynmapManager implements Listener {
         }
     }
     
+    /**
+     *
+     * @return
+     */
     public boolean isEnabled() {
         return _enabled;
     }

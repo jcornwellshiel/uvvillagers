@@ -69,11 +69,33 @@ public final class UVVillagers extends JavaPlugin implements Listener {
     private Integer _villagerValue;
     private Integer _babyVillagerValue;
     private Integer _ironGolemValue;
+    /**
+     *
+     */
     protected Integer _emeraldTributeItem = -1;
-    protected String _tributeType = "emerald", _tributeMethod = "direct";
+    /**
+     *
+     */
+    protected String _tributeType = "emerald",
+    /**
+     *
+     */
+    _tributeMethod = "direct";
+    /**
+     *
+     */
     protected int _villageMinPopulation = 1;
+    /**
+     *
+     */
     protected int _minStartingReputation;
+    /**
+     *
+     */
     protected int _maxStartingReputation;
+    /**
+     *
+     */
     protected int _discoverBonus;
 
     /**
@@ -967,6 +989,10 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         return false;
     }
     
+    /**
+     *
+     * @param message
+     */
     protected void debug(String message) {
         if (_debug) {
             getLogger().info(message);

@@ -30,9 +30,21 @@ import org.bukkit.potion.PotionEffectType;
 public class SiegeManager {
 
     private UVVillagers _plugin;
+    /**
+     *
+     */
     protected Map<String, UVSiege> _currentSieges = new HashMap<String, UVSiege>();
+    /**
+     *
+     */
     protected boolean _useCoreSieges;
+    /**
+     *
+     */
     protected int _nonCoreSiegeChance;
+    /**
+     *
+     */
     protected ConfigurationSection _siegeConfig;
     
     /**
@@ -71,6 +83,7 @@ public class SiegeManager {
     /**
      * Check to see if a siege is happening.
      *
+     * @param world 
      * @return True if a siege is active, false if not.
      */
     public boolean isSiegeActive(World world) {
@@ -79,6 +92,7 @@ public class SiegeManager {
 
     /**
      * Trigger end-of-siege processing
+     * @param world 
      */
     public void endSiege(World world) {
         // If there was a siege, do stuff. Otherwise do nothing.
@@ -91,6 +105,7 @@ public class SiegeManager {
 
     /**
      * Null out the current siege.
+     * @param world 
      */
     public void clearSiege(World world) {
         // Null out the siege object
@@ -329,7 +344,8 @@ public class SiegeManager {
     /**
      * Get the chance of this mob type receiving this potion buff
      *
-     * @param entity mob type
+     * @param type 
+     * @param potionType 
      * @return point value
      */
     protected Integer getPotionChance(String type, String potionType) {
@@ -338,7 +354,7 @@ public class SiegeManager {
     /**
      * Get the chance of this mob type receiving this potion buff
      *
-     * @param entity mob type
+     * @param type 
      * @return point value
      */
     protected Integer getMaxPotions(String type) {
@@ -377,6 +393,7 @@ public class SiegeManager {
      * Get the number of kills a player got during the current siege
      *
      * @param name player name
+     * @param world 
      * @return kill count
      */
     public int getPlayerKills(String name, World world) {
@@ -390,6 +407,7 @@ public class SiegeManager {
     /**
      * Get the village associated with the active siege
      *
+     * @param world 
      * @return village object
      */
     public UVVillage getVillage(World world) {
@@ -400,6 +418,11 @@ public class SiegeManager {
         }
     }
     
+    /**
+     *
+     * @param world
+     * @return
+     */
     public ArrayList<String> getSiegeInfo(World world) {
         if (_currentSieges.get(world.getName()) != null) {
             return _currentSieges.get(world.getName()).overviewMessage();

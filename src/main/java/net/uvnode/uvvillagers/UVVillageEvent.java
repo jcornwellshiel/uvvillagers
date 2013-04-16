@@ -53,6 +53,10 @@ public class UVVillageEvent extends Event {
     public String getMessage() {
         return "Village " + _key + " " + _type.toString();
     }
+    /**
+     *
+     * @return
+     */
     public String getWorld() {
         return (String) _data;
     }

@@ -27,6 +27,9 @@ import org.powermock.modules.junit4.PowerMockRunner;
 //@PrepareForTest(Village.class)
 public class UVVillageTest {
     
+    /**
+     *
+     */
     @Test
     public void setCorePlayerReputation() {
         /*Village mockVillage = PowerMockito.mock(Village.class);*/
