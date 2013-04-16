@@ -30,15 +30,10 @@ import org.bukkit.potion.PotionEffectType;
 public class SiegeManager {
 
     private UVVillagers _plugin;
-    protected Map<String, UVSiege> _currentSieges = new HashMap<String, UVSiege>();;
-    protected Map<String, Integer> _populationThresholds = new HashMap<String, Integer>();
-    protected Map<String, Integer> _killValues = new HashMap<String, Integer>();
-    protected Map<String, Integer> _chanceOfExtraMobs = new HashMap<String, Integer>();
-    protected Map<String, Integer> _maxExtraMobs = new HashMap<String, Integer>();
-    protected int _spawnSpread;
-    protected int _spawnVSpread;
+    protected Map<String, UVSiege> _currentSieges = new HashMap<String, UVSiege>();
     protected boolean _useCoreSieges;
-    protected int _nonCoreSiegeChance, _potionBuffChance;
+    protected int _nonCoreSiegeChance;
+    protected ConfigurationSection _siegeConfig;
     
     /**
      * Basic Constructor
@@ -46,7 +41,7 @@ public class SiegeManager {
      * @param plugin The UVVillagers plugin
      */
     public SiegeManager(UVVillagers plugin) {
-        _plugin = plugin;;
+        _plugin = plugin;
     }
 
     /**
@@ -55,80 +50,7 @@ public class SiegeManager {
      * @param siegeSection The configuration section to load from.
      */
     public void loadConfig(ConfigurationSection siegeSection) {
-        _useCoreSieges = siegeSection.getBoolean("useCoreSiegeEvent");
-        
-        _nonCoreSiegeChance = siegeSection.getInt("nonCoreSiegeChance");
-        
-        _potionBuffChance = siegeSection.getInt("potionBuffChance");
-        
-        _spawnSpread = siegeSection.getInt("randomSpread");
-        _spawnVSpread = siegeSection.getInt("randomVerticalSpread");
-
-        _chanceOfExtraMobs.put("ZOMBIE", siegeSection.getInt("mobs.zombie.chance"));
-        _populationThresholds.put("ZOMBIE", siegeSection.getInt("mobs.zombie.threshold"));
-        _maxExtraMobs.put("ZOMBIE", siegeSection.getInt("mobs.zombie.max"));
-        _killValues.put("ZOMBIE", siegeSection.getInt("mobs.zombie.points"));
-
-        _chanceOfExtraMobs.put("SKELETON_NORMAL", siegeSection.getInt("mobs.skeleton.chance"));
-        _populationThresholds.put("SKELETON_NORMAL", siegeSection.getInt("mobs.skeleton.threshold"));
-        _maxExtraMobs.put("SKELETON_NORMAL", siegeSection.getInt("mobs.skeleton.max"));
-        _killValues.put("SKELETON_NORMAL", siegeSection.getInt("mobs.skeleton.points"));
-
-        _chanceOfExtraMobs.put("SPIDER", siegeSection.getInt("mobs.spider.chance"));
-        _populationThresholds.put("SPIDER", siegeSection.getInt("mobs.spider.threshold"));
-        _maxExtraMobs.put("SPIDER", siegeSection.getInt("mobs.spider.max"));
-        _killValues.put("SPIDER", siegeSection.getInt("mobs.spider.points"));
-
-        _chanceOfExtraMobs.put("CAVE_SPIDER", siegeSection.getInt("mobs.cave_spider.chance"));
-        _populationThresholds.put("CAVE_SPIDER", siegeSection.getInt("mobs.cave_spider.threshold"));
-        _maxExtraMobs.put("CAVE_SPIDER", siegeSection.getInt("mobs.cave_spider.max"));
-        _killValues.put("CAVE_SPIDER", siegeSection.getInt("mobs.cave_spider.points"));
-
-        _chanceOfExtraMobs.put("PIG_ZOMBIE", siegeSection.getInt("mobs.pig_zombie.chance"));
-        _populationThresholds.put("PIG_ZOMBIE", siegeSection.getInt("mobs.pig_zombie.threshold"));
-        _maxExtraMobs.put("PIG_ZOMBIE", siegeSection.getInt("mobs.pig_zombie.max"));
-        _killValues.put("PIG_ZOMBIE", siegeSection.getInt("mobs.pig_zombie.points"));
-
-        _chanceOfExtraMobs.put("BLAZE", siegeSection.getInt("mobs.blaze.chance"));
-        _populationThresholds.put("BLAZE", siegeSection.getInt("mobs.blaze.threshold"));
-        _maxExtraMobs.put("BLAZE", siegeSection.getInt("mobs.blaze.max"));
-        _killValues.put("BLAZE", siegeSection.getInt("mobs.blaze.points"));
-
-        _chanceOfExtraMobs.put("WITCH", siegeSection.getInt("mobs.witch.chance"));
-        _populationThresholds.put("WITCH", siegeSection.getInt("mobs.witch.threshold"));
-        _maxExtraMobs.put("WITCH", siegeSection.getInt("mobs.witch.max"));
-        _killValues.put("WITCH", siegeSection.getInt("mobs.witch.points"));
-
-        _chanceOfExtraMobs.put("MAGMA_CUBE", siegeSection.getInt("mobs.magma_cube.chance"));
-        _populationThresholds.put("MAGMA_CUBE", siegeSection.getInt("mobs.magma_cube.threshold"));
-        _maxExtraMobs.put("MAGMA_CUBE", siegeSection.getInt("mobs.magma_cube.max"));
-        _killValues.put("MAGMA_CUBE", siegeSection.getInt("mobs.magma_cube.points"));
-        
-        _chanceOfExtraMobs.put("SKELETON_WITHER", siegeSection.getInt("mobs.wither_skeleton.chance"));
-        _populationThresholds.put("SKELETON_WITHER", siegeSection.getInt("mobs.wither_skeleton.threshold"));
-        _maxExtraMobs.put("SKELETON_WITHER", siegeSection.getInt("mobs.wither_skeleton.max"));
-        _killValues.put("SKELETON_WITHER", siegeSection.getInt("mobs.wither_skeleton.points"));
-
-        _chanceOfExtraMobs.put("ENDERMAN", siegeSection.getInt("mobs.enderman.chance"));
-        _populationThresholds.put("ENDERMAN", siegeSection.getInt("mobs.enderman.threshold"));
-        _maxExtraMobs.put("ENDERMAN", siegeSection.getInt("mobs.enderman.max"));
-        _killValues.put("ENDERMAN", siegeSection.getInt("mobs.enderman.points"));
-
-        _chanceOfExtraMobs.put("GHAST", siegeSection.getInt("mobs.ghast.chance"));
-        _populationThresholds.put("GHAST", siegeSection.getInt("mobs.ghast.threshold"));
-        _maxExtraMobs.put("GHAST", siegeSection.getInt("mobs.ghast.max"));
-        _killValues.put("GHAST", siegeSection.getInt("mobs.ghast.points"));
-
-        _chanceOfExtraMobs.put("WITHER", siegeSection.getInt("mobs.wither.chance"));
-        _populationThresholds.put("WITHER", siegeSection.getInt("mobs.wither.threshold"));
-        _maxExtraMobs.put("WITHER", siegeSection.getInt("mobs.wither.max"));
-        _killValues.put("WITHER", siegeSection.getInt("mobs.wither.points"));
-
-        _chanceOfExtraMobs.put("ENDER_DRAGON", siegeSection.getInt("mobs.ender_dragon.chance"));
-        _populationThresholds.put("ENDER_DRAGON", siegeSection.getInt("mobs.ender_dragon.threshold"));
-        _maxExtraMobs.put("ENDER_DRAGON", siegeSection.getInt("mobs.ender_dragon.max"));
-        _killValues.put("ENDER_DRAGON", siegeSection.getInt("mobs.ender_dragon.points"));
-        _plugin.getLogger().info(String.format("Loaded %d siege mob definitions.", _chanceOfExtraMobs.size(), _populationThresholds.size(), _maxExtraMobs.size(), _killValues.size(), _chanceOfExtraMobs.size()));
+        _siegeConfig = siegeSection;
     }
 
     /**
@@ -136,14 +58,14 @@ public class SiegeManager {
      * @return whether we're listening for core siege events
      */
     public boolean usingCoreSieges() {
-        return _useCoreSieges;
+        return _siegeConfig.getBoolean("useCoreSiegeEvent");
     }
     /**
      * Get the chance of a non-core siege
      * @return chance of non-core siege (1-100)
      */
     public int getChanceOfSiege() {
-        return _nonCoreSiegeChance;
+        return _siegeConfig.getInt("nonCoreSiegeChance");
     }
     
     /**
@@ -301,9 +223,9 @@ public class SiegeManager {
 
                             // Randomize the location for this spawn
                             Location spawnLocation = location.clone();
-                            int xOffset = _plugin.getRandomNumber(_spawnSpread * -1, _spawnSpread);
-                            int yOffset = _plugin.getRandomNumber(0, _spawnVSpread);
-                            int zOffset = _plugin.getRandomNumber(_spawnSpread * -1, _spawnSpread);
+                            int xOffset = _plugin.getRandomNumber(_siegeConfig.getInt("randomSpread") * -1, _siegeConfig.getInt("randomSpread"));
+                            int yOffset = _plugin.getRandomNumber(0, _siegeConfig.getInt("randomVerticalSpread"));
+                            int zOffset = _plugin.getRandomNumber(_siegeConfig.getInt("randomSpread") * -1, _siegeConfig.getInt("randomSpread"));
                             spawnLocation.setX(spawnLocation.getX() + xOffset);
                             spawnLocation.setY(spawnLocation.getY() + yOffset);
                             spawnLocation.setZ(spawnLocation.getZ() + zOffset);
@@ -364,11 +286,7 @@ public class SiegeManager {
      * @return chance out of 100
      */
     protected int getExtraMobChance(String type) {
-        if (_chanceOfExtraMobs.containsKey(type)) {
-            return _chanceOfExtraMobs.get(type);
-        } else {
-            return 0;
-        }
+        return _siegeConfig.getInt(String.format("mobs.%s.chance", type.toLowerCase()));
     }
 
     /**
@@ -378,11 +296,7 @@ public class SiegeManager {
      * @return max
      */
     protected int getMaxToSpawn(String type) {
-        if (_maxExtraMobs.containsKey(type)) {
-            return _maxExtraMobs.get(type);
-        } else {
-            return 0;
-        }
+        return _siegeConfig.getInt(String.format("mobs.%s.max", type.toLowerCase()));
     }
 
     /**
@@ -392,11 +306,7 @@ public class SiegeManager {
      * @return minimum population
      */
     protected int getPopulationThreshold(String type) {
-        if (_populationThresholds.containsKey(type)) {
-            return _populationThresholds.get(type);
-        } else {
-            return 999;
-        }
+        return _siegeConfig.getInt(String.format("mobs.%s.threshold", type.toLowerCase()));
     }
 
     /**
@@ -406,27 +316,33 @@ public class SiegeManager {
      * @return point value
      */
     protected Integer getKillValue(LivingEntity entity) {
-        
-        _plugin.debug(_killValues.toString());
-        _plugin.debug(_killValues.keySet().toString());
-        _plugin.debug(_killValues.keySet().toArray().toString());
-        String typeString = entity.getType().toString();
-        _plugin.debug(typeString);
+        String type = entity.getType().toString();
+        _plugin.debug(type);
         // Is it a skeleton? If so add skeleton type
         if (entity.getType() == EntityType.SKELETON) {
-            typeString += "_" + ((Skeleton) entity).getSkeletonType().toString();
+            type += "_" + ((Skeleton) entity).getSkeletonType().toString();
         }
-        _plugin.debug(typeString);
         
-        if (_killValues.containsKey(typeString)) {
-            // Yes! Return it!
-            return _killValues.get(typeString);
-        } else {
-            // Return 0! No points for unknowns!
-            _plugin.debug("Kill value not found");
-
-            return 0;
-        }
+        return _siegeConfig.getInt(String.format("mobs.%s.points", type.toLowerCase()));
+    }
+    
+    /**
+     * Get the chance of this mob type receiving this potion buff
+     *
+     * @param entity mob type
+     * @return point value
+     */
+    protected Integer getPotionChance(String type, String potionType) {
+        return _siegeConfig.getInt(String.format("mobs.%s.potionChance.%s", type.toLowerCase(), potionType.toLowerCase()));
+    }
+    /**
+     * Get the chance of this mob type receiving this potion buff
+     *
+     * @param entity mob type
+     * @return point value
+     */
+    protected Integer getMaxPotions(String type) {
+        return _siegeConfig.getInt(String.format("mobs.%s.max_potions", type.toLowerCase()));
     }
 
     /**
@@ -496,25 +412,11 @@ public class SiegeManager {
     
     private void buffMob(LivingEntity entity, int chance) {
         Collection<PotionEffect> effects = new ArrayList<PotionEffect>();
-        int maxEffects = 2;
-        
-        if(_plugin.getRandomNumber(0, 99) < chance && effects.size() < maxEffects) {
-             effects.add(new PotionEffect(PotionEffectType.INCREASE_DAMAGE, _plugin.getRandomNumber(1, 2000), _plugin.getRandomNumber(1, 2), true));
-        }
-        if(_plugin.getRandomNumber(0, 99) < chance && effects.size() < maxEffects) {
-             effects.add(new PotionEffect(PotionEffectType.JUMP, _plugin.getRandomNumber(1, 2000), _plugin.getRandomNumber(1, 2), true));
-        }
-        if(_plugin.getRandomNumber(0, 99) < chance && effects.size() < maxEffects) {
-             effects.add(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, _plugin.getRandomNumber(1, 2000), _plugin.getRandomNumber(1, 2), true));
-        }
-        if(_plugin.getRandomNumber(0, 99) < chance && effects.size() < maxEffects) {
-             effects.add(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, _plugin.getRandomNumber(1, 2000), _plugin.getRandomNumber(1, 2), true));
-        }
-        if(_plugin.getRandomNumber(0, 99) < chance && effects.size() < maxEffects) {
-             effects.add(new PotionEffect(PotionEffectType.SPEED, _plugin.getRandomNumber(1, 2000), _plugin.getRandomNumber(1, 2), true));
-        }
-        if(_plugin.getRandomNumber(0, 99) < chance && effects.size() < maxEffects) {
-             effects.add(new PotionEffect(PotionEffectType.INVISIBILITY, _plugin.getRandomNumber(1, 2000), _plugin.getRandomNumber(1, 2), true));
+        String type = entity.getType().getName();
+        for (PotionEffectType potionType : PotionEffectType.values()) {
+            if(_plugin.getRandomNumber(0, 99) < getPotionChance(type, potionType.toString()) && effects.size() < getMaxPotions(type)) {
+                effects.add(new PotionEffect(potionType, _plugin.getRandomNumber(1, 2000), _plugin.getRandomNumber(1, 2), true));
+            }
         }
         entity.addPotionEffects(effects);
     }

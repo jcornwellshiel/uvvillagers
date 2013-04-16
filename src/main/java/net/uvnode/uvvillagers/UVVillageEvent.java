@@ -17,7 +17,6 @@ public class UVVillageEvent extends Event {
     private UVVillageEventType _type;
     private String _key;
     private Object _data;
-
     /**
      * Base constructor
      *
@@ -53,6 +52,9 @@ public class UVVillageEvent extends Event {
      */
     public String getMessage() {
         return "Village " + _key + " " + _type.toString();
+    }
+    public String getWorld() {
+        return (String) _data;
     }
 
     /**

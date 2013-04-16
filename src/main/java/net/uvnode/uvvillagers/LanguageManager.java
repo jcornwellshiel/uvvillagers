@@ -14,7 +14,6 @@ import java.util.Map;
 public class LanguageManager {
     private Map<String,String> _strings;
     
-    
     public LanguageManager(Map<String,Object> strings) {
         _strings = new HashMap<String, String>();
         for(Map.Entry<String, Object> string : strings.entrySet()) {

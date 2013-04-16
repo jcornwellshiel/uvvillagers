@@ -232,7 +232,12 @@ public class VillageManager {
         UVVillage newVillage = new UVVillage(location, village, _plugin);
         newVillage.setCreated();
         // Name it! "[player]ville @ X,Y,Z"
-        String name = String.format(_plugin.getLanguageManager().getString("village_default_name"), player.getName(), location.getBlockX(), location.getBlockY(), location.getBlockZ());
+        Integer x = location.getBlockX(), y = location.getBlockY(), z = location.getBlockZ();
+        String name = _plugin.getLanguageManager().getString("village_default_name")
+                .replace("@player", player.getName())
+                .replace("@x", x.toString())
+                .replace("@y", y.toString())
+                .replace("@z", z.toString());
         newVillage.setName(name);
 
         // Grant discoverer bonus rep!
@@ -267,7 +272,7 @@ public class VillageManager {
         }
 
         // Throw an ABANDONED event!
-        UVVillageEvent event = new UVVillageEvent((UVVillage) null, key, UVVillageEventType.ABANDONED);
+        UVVillageEvent event = new UVVillageEvent((UVVillage) null, key, UVVillageEventType.ABANDONED, world.getName());
         _plugin.getServer().getPluginManager().callEvent(event);
     }
 
@@ -440,7 +445,7 @@ public class VillageManager {
                     v.put("sign_z", -1);
                 }
                 v.put("size", villageEntry.getValue().getSize());
-                v.put("doors", villageEntry.getValue().getDoors());
+                v.put("doors", villageEntry.getValue().getDoorCount());
                 v.put("population", villageEntry.getValue().getPopulation());
                 v.put("pr", villageEntry.getValue().getPlayerReputations());
                 v.put("created", villageEntry.getValue().getCreatedString());
@@ -476,7 +481,7 @@ public class VillageManager {
                 // Discover one, and get it.
                 village = discoverVillage(coreVillageLocation, coreVillage, player);
                 // Announce that the player has discovered a lovely new UVVillage.
-                player.sendMessage(String.format(_plugin.getLanguageManager().getString("village_discovered"), village.getName()));
+                player.sendMessage(_plugin.getLanguageManager().getString("village_discovered").replace("@village", village.getName()));
             }
 
             if (village == null) {
@@ -484,7 +489,7 @@ public class VillageManager {
                     for (Map.Entry<String, UVVillage> villageEntry : worldEntry.getValue().entrySet()) {
                         // If the player was in this village previously, let them know they left.
                         if (villageEntry.getValue().isPlayerHere(player.getName())) {
-                            player.sendMessage(String.format(_plugin.getLanguageManager().getString("village_leave"), villageEntry.getValue().getName()));
+                            player.sendMessage(_plugin.getLanguageManager().getString("village_leave").replace("@village", villageEntry.getValue().getName()));
                         }
                         villageEntry.getValue().setPlayerGone(player.getName());
                     }
@@ -515,7 +520,7 @@ public class VillageManager {
                 }
                 // No, the village didn't know he was here yet.
                 // Announce to the player that he's in a new UVVillage.
-                player.sendMessage(String.format(_plugin.getLanguageManager().getString("village_enter"), village.getName(), _plugin.getRank(village.getPlayerReputation(player.getName())).getName()));
+                player.sendMessage(_plugin.getLanguageManager().getString("village_enter").replace("@village", village.getName()).replace("@reputation", _plugin.getRank(village.getPlayerReputation(player.getName())).getName()));
                 // Tell the village that the player is present.
                 village.setPlayerHere(player.getName());
                 // Loop through all the villages
@@ -525,7 +530,7 @@ public class VillageManager {
                         if (!villageEntry.getKey().equalsIgnoreCase(village.getName())) {
                             // If the player was in this village previously, let them know they left.
                             if (villageEntry.getValue().isPlayerHere(player.getName())) {
-                                player.sendMessage(String.format(_plugin.getLanguageManager().getString("village_leave"), villageEntry.getValue().getName()));
+                                player.sendMessage(_plugin.getLanguageManager().getString("village_leave").replace("@village", villageEntry.getValue().getName()));
                             }
                             villageEntry.getValue().setPlayerGone(player.getName());
                         }
@@ -539,7 +544,7 @@ public class VillageManager {
                 for (Map.Entry<String, UVVillage> villageEntry : worldEntry.getValue().entrySet()) {
                     // If the player was in this village previously, let them know they left.
                     if (villageEntry.getValue().isPlayerHere(player.getName())) {
-                        player.sendMessage(String.format(_plugin.getLanguageManager().getString("village_leave"), villageEntry.getValue().getName()));
+                        player.sendMessage(_plugin.getLanguageManager().getString("village_leave").replace("@village", villageEntry.getValue().getName()));
                     }
                     villageEntry.getValue().setPlayerGone(player.getName());
                 }
