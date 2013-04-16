@@ -652,7 +652,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         debug(event.getMessage());
         switch (event.getType()) {
             case SIEGE_BEGAN:
-                getServer().broadcastMessage(ChatColor.RED + String.format(getLanguageManager().getString("siege_began"), event.getKey()));
+                getServer().broadcastMessage(ChatColor.RED + getLanguageManager().getString("siege_began").replace("@village", event.getKey()));
                 break;
             case SIEGE_ENDED:
                 ArrayList<String> messages = event.getSiegeMessage();
@@ -662,10 +662,10 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                 }
                 break;
             case ABANDONED:
-                getServer().broadcastMessage(ChatColor.DARK_GRAY + String.format(getLanguageManager().getString("village_abandoned"), event.getKey()));
+                getServer().broadcastMessage(ChatColor.DARK_GRAY + getLanguageManager().getString("village_abandoned").replace("@village", event.getKey()));
                 break;
             case MERGED:
-                getServer().broadcastMessage(ChatColor.GRAY + String.format(getLanguageManager().getString("village_merged"), event.getKey(), event.getMergeMessage()));
+                getServer().broadcastMessage(ChatColor.GRAY + getLanguageManager().getString("village_merged").replace("@village", event.getKey()).replace("@newvillage", event.getMergeMessage()));
                 break;
             default:
                 break;
