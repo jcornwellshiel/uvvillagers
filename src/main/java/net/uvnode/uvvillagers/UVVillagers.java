@@ -120,7 +120,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         villageConfiguration = new FileManager(this, "villages.yml");
         siegeConfiguration = new FileManager(this, "siege.yml");
         
-        readVillageConfig(getServer().getWorlds().get(0));
+        readAllVillageConfigs();//(getServer().getWorlds().get(0));
         readSiegeConfig();
         
         languageConfiguration = new FileManager(this, "language.yml");
