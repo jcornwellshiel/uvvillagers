@@ -9,7 +9,6 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.craftbukkit.v1_5_R2.inventory.CraftItemStack;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.PigZombie;
@@ -253,7 +252,8 @@ public class SiegeManager {
                             if (skeletonType == SkeletonType.WITHER) {
                                 Skeleton spawn = (Skeleton) location.getWorld().spawnEntity(spawnLocation, type);
                                 spawn.setSkeletonType(SkeletonType.WITHER);
-                                switch(_plugin.getRandomNumber(0, 2)) {
+                                
+                                switch(_plugin.getRandomNumber(0, 3)) {
                                     case 0: 
                                         spawn.getEquipment().setItemInHand(new ItemStack(Material.STONE_SWORD));
                                         break;
@@ -261,6 +261,9 @@ public class SiegeManager {
                                         spawn.getEquipment().setItemInHand(new ItemStack(Material.IRON_SWORD));
                                         break;
                                     case 2: 
+                                        spawn.getEquipment().setItemInHand(new ItemStack(Material.GOLD_SWORD));
+                                        break;
+                                    case 3: 
                                         spawn.getEquipment().setItemInHand(new ItemStack(Material.DIAMOND_SWORD));
                                         break;
                                 }
@@ -276,6 +279,20 @@ public class SiegeManager {
                                 }
                                 // If it's a zombie pigman, make it angry
                                 if (type == EntityType.PIG_ZOMBIE) {
+                                    switch(_plugin.getRandomNumber(0, 3)) {
+                                        case 0: 
+                                            spawn.getEquipment().setItemInHand(new ItemStack(Material.STONE_SWORD));
+                                            break;
+                                        case 1: 
+                                            spawn.getEquipment().setItemInHand(new ItemStack(Material.IRON_SWORD));
+                                            break;
+                                        case 2: 
+                                            spawn.getEquipment().setItemInHand(new ItemStack(Material.GOLD_SWORD));
+                                            break;
+                                        case 3: 
+                                            spawn.getEquipment().setItemInHand(new ItemStack(Material.DIAMOND_SWORD));
+                                            break;
+                                    }
                                     ((PigZombie) spawn).setAngry(true);
                                     ((PigZombie) spawn).setAnger(24000);
                                 }
@@ -438,7 +455,12 @@ public class SiegeManager {
         String type = entity.getType().getName();
         for (PotionEffectType potionType : PotionEffectType.values()) {
             if(_plugin.getRandomNumber(0, 99) < getPotionChance(type, potionType.toString()) && effects.size() < getMaxPotions(type)) {
-                effects.add(new PotionEffect(potionType, _plugin.getRandomNumber(1, 2000), _plugin.getRandomNumber(1, 2), true));
+                effects.add(
+                        new PotionEffect(
+                            potionType, 
+                            _plugin.getRandomNumber(_siegeConfig.getInt("potionMinDuration"), _siegeConfig.getInt("potionMaxDuration")), 
+                            _plugin.getRandomNumber(_siegeConfig.getInt("potionMinPower"), _siegeConfig.getInt("potionMaxPower")), 
+                            true));
             }
         }
         entity.addPotionEffects(effects);

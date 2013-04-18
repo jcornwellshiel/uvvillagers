@@ -6,6 +6,10 @@
 siege:
   useCoreSiegeEvent: false
   nonCoreSiegeChance: 50
+  potionMinDuration: 0
+  potionMaxDuration: 2000
+  potionMinPower: 1
+  potionMaxPower: 2
   randomSpread: 3
   randomVerticalSpread: 5
   mobs:

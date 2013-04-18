@@ -1,6 +1,6 @@
 name: UVVillagers
 main: net.uvnode.uvvillagers.UVVillagers
-version: 1.1.16
+version: 1.2.0
 load: POSTWORLD
 author: jcornwellshiel
 website: uv-node.net
