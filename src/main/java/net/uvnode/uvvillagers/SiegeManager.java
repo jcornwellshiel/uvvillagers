@@ -366,7 +366,7 @@ public class SiegeManager {
      * @return point value
      */
     protected Integer getPotionChance(String type, String potionType) {
-        return _siegeConfig.getInt(String.format("mobs.%s.potionChance.%s", type.toLowerCase(), potionType.toLowerCase()));
+        return _siegeConfig.getInt(String.format("mobs.%s.potions.%s", type.toLowerCase(), potionType.toLowerCase()), 0);
     }
     /**
      * Get the chance of this mob type receiving this potion buff
@@ -375,7 +375,7 @@ public class SiegeManager {
      * @return point value
      */
     protected Integer getMaxPotions(String type) {
-        return _siegeConfig.getInt(String.format("mobs.%s.max_potions", type.toLowerCase()));
+        return _siegeConfig.getInt(String.format("mobs.%s.max_potions", type.toLowerCase()), 0);
     }
 
     /**
@@ -453,15 +453,23 @@ public class SiegeManager {
     private void buffMob(LivingEntity entity, int chance) {
         Collection<PotionEffect> effects = new ArrayList<PotionEffect>();
         String type = entity.getType().getName();
-        for (PotionEffectType potionType : PotionEffectType.values()) {
-            if(_plugin.getRandomNumber(0, 99) < getPotionChance(type, potionType.toString()) && effects.size() < getMaxPotions(type)) {
-                effects.add(
-                        new PotionEffect(
-                            potionType, 
-                            _plugin.getRandomNumber(_siegeConfig.getInt("potionMinDuration"), _siegeConfig.getInt("potionMaxDuration")), 
-                            _plugin.getRandomNumber(_siegeConfig.getInt("potionMinPower"), _siegeConfig.getInt("potionMaxPower")), 
-                            true));
+        try {
+            for (PotionEffectType potionType : PotionEffectType.values()) {
+                if(potionType != null) {
+                    if (getPotionChance(type, potionType.getName()) > 0) {
+                        if(_plugin.getRandomNumber(0, 99) < getPotionChance(type, potionType.getName()) && effects.size() < getMaxPotions(type)) {
+                            effects.add(
+                                    new PotionEffect(
+                                        potionType, 
+                                        _plugin.getRandomNumber(_siegeConfig.getInt("potionMinDuration"), _siegeConfig.getInt("potionMaxDuration")), 
+                                        _plugin.getRandomNumber(_siegeConfig.getInt("potionMinPower"), _siegeConfig.getInt("potionMaxPower")), 
+                                        true));
+                        }
+                    }
+                }
             }
+        } catch(Exception e) {
+            e.printStackTrace();
         }
         entity.addPotionEffects(effects);
     }

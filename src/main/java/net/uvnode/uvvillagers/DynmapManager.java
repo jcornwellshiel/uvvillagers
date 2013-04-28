@@ -263,7 +263,11 @@ public class DynmapManager implements Listener {
         _plugin.debug(String.format("Dynmap: %s fired UVVillageEvent %s", event.getKey(), event.getType()));
         switch (event.getType()) {
             case DISCOVERED:
-                createMarker(event.getVillage(), event.getKey());
+                if (event.getVillage() != null) {
+                    createMarker(event.getVillage(), event.getKey());
+                } else {
+                    _plugin.getLogger().info("Tried to create a village marker for a null village!");
+                }
                 break;
             case ABANDONED:
                 deleteMarker(event.getKey(), event.getWorld());
