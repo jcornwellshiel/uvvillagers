@@ -58,6 +58,8 @@ public class UVVillage {
         _maxY = Integer.MIN_VALUE;
         _minZ = Integer.MAX_VALUE;
         _maxZ = Integer.MIN_VALUE;
+        _name = "";
+        _numDoors = 0;
         _plugin = plugin;
         _abandonStrikes = 0;
         _location = location;
@@ -91,6 +93,7 @@ public class UVVillage {
         _size = size;
         _playerReputations = playerReputations;
         _villageCore = null;
+        _name = "";
         _abandonStrikes = 0;
     }
 
