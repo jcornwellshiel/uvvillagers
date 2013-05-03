@@ -1,0 +1,64 @@
+mode: emerald
+range: 64
+time: dawn
+emeraldMode:
+  itemId: 388
+  itemName: Emerald
+  villagerGroupSize: 20
+  minPerGroup: 0
+  maxPerGroup: 3
+  siegeBonus: 1
+  minPerSiegeKill: 1
+  maxPerSiegeKill: 2
+professionMode:
+  villagerGroupSize: 5
+  minValuePerVillagerGroup: 1
+  maxValuePerVillagerGroup: 10
+  blacksmith:
+    - 263:
+      value: 1
+      threshold: 1
+    - 265:
+      value: 5
+      threshold: 5
+    - 266:
+      value: 10
+      threshold: 10
+    - 264:
+      value: 20
+      threshold: 20
+  butcher: 
+    #wool, leather, raw chicken, raw pork, raw steak
+    - 35:
+      value: 1
+      threshold: 1
+    - 334:
+      value: 10
+      threshold: 10
+    - 365:
+      value: 15
+      threshold: 15
+    - 319:
+      value: 20
+      threshold: 20
+    - 363:
+      value: 25
+      threshold: 25
+  farmer:
+    - 264:
+      value: 1
+      threshold: 1
+  librarian:
+    - 339:
+      value: 10
+      threshold: 1
+    - 340:
+      value: 20
+      threshold: 1
+    - 358:
+      value: 50
+      threshold: 1
+  priest:
+    - 264:
+      value: 1
+      threshold: 1

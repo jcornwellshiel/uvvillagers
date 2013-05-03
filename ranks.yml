@@ -1,0 +1,41 @@
+ranks:
+  hated:
+    threshold: -1000
+    multiplier: 0.0
+    isHostile: true
+    canTrade: false
+  hostile:
+    threshold: -100
+    multiplier: 0.0
+    isHostile: true
+    canTrade: false
+  unfriendly:
+    threshold: -10
+    multiplier: 0.0
+    isHostile: true
+    canTrade: true
+  neutral:
+    threshold: 0
+    multiplier: 0.25
+    isHostile: false
+    canTrade: true
+  friendly:
+    threshold: 10
+    multiplier: 0.5
+    isHostile: false
+    canTrade: true
+  honored:
+    threshold: 100
+    multiplier: 0.75
+    isHostile: false
+    canTrade: true
+  revered:
+    threshold: 1000
+    multiplier: 1.0
+    isHostile: false
+    canTrade: true
+  exalted:
+    threshold: 10000
+    multiplier: 2.0
+    isHostile: false
+    canTrade: true
