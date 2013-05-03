@@ -1,0 +1,46 @@
+#Give tributes to "direct", "mayor", or to "chest". tribute chests must be a single chest block on top of a gold block. 
+tributeMethod: mayor
+
+#"emerald" or "profession"
+tributeType: emerald
+
+#Item ID for "emeralds" tribute type
+emeraldTributeItem: 388
+
+#The radius (in blocks) around the player or chest to get villager tributes from. 
+tributeRange: 64
+
+#The number of villagers per tribute
+villagerCount: 20
+
+#The minimum tribute size per X villagers
+minPerVillagerCount: 0
+
+#The maximum tribute size per X villagers
+maxPerVillagerCount: 3
+
+#Bonus tribute per X villagers if there was a zombie siege in the vicinity
+baseSiegeBonus: 1
+
+#The minimum tribute granted for killing a zombie siege mob.
+minPerSiegeKill: 1
+
+#The maximum tribute granted for killing a zombie siege mob.
+maxPerSiegeKill: 2
+
+#debug console output
+debug: false
+
+#Reputation lost for killing an iron golem
+ironGolemValue: -10
+#Reputation lost for killing a villager
+villagerValue: -20
+#Reputation lost for killing a baby villager
+babyVillagerValue: -50
+
+#Minimum village population for a village to be recognized
+villageMinPopulation: 1
+
+minStartingReputation: -10
+maxStartingReputation: 10
+discoverBonus: 10
