@@ -1,6 +1,5 @@
 package net.uvnode.uvvillagers;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -8,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 //import net.minecraft.server.v1_4_R1.Village;
-import net.minecraft.server.v1_5_R2.Village;
+import net.minecraft.server.v1_5_R3.Village;
 
 import net.uvnode.uvvillagers.util.FileManager;
 import org.bukkit.ChatColor;
@@ -20,7 +19,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.craftbukkit.v1_5_R2.entity.CraftVillager;
+import org.bukkit.craftbukkit.v1_5_R3.entity.CraftVillager;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
@@ -578,6 +577,10 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                 rankString = String.format(" (%s)", getRank(village.getPlayerReputation(sender.getName())).getName());
             }
             sender.sendMessage(ChatColor.GRAY + String.format("%s%s: %d doors, %d villagers, %d block size.", village.getName(), rankString, village.getDoorCount(), village.getPopulation(), village.getSize()));
+            if(village.getMayor() != null) {
+                Location mv = village.getMayor().getLocation();
+                sender.sendMessage(ChatColor.GRAY + String.format("The Mayor is currently at %d %d %d", mv.getBlockX(), mv.getBlockY(), mv.getBlockZ()));
+            }
         }
     }
 
@@ -648,7 +651,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      */
     @EventHandler
     private void onUVVillageEvent(UVVillageEvent event) {
-        if(_dynmapManager != null && _dynmapManager.isEnabled()) _dynmapManager.onUVVillageEvent(event);
+        //if(_dynmapManager != null && _dynmapManager.isEnabled()) _dynmapManager.onUVVillageEvent(event);
         debug(event.getMessage());
         switch (event.getType()) {
             case SIEGE_BEGAN:
@@ -679,7 +682,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      */
     @EventHandler
     private void onUVTimeEvent(UVTimeEvent event) {
-        debug(event.getMessage());
+        //debug(event.getMessage());
         switch (event.getType()) {
             case DAWN:
                 // Calculate tributes

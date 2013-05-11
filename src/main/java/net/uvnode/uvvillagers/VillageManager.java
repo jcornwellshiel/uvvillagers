@@ -14,10 +14,10 @@ import org.bukkit.entity.Player;
 //import net.minecraft.server.v1_4_R1.WorldServer;
 //import org.bukkit.craftbukkit.v1_4_R1.CraftWorld;
 
-import net.minecraft.server.v1_5_R2.Village;
-import net.minecraft.server.v1_5_R2.WorldServer;
-import org.bukkit.craftbukkit.v1_5_R2.CraftWorld;
-import org.bukkit.craftbukkit.v1_5_R2.entity.CraftVillager;
+import net.minecraft.server.v1_5_R3.Village;
+import net.minecraft.server.v1_5_R3.WorldServer;
+import org.bukkit.craftbukkit.v1_5_R3.CraftWorld;
+import org.bukkit.craftbukkit.v1_5_R3.entity.CraftVillager;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Villager;
@@ -331,15 +331,15 @@ public class VillageManager {
                             }
                             // And remove this from the potential abandons list
                             villageEntry.getValue().clearAbandonStrikes();
-                            _plugin.debug(String.format("%s has a nearby core village, clearing strikes.", villageEntry.getKey()));
+                            //_plugin.debug(String.format("%s has a nearby core village, clearing strikes.", villageEntry.getKey()));
                         }
                     } else {
                         villageEntry.getValue().clearAbandonStrikes();
-                        _plugin.debug(String.format("%s is not near a player, clearing strikes.", villageEntry.getKey()));
+                        //_plugin.debug(String.format("%s is not near a player, clearing strikes.", villageEntry.getKey()));
                     }
                 } else {
                     villageEntry.getValue().clearAbandonStrikes();
-                    _plugin.debug(String.format("%s is not in a loaded chunk, clearing strikes.", villageEntry.getKey()));
+                    //_plugin.debug(String.format("%s is not in a loaded chunk, clearing strikes.", villageEntry.getKey()));
                 }
             }
             // Abandon the villages marked for abandoning
@@ -377,15 +377,23 @@ public class VillageManager {
 
                 Location location = new Location(w, x, y, z);
 
+                // Read informational data
+                int size = villageConfigSection.getInt("size");
+                int doors = villageConfigSection.getInt("doors");
+                int population = villageConfigSection.getInt("population");
+
+                int maxX = villageConfigSection.getInt("maxx", x + size/2);
+                int maxY = villageConfigSection.getInt("maxy", y + size/2);
+                int maxZ = villageConfigSection.getInt("maxz", z + size/2);
+                int minX = villageConfigSection.getInt("minx", x - size/2);
+                int minY = villageConfigSection.getInt("miny", y - size/2);
+                int minZ = villageConfigSection.getInt("minz", z - size/2);
+                
                 boolean has_sign = villageConfigSection.getBoolean("has_sign");
                 int sign_x = villageConfigSection.getInt("sign_x");
                 int sign_y = villageConfigSection.getInt("sign_y");
                 int sign_z = villageConfigSection.getInt("sign_z");
 
-                // Read informational data
-                int size = villageConfigSection.getInt("size");
-                int doors = villageConfigSection.getInt("doors");
-                int population = villageConfigSection.getInt("population");
 
                 // Read player reputation map
                 Map<String, Object> playersMap = villageConfigSection.getConfigurationSection("pr").getValues(false);
@@ -400,6 +408,7 @@ public class VillageManager {
                 UVVillage village = new UVVillage(location, doors, population, size, playerReputations, _plugin);
                 village.setName(villageEntry.getKey());
                 village.setCreated(villageConfigSection.getString("created"));
+                village.setBounds(minX, maxX, minY, maxY, minZ, maxZ);
                 if (has_sign)
                     village.setMayorSign(new Location(w, sign_x, sign_y, sign_z));
                 
@@ -451,6 +460,19 @@ public class VillageManager {
                 Map<String, Object> v = new HashMap<String, Object>();
                 // Put in all its nice data. Someday maybe I'll learn to serialize instead...
                 v.put("world", villageEntry.getValue().getLocation().getWorld().getName());
+                v.put("x", villageEntry.getValue().getLocation().getBlockX());
+                v.put("y", villageEntry.getValue().getLocation().getBlockY());
+                v.put("z", villageEntry.getValue().getLocation().getBlockZ());
+                
+                v.put("minx", villageEntry.getValue().getMinX());
+                v.put("maxx", villageEntry.getValue().getMaxX());
+                v.put("miny", villageEntry.getValue().getMinY());
+                v.put("maxy", villageEntry.getValue().getMaxY());
+                v.put("minz", villageEntry.getValue().getMinZ());
+                v.put("maxz", villageEntry.getValue().getMaxZ());
+                
+                v.put("y", villageEntry.getValue().getLocation().getBlockY());
+                v.put("z", villageEntry.getValue().getLocation().getBlockZ());
                 v.put("x", villageEntry.getValue().getLocation().getBlockX());
                 v.put("y", villageEntry.getValue().getLocation().getBlockY());
                 v.put("z", villageEntry.getValue().getLocation().getBlockZ());
@@ -526,7 +548,7 @@ public class VillageManager {
             // Find missing mayors
             if (village.getMayor() == null) {
                 if (village.getMayorSign() != null) {
-                    for (Entity entity : village.getMayorSign().getNearbyEntities(16, 16, 16)) {
+                    for (Entity entity : village.getMayorSign().getNearbyEntities(village.getSize(), village.getSize(), village.getSize())) {
                         if (entity.getType() == EntityType.VILLAGER) {
                             if (((CraftVillager) entity).isCustomNameVisible() && ((CraftVillager) entity).getCustomName().contains("Mayor of")) {
                                 village.setMayor((Villager) entity);

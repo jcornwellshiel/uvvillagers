@@ -5,15 +5,15 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import net.minecraft.server.v1_5_R2.Navigation;
+import net.minecraft.server.v1_5_R3.Navigation;
 
 //import net.minecraft.server.v1_4_R1.Village;
-import net.minecraft.server.v1_5_R2.Village;
-import net.minecraft.server.v1_5_R2.VillageDoor;
+import net.minecraft.server.v1_5_R3.Village;
+import net.minecraft.server.v1_5_R3.VillageDoor;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.craftbukkit.v1_5_R2.entity.CraftVillager;
+import org.bukkit.craftbukkit.v1_5_R3.entity.CraftVillager;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.ItemFrame;
@@ -696,5 +696,14 @@ public class UVVillage {
         } else {
             return getLocation().getBlockZ() + (getSize() / 2);
         }
+    }
+    
+    public void setBounds(int minX, int maxX, int minY, int maxY, int minZ, int maxZ) {
+        _minX = minX;
+        _maxX = maxX;
+        _minY = minY;
+        _maxY = maxY;
+        _minZ = minZ;
+        _maxZ = maxZ;
     }
 }
