@@ -383,7 +383,7 @@ public class SiegeManager {
      *
      * @param event mob death event
      */
-    public void checkDeath(EntityDeathEvent event) {
+    public boolean checkDeath(EntityDeathEvent event) {
         String worldName = event.getEntity().getLocation().getWorld().getName();
         // If there's an active siege being tracked, check to see if the mob killed is part of the siege 
         if (_currentSieges.get(worldName) != null) {
@@ -400,10 +400,11 @@ public class SiegeManager {
                         _currentSieges.get(worldName).getVillage().modifyPlayerReputation(event.getEntity().getKiller().getName(), getKillValue(event.getEntity()));
                     }
                     _plugin.debug(String.format("%s gained %d rep with %s for killing a %s.", event.getEntity().getKiller().getName(), getKillValue(event.getEntity()), _currentSieges.get(worldName).getVillage().getName(), event.getEntity().getType().getName()));
+                    return true;
                 }
             }
         }
-
+        return false;
     }
 
     /**

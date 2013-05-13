@@ -8,17 +8,20 @@ import java.util.Map;
 import java.util.Random;
 //import net.minecraft.server.v1_4_R1.Village;
 import net.minecraft.server.v1_5_R3.Village;
+import net.minecraft.server.v1_5_R3.WorldServer;
 
 import net.uvnode.uvvillagers.util.FileManager;
 import org.bukkit.ChatColor;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Server;
 import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.craftbukkit.v1_5_R3.CraftWorld;
 import org.bukkit.craftbukkit.v1_5_R3.entity.CraftVillager;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -623,7 +626,14 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      */
     @EventHandler
     private void onEntityDeathEvent(EntityDeathEvent event) {
-        _siegeManager.checkDeath(event);
+        if (!_siegeManager.checkDeath(event)) { // Increase rep marginally for non-siege kill near village
+            UVVillage village = _villageManager.getClosestVillageToLocation(event.getEntity().getLocation(), 16);
+            if (village != null && event.getEntity().getKiller() != null) {
+                int kv = _siegeManager.getKillValue(event.getEntity()) / 3;
+                if (kv == 0) kv++;
+                village.modifyPlayerReputation(event.getEntity().getKiller().getName(), kv);
+            }
+        }
         if (event.getEntity().getKiller() != null) {
             if (event.getEntity().getType() == EntityType.VILLAGER) {
                 UVVillage village = _villageManager.getClosestVillageToLocation(event.getEntity().getLocation(), 16);
@@ -692,7 +702,10 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                 debug("Ending active sieges in " + event.getWorld().getName());
                 _siegeManager.endSiege(event.getWorld());
                 break;
-
+/*            case NOON:
+                    if(_starvationEnabled)
+                        _villageManager.tickStarvation(event.getWorld());
+                break;*/
             case DUSK:
                 // clear active siege just in case something is missing
                 debug("Clearing siege data in " + event.getWorld().getName());
@@ -983,10 +996,14 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      * @return True if a player is in range, false if not.
      */
     protected boolean areAnyPlayersInRange(Location location, int distance) {
-        List<Player> players = location.getWorld().getPlayers();
+        Player[] players = getServer().getOnlinePlayers();
         for (Player player : players) {
-            if (location.distanceSquared(player.getLocation()) < distance * distance) {
-                return true;
+            if (!player.hasMetadata("NPC")) { // Citizens compatibility check
+                if (location.getWorld().getName().equalsIgnoreCase(player.getLocation().getWorld().getName())) { // Add check to see if it's a real live player
+                    if (location.distanceSquared(player.getLocation()) < distance * distance) {
+                        return true;
+                    }
+                }
             }
         }
         return false;

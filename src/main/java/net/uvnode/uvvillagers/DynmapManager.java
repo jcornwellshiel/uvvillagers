@@ -16,11 +16,11 @@ import org.dynmap.markers.MarkerSet;
  */
 public class DynmapManager implements Listener {
 
-    Plugin dynmap;
+    Plugin _dynmap;
     DynmapAPI api;
     UVVillagers _plugin;
-    MarkerAPI markerapi;
-    MarkerSet set;
+    MarkerAPI _markerapi;
+    MarkerSet _markerSet;
     double borderOpacity = 0.5;
     int borderWeight = 1;
     double fillOpacity = 0.25;
@@ -42,16 +42,16 @@ public class DynmapManager implements Listener {
     protected boolean enable() {
         try {
             PluginManager pm = _plugin.getServer().getPluginManager();
-            dynmap = pm.getPlugin("dynmap");
-            if (dynmap == null) {
+            _dynmap = pm.getPlugin("dynmap");
+            if (_dynmap == null) {
                 _plugin.getLogger().severe("Cannot find dynmap!");
                 _enabled = false;
                 return false;
             }
 
-            api = (DynmapAPI) dynmap;
+            api = (DynmapAPI) _dynmap;
 
-            if (dynmap.isEnabled()) {
+            if (_dynmap.isEnabled()) {
                 _plugin.getLogger().info("Starting up UVVillagers DynmapManager!");
                 activate();
                 _enabled = true;
@@ -72,9 +72,10 @@ public class DynmapManager implements Listener {
      *
      */
     protected void disable() {
-        if (set != null) {
-            set.deleteMarkerSet();
-            set = null;
+        if (_markerSet != null) {
+            _markerSet.getMarkers().clear();
+            _markerSet.deleteMarkerSet();
+            _markerSet = null;
         }
     }
 
@@ -84,8 +85,8 @@ public class DynmapManager implements Listener {
     private void activate() {
         try {
             // Load marker API
-            markerapi = api.getMarkerAPI();
-            if (markerapi == null) {
+            _markerapi = api.getMarkerAPI();
+            if (_markerapi == null) {
                 _plugin.getLogger().severe("Cannot load marker API!");
                 return;
             }
@@ -94,17 +95,18 @@ public class DynmapManager implements Listener {
         }
 
         // Get marker set
-        set = markerapi.getMarkerSet("uvv.villages");
+        _markerSet = _markerapi.getMarkerSet("uvv.villages");
 
         // Create marker set if it doesn't exist, set label if it does
-        if (set == null) {
-            set = markerapi.createMarkerSet("uvv.villages", "Villages", null, false);
+        if (_markerSet == null) {
+            _markerSet = _markerapi.createMarkerSet("uvv.villages", "Villages", null, false);
         } else {
-            set.setMarkerSetLabel("Villages");
+            _markerSet.setMarkerSetLabel("Villages");
+            _markerSet.getMarkers().clear();
         }
 
         // If creating failed, drop out. 
-        if (set == null) {
+        if (_markerSet == null) {
             _plugin.getLogger().severe("Error creating marker set.");
             return;
         }
@@ -142,7 +144,11 @@ public class DynmapManager implements Listener {
         double[] z = {v.getMinZ(), v.getMaxZ()};
         // Create marker
         String label = makeMarkerLabel(v);
-        AreaMarker marker = set.createAreaMarker(key, label, true, v.getLocation().getWorld().getName(), x, z, false);
+        AreaMarker marker = _markerSet.createAreaMarker(v.getLocation().getWorld().getName() + key, label, true, v.getLocation().getWorld().getName(), x, z, false);
+        if(marker == null) {
+            _plugin.getLogger().info("Error adding area marker " + v.getLocation().getWorld().getName() + key);
+            return;
+        }
         marker.setLabel(label, true);
         marker.setDescription(label);
         marker.setLineStyle(borderWeight, borderOpacity, normalColor);
@@ -158,7 +164,7 @@ public class DynmapManager implements Listener {
      */
     private void updateMarkerLabel(UVVillage v, String key) {
         // Retrieve the marker
-        AreaMarker marker = set.findAreaMarker(v.getLocation().getWorld().getName() + key);
+        AreaMarker marker = _markerSet.findAreaMarker(v.getLocation().getWorld().getName() + key);
         // If the marker is found, update its label
         if (marker != null) {
             String label = makeMarkerLabel(v);
@@ -182,7 +188,7 @@ public class DynmapManager implements Listener {
      */
     private void updateMarkerGeometry(UVVillage v, String key) {
         // Retrieve the marker
-        AreaMarker marker = set.findAreaMarker(v.getLocation().getWorld().getName() + key);
+        AreaMarker marker = _markerSet.findAreaMarker(v.getLocation().getWorld().getName() + key);
         // If the marker is found, update its label
         if (marker != null) {
 /*            // Get X range of marker
@@ -211,7 +217,7 @@ public class DynmapManager implements Listener {
      */
     private void updateMarkerStartSiege(UVVillage v, String key) {
         // Retrieve the marker
-        AreaMarker marker = set.findAreaMarker(v.getLocation().getWorld().getName() + key);
+        AreaMarker marker = _markerSet.findAreaMarker(v.getLocation().getWorld().getName() + key);
         // If the marker is found, update its color
         if (marker != null) {
             _plugin.debug("Dynmap: Showing active siege in " + v.getLocation().getWorld().getName() + key);
@@ -230,7 +236,7 @@ public class DynmapManager implements Listener {
      */
     private void updateMarkerEndSiege(UVVillage v, String key) {
         // Retrieve the marker
-        AreaMarker marker = set.findAreaMarker(v.getLocation().getWorld().getName() + key);
+        AreaMarker marker = _markerSet.findAreaMarker(v.getLocation().getWorld().getName() + key);
         // If the marker is found, update its label
         if (marker != null) {
             _plugin.debug("Dynmap: Removing active siege in " + v.getLocation().getWorld().getName() + key);
@@ -246,7 +252,7 @@ public class DynmapManager implements Listener {
      */
     private void deleteMarker(String key, String world) {
         // Retrieve the marker
-        AreaMarker marker = set.findAreaMarker(world + key);
+        AreaMarker marker = _markerSet.findAreaMarker(world + key);
         // If the marker is found, delete it
         if (marker != null) {
             marker.deleteMarker();
