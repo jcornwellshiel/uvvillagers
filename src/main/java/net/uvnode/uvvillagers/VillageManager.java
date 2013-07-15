@@ -14,10 +14,10 @@ import org.bukkit.entity.Player;
 //import net.minecraft.server.v1_4_R1.WorldServer;
 //import org.bukkit.craftbukkit.v1_4_R1.CraftWorld;
 
-import net.minecraft.server.v1_5_R3.Village;
-import net.minecraft.server.v1_5_R3.WorldServer;
-import org.bukkit.craftbukkit.v1_5_R3.CraftWorld;
-import org.bukkit.craftbukkit.v1_5_R3.entity.CraftVillager;
+import net.minecraft.server.v1_6_R2.Village;
+import net.minecraft.server.v1_6_R2.WorldServer;
+import org.bukkit.craftbukkit.v1_6_R2.CraftWorld;
+import org.bukkit.craftbukkit.v1_6_R2.entity.CraftVillager;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Villager;

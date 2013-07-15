@@ -7,22 +7,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 //import net.minecraft.server.v1_4_R1.Village;
-import net.minecraft.server.v1_5_R3.Village;
-import net.minecraft.server.v1_5_R3.WorldServer;
+import net.minecraft.server.v1_6_R2.Village;
 
 import net.uvnode.uvvillagers.util.FileManager;
 import org.bukkit.ChatColor;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.Server;
 import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.craftbukkit.v1_5_R3.CraftWorld;
-import org.bukkit.craftbukkit.v1_5_R3.entity.CraftVillager;
+import org.bukkit.craftbukkit.v1_6_R2.entity.CraftVillager;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
@@ -37,7 +34,6 @@ import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.Villager;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.world.WorldLoadEvent;
-import org.mcstats.Metrics;
 
 /**
  * @author James Cornwell-Shiel
@@ -136,15 +132,6 @@ public final class UVVillagers extends JavaPlugin implements Listener {
             
         
         startDayTimer();
-/*
-        //Start plugin metrics
-        try {
-            Metrics metrics = new Metrics(this);
-            metrics.start();
-        } catch (IOException e) {
-            // Failed to submit the stats :-(
-        }
-*/
     }
 
     /**
