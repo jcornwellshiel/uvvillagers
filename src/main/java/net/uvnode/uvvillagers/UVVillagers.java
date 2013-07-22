@@ -163,6 +163,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         _babyVillagerValue = baseConfiguration.getInt("babyVillagerValue");
         tributeRange = baseConfiguration.getInt("tributeRange");
         villagerCount = baseConfiguration.getInt("villagerCount");
+        _villageMinPopulation = baseConfiguration.getInt("villageMinPopulation");
         minPerVillagerCount = baseConfiguration.getInt("minPerVillagerCount");
         maxPerVillagerCount = baseConfiguration.getInt("maxPerVillagerCount");
         baseSiegeBonus = baseConfiguration.getInt("baseSiegeBonus");
