@@ -63,6 +63,8 @@ public final class UVVillagers extends JavaPlugin implements Listener {
             maxPerSiegeKill,
             timerInterval = 100;
     private ArrayList<String> tributeCalculating = new ArrayList<String>();
+    private ArrayList<String> _enabledWorlds = new ArrayList<String>();
+    private boolean _worldFilterEnabled = false;
     private boolean _debug = false;
     
     private Integer _villagerValue;
@@ -170,9 +172,11 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         minPerSiegeKill = baseConfiguration.getInt("minPerSiegeKill");
         maxPerSiegeKill = baseConfiguration.getInt("maxPerSiegeKill");
         _dynmapDefaultVisible = baseConfiguration.getBoolean("dynmapDefaultVisible");
+        _worldFilterEnabled = baseConfiguration.getBoolean("useWorlds");
+        _enabledWorlds = baseConfiguration.getStringList("worlds");
         _debug = baseConfiguration.getBoolean("debug");
         if (_debug) debug("Debug enabled.");
-
+            
 
         getLogger().info("Base configuration loaded.");
     }
@@ -239,24 +243,27 @@ public final class UVVillagers extends JavaPlugin implements Listener {
             public void run() {
                 List<World> worlds = getServer().getWorlds();
                 for (int i = 0; i < worlds.size(); i++) {
-                    if (worlds.get(i).getTime() >= 0 && worlds.get(i).getTime() < 0 + timerInterval) {
-                        UVTimeEvent event = new UVTimeEvent(worlds.get(i), UVTimeEventType.DAWN);
+
+                    if (isWorldEnabled(worlds.get(i).getName())) {
+                        if (worlds.get(i).getTime() >= 0 && worlds.get(i).getTime() < 0 + timerInterval) {
+                            UVTimeEvent event = new UVTimeEvent(worlds.get(i), UVTimeEventType.DAWN);
+                            getServer().getPluginManager().callEvent(event);
+                        }
+                        if (worlds.get(i).getTime() >= 12500 && worlds.get(i).getTime() < 12500 + timerInterval) {
+                            UVTimeEvent event = new UVTimeEvent(worlds.get(i), UVTimeEventType.DUSK);
+                            getServer().getPluginManager().callEvent(event);
+                        }
+                        if (worlds.get(i).getTime() >= 5000 && worlds.get(i).getTime() < 5000 + timerInterval) {
+                            UVTimeEvent event = new UVTimeEvent(worlds.get(i), UVTimeEventType.NOON);
+                            getServer().getPluginManager().callEvent(event);
+                        }
+                        if (worlds.get(i).getTime() >= 17000 && worlds.get(i).getTime() < 17000 + timerInterval) {
+                            UVTimeEvent event = new UVTimeEvent(worlds.get(i), UVTimeEventType.MIDNIGHT);
+                            getServer().getPluginManager().callEvent(event);
+                        }
+                        UVTimeEvent event = new UVTimeEvent(worlds.get(i), UVTimeEventType.CHECK);
                         getServer().getPluginManager().callEvent(event);
                     }
-                    if (worlds.get(i).getTime() >= 12500 && worlds.get(i).getTime() < 12500 + timerInterval) {
-                        UVTimeEvent event = new UVTimeEvent(worlds.get(i), UVTimeEventType.DUSK);
-                        getServer().getPluginManager().callEvent(event);
-                    }
-                     if (worlds.get(i).getTime() >= 5000 && worlds.get(i).getTime() < 5000 + timerInterval) {
-                     UVTimeEvent event = new UVTimeEvent(worlds.get(i), UVTimeEventType.NOON);
-                     getServer().getPluginManager().callEvent(event);
-                     }
-                     if (worlds.get(i).getTime() >= 17000 && worlds.get(i).getTime() < 17000 + timerInterval) {
-                     UVTimeEvent event = new UVTimeEvent(worlds.get(i), UVTimeEventType.MIDNIGHT);
-                     getServer().getPluginManager().callEvent(event);
-                     }
-                    UVTimeEvent event = new UVTimeEvent(worlds.get(i), UVTimeEventType.CHECK);
-                    getServer().getPluginManager().callEvent(event);
 
                 }
 
@@ -615,6 +622,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      */
     @EventHandler
     private void onPlayerMoveEvent(PlayerMoveEvent event) {
+        if (!isWorldEnabled(event.getTo().getWorld().getName())) return;
         _villageManager.updatePlayerProximity(event.getTo(), event.getPlayer(), tributeRange);
     }
 
@@ -625,19 +633,20 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      */
     @EventHandler
     private void onCreatureSpawnEvent(CreatureSpawnEvent event) {
-            switch (event.getSpawnReason()) {
-                case VILLAGE_INVASION:
-                    // VILLAGE_INVASION is only triggered in a zombie siege.
-                    // Send this event to the SiegeManager!
-                    if (_siegeManager.usingCoreSieges()) {
-                       _siegeManager.trackSpawn(event);
-                    } else {
-                        event.setCancelled(true);
-                    }
-                    break;
-                default:
-                    break;
-            }
+        if (!isWorldEnabled(event.getLocation().getWorld().getName())) return;
+        switch (event.getSpawnReason()) {
+            case VILLAGE_INVASION:
+                // VILLAGE_INVASION is only triggered in a zombie siege.
+                // Send this event to the SiegeManager!
+                if (_siegeManager.usingCoreSieges()) {
+                   _siegeManager.trackSpawn(event);
+                } else {
+                    event.setCancelled(true);
+                }
+                break;
+            default:
+                break;
+        }
     }
 
     /**
@@ -647,6 +656,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      */
     @EventHandler
     private void onEntityDeathEvent(EntityDeathEvent event) {
+        if (!isWorldEnabled(event.getEntity().getWorld().getName())) return;
         if (!_siegeManager.checkDeath(event)) { // Increase rep marginally for non-siege kill near village
             UVVillage village = _villageManager.getClosestVillageToLocation(event.getEntity().getLocation(), 16);
             if (village != null && event.getEntity().getKiller() != null) {
@@ -725,6 +735,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      */
     @EventHandler
     private void onUVTimeEvent(UVTimeEvent event) {
+        if (!isWorldEnabled(event.getWorld().getName())) return;
         //debug(event.getMessage());
         switch (event.getType()) {
             case DAWN:
@@ -773,11 +784,13 @@ public final class UVVillagers extends JavaPlugin implements Listener {
     
     @EventHandler
     private void onWorldLoaded(WorldLoadEvent event) {
+        if (!isWorldEnabled(event.getWorld().getName())) return;
         readVillageConfig(event.getWorld());
     }
 
     @EventHandler
     private void onPlayerInteractEntityEvent(PlayerInteractEntityEvent event) {
+        if (!isWorldEnabled(event.getPlayer().getWorld().getName())) return;
         if (event.getRightClicked().getType() == EntityType.VILLAGER) {
             CraftVillager villager = (CraftVillager) event.getRightClicked();
             UVVillage village = _villageManager.getClosestVillageToLocation(villager.getLocation(), 8);
@@ -874,6 +887,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      * Forces a siege to start
      */
     private void startSiege(World world) {
+        if (!isWorldEnabled(world.getName())) return;
         Map<String, UVVillage> loadedVillages = _villageManager.getLoadedVillages(world);
         if (loadedVillages.size() > 0) {
             int index = getRandomNumber(0, loadedVillages.size()-1);
@@ -895,6 +909,8 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      * @param world The world for which to calculate
      */
     private void calculateTribute(World world) {
+        
+        if (!isWorldEnabled(world.getName())) return;
         
         if (!tributeCalculating.contains(world.getName())) {
             // TODO: ADD MULTIWORLD SUPPORT!
@@ -1121,4 +1137,21 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         return l;
     }
 
+    protected boolean isWorldEnabled(String name) {
+        boolean enabled;
+        switch (getServer().getWorld(name).getEnvironment()) {
+            case NORMAL: 
+                if (_worldFilterEnabled) {
+                    enabled = _enabledWorlds.contains(name);
+                } else {
+                    enabled = true;
+                }
+                break;
+            default:
+                enabled = false;
+        }
+        return enabled;
+        
+    }
+    
 }

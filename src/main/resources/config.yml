@@ -46,3 +46,8 @@ maxStartingReputation: 10
 discoverBonus: 10
 
 dynmapDefaultVisible: false
+
+useWorlds: false
+worlds:
+  - world
+  - world2
