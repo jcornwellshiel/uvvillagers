@@ -765,11 +765,12 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                 double nearestDistanceSquared = 64;
                 if (village != null) {
                     if (_tributeMethod.equalsIgnoreCase("mayor")) {
+                        /* //Can now just replace the mayor
                         if (village.getMayor() != null) {
                             event.getPlayer().sendMessage(ChatColor.DARK_RED + getLanguageManager().getString("mayor_already_exists").replace("@village", village.getName()));
                             event.setCancelled(true);
                             return;
-                        }
+                        }*/
                         if (!village.getTopReputation().equalsIgnoreCase(event.getPlayer().getName())) {
                             event.getPlayer().sendMessage(ChatColor.DARK_RED + getLanguageManager().getString("mayor_not_top_rep").replace("@village", village.getName()).replace("@toprep",village.getTopReputation()));
                             event.setCancelled(true);

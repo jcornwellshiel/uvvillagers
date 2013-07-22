@@ -596,6 +596,10 @@ public class UVVillage {
      * @param mayor
      */
     public void setMayor(Villager mayor) {
+        if (_mayor != null && !_mayor.isDead()) {
+            _mayor.setCustomName("");
+            _mayor.setCustomNameVisible(false);
+        }
         _mayor = (CraftVillager) mayor;
         String name = String.format("Mayor of %s", _name);
         if (name.length() > 32) {
@@ -712,6 +716,8 @@ public class UVVillage {
     }
 
     void setTributeChest(Location l) {
+        if (_tributeChest != null)
+            _tributeChest.getBlock().breakNaturally();
         _tributeChest = l;
     }
 
