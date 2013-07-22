@@ -625,6 +625,9 @@ public class UVVillage {
             Navigation nav = _mayor.getHandle().getNavigation();
             nav.a(_mayorSign.getLocation().getBlockX(), _mayorSign.getLocation().getBlockY(), _mayorSign.getLocation().getBlockZ(), 0.3f);
         }
+        if (_mayor.getLocation().distanceSquared(_mayorSign.getLocation()) > 100) {
+            _mayor.teleport(_mayorSign.getLocation());
+        }
     }
 
     /**
