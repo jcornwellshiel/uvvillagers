@@ -15,6 +15,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Chest;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import org.bukkit.command.Command;
@@ -763,35 +764,48 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                 Villager nearestVillager = null;
                 double nearestDistanceSquared = 64;
                 if (village != null) {
-                    
-                    if (village.getMayor() != null) {
-                        event.getPlayer().sendMessage(ChatColor.DARK_RED + getLanguageManager().getString("mayor_already_exists").replace("@village", village.getName()));
-                        event.setCancelled(true);
-                        return;
-                    }
-                    if (!village.getTopReputation().equalsIgnoreCase(event.getPlayer().getName())) {
-                        event.getPlayer().sendMessage(ChatColor.DARK_RED + getLanguageManager().getString("mayor_not_top_rep").replace("@village", village.getName()).replace("@toprep",village.getTopReputation()));
-                        event.setCancelled(true);
-                        return;
-                    }
-                    
-                    List<Entity> entitiesNearby = event.getRightClicked().getNearbyEntities(8, 8, 8);
-                    for (Entity entity : entitiesNearby) {
-                        if (entity.getType() == EntityType.VILLAGER) {
-                            double nearestDistance = entity.getLocation().distanceSquared(event.getRightClicked().getLocation());
-                            if (nearestDistance < nearestDistanceSquared)
-                            nearestVillager = (Villager) entity;
-                            nearestDistanceSquared = nearestDistance;
+                    if (_tributeMethod.equalsIgnoreCase("mayor")) {
+                        if (village.getMayor() != null) {
+                            event.getPlayer().sendMessage(ChatColor.DARK_RED + getLanguageManager().getString("mayor_already_exists").replace("@village", village.getName()));
+                            event.setCancelled(true);
+                            return;
                         }
-                    }
-                    if (nearestVillager == null) {
-                        event.getPlayer().sendMessage(ChatColor.DARK_RED + getLanguageManager().getString("mayor_no_villagers").replace("@village", village.getName()));
-                    } else {
-                        village.setMayorSign((ItemFrame) event.getRightClicked());
-                        village.setMayor(nearestVillager);
-                        debug("Mayor is " + nearestVillager.getEntityId());
-                        
-                        event.getPlayer().sendMessage(ChatColor.DARK_GREEN + getLanguageManager().getString("mayor_created").replace("@village", village.getName()));
+                        if (!village.getTopReputation().equalsIgnoreCase(event.getPlayer().getName())) {
+                            event.getPlayer().sendMessage(ChatColor.DARK_RED + getLanguageManager().getString("mayor_not_top_rep").replace("@village", village.getName()).replace("@toprep",village.getTopReputation()));
+                            event.setCancelled(true);
+                            return;
+                        }
+
+                        List<Entity> entitiesNearby = event.getRightClicked().getNearbyEntities(8, 8, 8);
+                        for (Entity entity : entitiesNearby) {
+                            if (entity.getType() == EntityType.VILLAGER) {
+                                double nearestDistance = entity.getLocation().distanceSquared(event.getRightClicked().getLocation());
+                                if (nearestDistance < nearestDistanceSquared)
+                                nearestVillager = (Villager) entity;
+                                nearestDistanceSquared = nearestDistance;
+                            }
+                        }
+                        if (nearestVillager == null) {
+                            event.getPlayer().sendMessage(ChatColor.DARK_RED + getLanguageManager().getString("mayor_no_villagers").replace("@village", village.getName()));
+                        } else {
+                            village.setMayorSign((ItemFrame) event.getRightClicked());
+                            village.setMayor(nearestVillager);
+                            debug("Mayor is " + nearestVillager.getEntityId());
+
+                            event.getPlayer().sendMessage(ChatColor.DARK_GREEN + getLanguageManager().getString("mayor_created").replace("@village", village.getName()));
+                        }
+                    } else if (_tributeMethod.equalsIgnoreCase("chest")) {
+                        if (!village.hasChest()) {
+                            ItemFrame i = (ItemFrame) event.getRightClicked();
+                            Location l = getItemFrameAttachedLocation(i);
+                            if (l.getBlock().getType().equals((Material.CHEST))) {
+                                village.setTributeChest(l);
+                                event.getPlayer().sendMessage(ChatColor.DARK_GREEN + getLanguageManager().getString("chest_created").replace("@village", village.getName()));
+                            }
+                        } else {
+                            event.getPlayer().sendMessage(ChatColor.DARK_GREEN + getLanguageManager().getString("chest_already_exists").replace("@village", village.getName()));
+                            event.setCancelled(true);
+                        }
                     }
                 }
             }
@@ -892,6 +906,8 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                         debug(String.format(" - Rank: %s", getRank(village.getValue().getPlayerReputation(player.getName())).getName()));
                         debug(String.format(" - Multiplier: %.2f", multiplier));
                         tributeAmount += (int) (villageTributeAmount * multiplier);
+                        
+                        // Apply mayor stuff
                         if (_tributeMethod.equalsIgnoreCase("mayor")) {
                             village.getValue().setEmeraldTribute(player.getName(), ((int) (villageTributeAmount * multiplier)));
                             if (villageTributeAmount * multiplier > 0) {
@@ -902,6 +918,16 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                                     player.sendMessage("(To create a Mayor, just place an item frame near a villager and insert an emerald!)");
                                 }
                             }
+                        }
+                        if (_tributeMethod.equalsIgnoreCase("chest") && village.getValue().hasChest()) {
+                            ItemStack items;
+                            if (_emeraldTributeItem > 0 && Material.getMaterial(_emeraldTributeItem) != null) {
+                                items = new ItemStack(Material.getMaterial(_emeraldTributeItem), tributeAmount);
+                            } else {
+                                items = new ItemStack(Material.EMERALD, tributeAmount);
+                            }
+                            ((Chest)village.getValue().getChest()).getBlockInventory().addItem(items);
+                            player.sendMessage(getLanguageManager().getString("tribute_chest_ready").replace("@village", village.getValue().getName()));
                         }
 
                     }
@@ -1021,6 +1047,27 @@ public final class UVVillagers extends JavaPlugin implements Listener {
        } else {
            player.sendMessage(getLanguageManager().getString("tribute_emeralds_none"));
        }
+    }
+
+    private Location getItemFrameAttachedLocation(ItemFrame i) {
+        Location l = i.getLocation();
+        switch (i.getAttachedFace()) {
+            case NORTH:
+                l = l.subtract(0, 0, 1);
+                break;
+            case EAST:
+                l = l.add(1, 0, 0);
+                break;
+            case SOUTH:
+                l = l.add(0, 0, 1);
+                break;
+            case WEST:
+                l = l.subtract(1, 0, 0);
+                break;
+            default:
+                break;
+        }
+        return l;
     }
 
 }

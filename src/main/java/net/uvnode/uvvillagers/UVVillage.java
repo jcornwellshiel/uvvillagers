@@ -43,6 +43,7 @@ public class UVVillage {
     private ItemFrame _mayorSign;
     private Location _mayorSignLocation = null;
     private int _minX, _maxX, _minY, _maxY, _minZ, _maxZ;
+    private Location _tributeChest;
 
     /**
      * Default Constructor
@@ -705,5 +706,25 @@ public class UVVillage {
         _maxY = maxY;
         _minZ = minZ;
         _maxZ = maxZ;
+    }
+
+    void setTributeChest(Location l) {
+        _tributeChest = l;
+    }
+
+    boolean hasChest() {
+        try {
+            if (_tributeChest.getBlock().getType().equals(Material.CHEST)) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    Location getChest() {
+        return _tributeChest;
     }
 }

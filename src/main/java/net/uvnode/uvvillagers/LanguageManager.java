@@ -38,7 +38,11 @@ public class LanguageManager {
      * @return
      */
     public String getString(String name) {
-        return _strings.get(name);
+        if (_strings.containsKey(name)) {
+            return _strings.get(name);
+        } else {
+            return "";
+        }
     }
     
     /**
