@@ -796,17 +796,17 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                             event.getPlayer().sendMessage(ChatColor.DARK_GREEN + getLanguageManager().getString("mayor_created").replace("@village", village.getName()));
                         }
                     } else if (_tributeMethod.equalsIgnoreCase("chest")) {
-                        if (!village.hasChest()) {
-                            ItemFrame i = (ItemFrame) event.getRightClicked();
-                            Location l = getItemFrameAttachedLocation(i);
-                            if (l.getBlock().getType().equals((Material.CHEST))) {
-                                village.setTributeChest(l);
-                                event.getPlayer().sendMessage(ChatColor.DARK_GREEN + getLanguageManager().getString("chest_created").replace("@village", village.getName()));
-                            }
+                        ItemFrame i = (ItemFrame) event.getRightClicked();
+                        Location l = getItemFrameAttachedLocation(i);
+                        if (l.getBlock().getType().equals((Material.CHEST))) {
+                            village.setTributeChest(l);
+                            event.getPlayer().sendMessage(ChatColor.DARK_GREEN + getLanguageManager().getString("chest_created").replace("@village", village.getName()));
+                        }
+/*                        if (!village.hasChest()) {
                         } else {
                             event.getPlayer().sendMessage(ChatColor.DARK_GREEN + getLanguageManager().getString("chest_already_exists").replace("@village", village.getName()));
                             event.setCancelled(true);
-                        }
+                        }*/
                     }
                 }
             }
