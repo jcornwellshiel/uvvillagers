@@ -462,7 +462,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                                 }
                                 UVVillage village = _villageManager.getClosestVillageToLocation(p.getLocation(), tributeRange);
                                 if (village != null) {
-                                    if (village.getTopReputation().equalsIgnoreCase(p.getName())) {
+                                    if (village.getTopReputation().equalsIgnoreCase(p.getName()) || village.getTopReputation().equalsIgnoreCase("Server") && p.hasPermission("uvv.admin")) {
                                         if (_villageManager.getVillageByKey(p.getWorld(), newName) == null) {
                                             if (_villageManager.renameVillage(p.getWorld(), village.getName(), newName)) {
                                                 sender.sendMessage(ChatColor.DARK_GREEN + getLanguageManager().getString("village_rename_success").replace("@village", village.getName()));
