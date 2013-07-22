@@ -798,7 +798,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                             event.setCancelled(true);
                             return;
                         }*/
-                        if (!village.getTopReputation().equalsIgnoreCase(event.getPlayer().getName())) {
+                        if (!village.getTopReputation().equalsIgnoreCase(event.getPlayer().getName()) && !(village.getTopReputation().equalsIgnoreCase("Server") && event.getPlayer().hasPermission("uvv.admin"))) {
                             event.getPlayer().sendMessage(ChatColor.DARK_RED + getLanguageManager().getString("mayor_not_top_rep").replace("@village", village.getName()).replace("@toprep",village.getTopReputation()));
                             event.setCancelled(true);
                             return;
@@ -823,6 +823,11 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                             event.getPlayer().sendMessage(ChatColor.DARK_GREEN + getLanguageManager().getString("mayor_created").replace("@village", village.getName()));
                         }
                     } else if (_tributeMethod.equalsIgnoreCase("chest")) {
+                        if (!village.getTopReputation().equalsIgnoreCase(event.getPlayer().getName()) && !(village.getTopReputation().equalsIgnoreCase("Server") && event.getPlayer().hasPermission("uvv.admin"))) {
+                            event.getPlayer().sendMessage(ChatColor.DARK_RED + getLanguageManager().getString("chest_not_top_rep").replace("@village", village.getName()).replace("@toprep",village.getTopReputation()));
+                            event.setCancelled(true);
+                            return;
+                        }
                         ItemFrame i = (ItemFrame) event.getRightClicked();
                         Location l = getItemFrameAttachedLocation(i);
                         if (l.getBlock().getType().equals((Material.CHEST))) {

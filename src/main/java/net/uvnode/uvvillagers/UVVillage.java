@@ -406,7 +406,7 @@ public class UVVillage {
      * @return player name
      */
     public String getTopReputation() {
-        if (_isServerVillage) return "Server Village";
+        if (_isServerVillage) return "Server";
         String topPlayer = "Nobody";
         int topRep = Integer.MIN_VALUE;
         for (Map.Entry<String, Integer> entry : _playerReputations.entrySet()) {
