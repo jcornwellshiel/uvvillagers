@@ -672,6 +672,18 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                     village.modifyPlayerReputation(event.getEntity().getKiller().getName(), _ironGolemValue);
             }
         }
+        
+        if (event.getEntity().getType() == EntityType.VILLAGER) {
+            CraftVillager v = (CraftVillager) event.getEntity();
+            String n = v.getCustomName();
+            if (n != null && n.contains("Mayor of ")) {
+                try {
+                    getServer().broadcastMessage(String.format("The %s has died by %s!", n, event.getEntity().getLastDamageCause().getEventName()));
+                    _villageManager.getVillageByKey(event.getEntity().getWorld(), n.replace("Mayor of","")).setMayor(null);
+                } catch (Exception e) {
+                }
+            }
+        }
 
     }
 
