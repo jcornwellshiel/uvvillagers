@@ -100,6 +100,7 @@ public class DynmapManager implements Listener {
         // Create marker set if it doesn't exist, set label if it does
         if (_markerSet == null) {
             _markerSet = _markerapi.createMarkerSet("uvv.villages", "Villages", null, false);
+            _markerSet.setHideByDefault(!_plugin._dynmapDefaultVisible);
         } else {
             _markerSet.setMarkerSetLabel("Villages");
             _markerSet.getMarkers().clear();

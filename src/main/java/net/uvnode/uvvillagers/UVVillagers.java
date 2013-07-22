@@ -96,6 +96,10 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      *
      */
     protected int _discoverBonus;
+    /**
+     *
+     */
+    protected boolean _dynmapDefaultVisible;
 
     /**
      * Loads data and runs initialization tasks when enabling the plugin (e.g.
@@ -164,6 +168,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         baseSiegeBonus = baseConfiguration.getInt("baseSiegeBonus");
         minPerSiegeKill = baseConfiguration.getInt("minPerSiegeKill");
         maxPerSiegeKill = baseConfiguration.getInt("maxPerSiegeKill");
+        _dynmapDefaultVisible = baseConfiguration.getBoolean("dynmapDefaultVisible");
         _debug = baseConfiguration.getBoolean("debug");
         if (_debug) debug("Debug enabled.");
 

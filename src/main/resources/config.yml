@@ -44,3 +44,5 @@ villageMinPopulation: 1
 minStartingReputation: -10
 maxStartingReputation: 10
 discoverBonus: 10
+
+dynmapDefaultVisible: false
