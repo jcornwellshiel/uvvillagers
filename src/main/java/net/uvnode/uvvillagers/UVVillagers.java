@@ -420,6 +420,33 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                     } else {
                         sender.sendMessage("Silly console, you can't do that!");
                     }
+                } else if (args[0].equalsIgnoreCase("setserver")) {
+                    sender.sendMessage(ChatColor.GOLD + " - UVVillagers Set Server Village - ");
+                    if (sender instanceof Player) {
+                        Player p = (Player) sender;
+                        if (p.hasPermission("uvv.admin")) {
+                            UVVillage v = _villageManager.getClosestVillageToLocation(p.getLocation(), tributeRange);
+                            if (v != null) {
+                                v = _villageManager.toggleServerVillage(v);
+                                if (v != null) {
+                                    if (v.isServerVillage()) {
+                                        sender.sendMessage(_languageManager.getString("server_village").replace("@village", v.getName()).replace("@owner", "server"));
+                                    } else {
+                                        sender.sendMessage(_languageManager.getString("server_village").replace("@village", v.getName()).replace("@owner", "player"));
+                                    }
+                                } else {
+                                    sender.sendMessage("An error occurred trying to change the village name.");
+                                }
+                            } else {
+                                sender.sendMessage("You're not in a village.");
+                            }
+                            
+                        } else {
+                            sender.sendMessage("You don't have permission to do that.");
+                        }
+                    } else {
+                        sender.sendMessage("Silly console, you can't do that!");
+                    }
                 } else if (args[0].equalsIgnoreCase("rename")) {
                     sender.sendMessage(ChatColor.GOLD + " - UVVillagers Rename Village - ");
                     if (sender instanceof Player) {

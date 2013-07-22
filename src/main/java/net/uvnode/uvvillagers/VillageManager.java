@@ -381,6 +381,8 @@ public class VillageManager {
                 int size = villageConfigSection.getInt("size");
                 int doors = villageConfigSection.getInt("doors");
                 int population = villageConfigSection.getInt("population");
+                
+                boolean isServerVillage = villageConfigSection.getBoolean("isServerVillage");
 
                 int maxX = villageConfigSection.getInt("maxx", x + size/2);
                 int maxY = villageConfigSection.getInt("maxy", y + size/2);
@@ -393,6 +395,11 @@ public class VillageManager {
                 int sign_x = villageConfigSection.getInt("sign_x");
                 int sign_y = villageConfigSection.getInt("sign_y");
                 int sign_z = villageConfigSection.getInt("sign_z");
+                
+                boolean has_chest = villageConfigSection.getBoolean("has_chest");
+                int chest_x = villageConfigSection.getInt("chest_x");
+                int chest_y = villageConfigSection.getInt("chest_y");
+                int chest_z = villageConfigSection.getInt("chest_z");
 
 
                 // Read player reputation map
@@ -405,12 +412,14 @@ public class VillageManager {
                 }
 
                 // Create village and set name by key
-                UVVillage village = new UVVillage(location, doors, population, size, playerReputations, _plugin);
+                UVVillage village = new UVVillage(location, doors, population, size, playerReputations, isServerVillage, _plugin);
                 village.setName(villageEntry.getKey());
                 village.setCreated(villageConfigSection.getString("created"));
                 village.setBounds(minX, maxX, minY, maxY, minZ, maxZ);
                 if (has_sign)
                     village.setMayorSign(new Location(w, sign_x, sign_y, sign_z));
+                if (has_chest)
+                    village.setTributeChest(new Location(w, chest_x, chest_y, chest_z));
                 
                 // Add to the collection!
                 _villages.get(world.getName()).put(villageEntry.getKey(), village);
@@ -419,6 +428,14 @@ public class VillageManager {
         _plugin.getLogger().info(String.format("Loaded %d villages in %s.", _villages.get(world.getName()).size(), world.getName()));
     }
 
+    public UVVillage toggleServerVillage(UVVillage v) {
+        v.setServerVillage(!v.isServerVillage());
+        _villages.get(v.getLocation().getWorld().getName()).put(v.getName(), v);
+        return v;
+        
+    }
+    
+    
     /**
      * Renames a village.
      *
@@ -476,6 +493,7 @@ public class VillageManager {
                 v.put("x", villageEntry.getValue().getLocation().getBlockX());
                 v.put("y", villageEntry.getValue().getLocation().getBlockY());
                 v.put("z", villageEntry.getValue().getLocation().getBlockZ());
+                
                 if (villageEntry.getValue().getMayorSign() != null) {
                     v.put("has_sign", true);
                     v.put("sign_x", villageEntry.getValue().getMayorSignLocation().getBlockX());
@@ -487,10 +505,22 @@ public class VillageManager {
                     v.put("sign_y", -1);
                     v.put("sign_z", -1);
                 }
+                if (villageEntry.getValue().getChest()!= null) {
+                    v.put("has_chest", true);
+                    v.put("chest_x", villageEntry.getValue().getChest().getBlockX());
+                    v.put("chest_y", villageEntry.getValue().getChest().getBlockY());
+                    v.put("chest_z", villageEntry.getValue().getChest().getBlockZ());                    
+                } else {
+                    v.put("has_chest", false);
+                    v.put("chest_x", -1);
+                    v.put("chest_y", -1);
+                    v.put("chest_z", -1);
+                }
                 v.put("size", villageEntry.getValue().getSize());
                 v.put("doors", villageEntry.getValue().getDoorCount());
                 v.put("population", villageEntry.getValue().getPopulation());
                 v.put("pr", villageEntry.getValue().getPlayerReputations());
+                v.put("isServerVillage", villageEntry.getValue().isServerVillage());
                 v.put("created", villageEntry.getValue().getCreatedString());
                 // Add it to the main map.
                 w.put(villageEntry.getKey(), v);

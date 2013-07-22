@@ -44,6 +44,7 @@ public class UVVillage {
     private Location _mayorSignLocation = null;
     private int _minX, _maxX, _minY, _maxY, _minZ, _maxZ;
     private Location _tributeChest;
+    private boolean _isServerVillage;
 
     /**
      * Default Constructor
@@ -65,6 +66,7 @@ public class UVVillage {
         _abandonStrikes = 0;
         _location = location;
         _villageCore = village;
+        _isServerVillage = false;
         if (_villageCore != null) {
             updateVillageDataFromCore();
         }
@@ -80,7 +82,7 @@ public class UVVillage {
      * @param playerReputations
      * @param plugin  
      */
-    public UVVillage(Location location, int doors, int population, int size, Map<String, Integer> playerReputations, UVVillagers plugin) {
+    public UVVillage(Location location, int doors, int population, int size, Map<String, Integer> playerReputations, boolean isServerVillage, UVVillagers plugin) {
         _minX = Integer.MAX_VALUE;
         _maxX = Integer.MIN_VALUE;
         _minY = Integer.MAX_VALUE;
@@ -94,6 +96,7 @@ public class UVVillage {
         _size = size;
         _playerReputations = playerReputations;
         _villageCore = null;
+        _isServerVillage = isServerVillage;
         _name = "";
         _abandonStrikes = 0;
     }
@@ -403,6 +406,7 @@ public class UVVillage {
      * @return player name
      */
     public String getTopReputation() {
+        if (_isServerVillage) return "Server Village";
         String topPlayer = "Nobody";
         int topRep = Integer.MIN_VALUE;
         for (Map.Entry<String, Integer> entry : _playerReputations.entrySet()) {
@@ -715,13 +719,13 @@ public class UVVillage {
         _maxZ = maxZ;
     }
 
-    void setTributeChest(Location l) {
+    protected void setTributeChest(Location l) {
         if (_tributeChest != null)
             _tributeChest.getBlock().breakNaturally();
         _tributeChest = l;
     }
 
-    boolean hasChest() {
+    public boolean hasChest() {
         try {
             if (_tributeChest.getBlock().getType().equals(Material.CHEST)) {
                 return true;
@@ -733,7 +737,15 @@ public class UVVillage {
         }
     }
 
-    Location getChest() {
+    public Location getChest() {
         return _tributeChest;
+    }
+    
+    protected void setServerVillage(boolean b) {
+        _isServerVillage = b;
+    }
+    
+    public boolean isServerVillage() {
+        return _isServerVillage;
     }
 }
