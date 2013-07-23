@@ -20,6 +20,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.craftbukkit.v1_6_R2.block.CraftChest;
 import org.bukkit.craftbukkit.v1_6_R2.entity.CraftVillager;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -117,6 +118,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(this, this);
 
         baseConfiguration = new FileManager(this, "config.yml");
+        updateBaseConfig();
         readBaseConfig();
 
         ranksConfiguration = new FileManager(this, "ranks.yml");
@@ -129,6 +131,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         readSiegeConfig();
         
         languageConfiguration = new FileManager(this, "language.yml");
+        updateLanguageConfig();
         _languageManager = new LanguageManager(languageConfiguration.getConfigSection("strings").getValues(false));
         
         _dynmapManager = new DynmapManager(this);
@@ -445,7 +448,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                                     if (v.isServerVillage()) {
                                         sender.sendMessage(_languageManager.getString("server_village").replace("@village", v.getName()).replace("@owner", "server"));
                                     } else {
-                                        sender.sendMessage(_languageManager.getString("server_village").replace("@village", v.getName()).replace("@owner", "player"));
+                                        sender.sendMessage(_languageManager.getString("server_village").replace("@village", v.getName()).replace("@owner", "players"));
                                     }
                                 } else {
                                     sender.sendMessage("An error occurred trying to change the village name.");
@@ -524,6 +527,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         sender.sendMessage(ChatColor.GRAY + " /uvv current - displays current village info");
         sender.sendMessage(ChatColor.GRAY + " /uvv rename New Village Name - renames the village you're in");
         sender.sendMessage(ChatColor.GRAY + " /uvv siegeinfo - prints out the status of the current siege");
+        sender.sendMessage(ChatColor.GRAY + " /uvv setserver - toggles the current village between player-/server-owned");
     }
     private void dumpDataToSender(CommandSender sender, String[] args) {
         if (args.length > 1) {
@@ -993,7 +997,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                             } else {
                                 items = new ItemStack(Material.EMERALD, tributeAmount);
                             }
-                            ((Chest)village.getValue().getChest()).getBlockInventory().addItem(items);
+                            ((Chest)village.getValue().getChest().getBlock().getState()).getBlockInventory().addItem(items);
                             player.sendMessage(getLanguageManager().getString("tribute_chest_ready").replace("@village", village.getValue().getName()));
                         }
 
@@ -1154,4 +1158,27 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         
     }
     
+    private void updateBaseConfig() {
+        String configVersion = baseConfiguration.getString("configVersion");
+        if (configVersion == null || configVersion == "") {
+            baseConfiguration.set("configVersion", "1.3.2", false);
+            baseConfiguration.set("useWorlds", false, false);
+            baseConfiguration.set("worlds", "", false);
+            baseConfiguration.set("dynmapDefaultVisible", false, false);             
+        }
+        baseConfiguration.saveFile();
+    }    
+    
+    private void updateLanguageConfig() {
+        String configVersion = languageConfiguration.getString("configVersion");
+        if (configVersion == null || configVersion == "") {
+            languageConfiguration.set("configVersion", "1.3.2", false);
+            languageConfiguration.set("strings.chest_created", "You have created a tribute chest in @village. Tributes will be placed here daily.", false);
+            languageConfiguration.set("strings.chest_already_exists", "&C@village already has a tribute chest!", false);
+            languageConfiguration.set("strings.chest_create_not_top_rep", "&CYou must be the most reputable player with @village to create the Tribute Chest. Currently that is @toprep.", false);
+            languageConfiguration.set("strings.tribute_chest_ready", "The villagers of @village have left a tribute for you in the tribute chest.", false);
+            languageConfiguration.set("strings.server_village", "The village @village is now owned by @owner.", false);
+        }
+        languageConfiguration.saveFile();
+    }
 }
