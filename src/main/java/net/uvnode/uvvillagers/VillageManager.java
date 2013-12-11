@@ -10,14 +10,10 @@ import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
-//import net.minecraft.server.v1_4_R1.Village;
-//import net.minecraft.server.v1_4_R1.WorldServer;
-//import org.bukkit.craftbukkit.v1_4_R1.CraftWorld;
-
-import net.minecraft.server.v1_6_R2.Village;
-import net.minecraft.server.v1_6_R2.WorldServer;
-import org.bukkit.craftbukkit.v1_6_R2.CraftWorld;
-import org.bukkit.craftbukkit.v1_6_R2.entity.CraftVillager;
+import net.minecraft.server.v1_7_R1.Village;
+import net.minecraft.server.v1_7_R1.WorldServer;
+import org.bukkit.craftbukkit.v1_7_R1.CraftWorld;
+import org.bukkit.craftbukkit.v1_7_R1.entity.CraftVillager;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Villager;
@@ -40,7 +36,7 @@ public class VillageManager {
      */
     public VillageManager(UVVillagers plugin) {
         _plugin = plugin;
-        _villages = new HashMap<String, Map<String, UVVillage>>();
+        _villages = new HashMap<>();
     }
 
     /**
@@ -78,7 +74,7 @@ public class VillageManager {
      */
     public List<Village> getCoreVillagesNearLocation(Location location, int maxDistance) {
         WorldServer worldServer = ((CraftWorld) location.getWorld()).getHandle();
-        List<Village> nearby = new ArrayList<Village>();
+        List<Village> nearby = new ArrayList<>();
         double closestDistance = maxDistance * maxDistance;
 
         // TODO: Loop through worldServer.villages.getVillages()
@@ -141,7 +137,7 @@ public class VillageManager {
      * @return hashmap of villages found within maxDistance of location
      */
     public Map<String, UVVillage> getVillagesNearLocation(Location location, int maxDistance) {
-        Map<String, UVVillage> villages = new HashMap<String, UVVillage>();
+        Map<String, UVVillage> villages = new HashMap<>();
         if (_villages.containsKey(location.getWorld().getName())) {
             for (Map.Entry<String, UVVillage> villageEntry : _villages.get(location.getWorld().getName()).entrySet()) {
                 if (villageEntry.getValue().getLocation().getWorld().getName().equalsIgnoreCase(location.getWorld().getName())) {
@@ -172,7 +168,7 @@ public class VillageManager {
      * @return hashmap of all known UVVillages
      */
     public Map<String, UVVillage> getAllVillages() {
-        Map<String, UVVillage> villages = new HashMap<String, UVVillage>();
+        Map<String, UVVillage> villages = new HashMap<>();
         for (Map.Entry<String, Map<String, UVVillage>> worldEntry : _villages.entrySet()) {
             for (Map.Entry<String, UVVillage> villageEntry : worldEntry.getValue().entrySet()) {
                 villages.put("world" + villageEntry.getKey(), villageEntry.getValue());
@@ -187,7 +183,7 @@ public class VillageManager {
      * @return hashmap of UVVillages in loaded chunks.
      */
     public Map<String, UVVillage> getLoadedVillages() {
-        Map<String, UVVillage> villages = new HashMap<String, UVVillage>();
+        Map<String, UVVillage> villages = new HashMap<>();
         for (Map.Entry<String, Map<String, UVVillage>> worldEntry : _villages.entrySet()) {
             for (Map.Entry<String, UVVillage> villageEntry : worldEntry.getValue().entrySet()) {
                 if (villageEntry.getValue().getLocation().getChunk().isLoaded()) {
@@ -206,7 +202,7 @@ public class VillageManager {
      * @return
      */
     public Map<String, UVVillage> getLoadedVillages(World world) {
-        Map<String, UVVillage> villages = new HashMap<String, UVVillage>();
+        Map<String, UVVillage> villages = new HashMap<>();
         if (_villages.containsKey(world.getName())) {
             for (Map.Entry<String, UVVillage> villageEntry : _villages.get(world.getName()).entrySet()) {
                 if (world.getName().equalsIgnoreCase(villageEntry.getValue().getLocation().getWorld().getName())) {
@@ -300,7 +296,7 @@ public class VillageManager {
      * @param world 
      */
     public void matchVillagesToCore(World world) {
-        List<UVVillage> markedForAbandon = new ArrayList<UVVillage>();
+        List<UVVillage> markedForAbandon = new ArrayList<>();
         if (_villages.containsKey(world.getName())) {
             Map<String, UVVillage> villages = _villages.get(world.getName());
             for (Map.Entry<String, UVVillage> villageEntry : villages.entrySet()) {
@@ -404,7 +400,7 @@ public class VillageManager {
 
                 // Read player reputation map
                 Map<String, Object> playersMap = villageConfigSection.getConfigurationSection("pr").getValues(false);
-                Map<String, Integer> playerReputations = new HashMap<String, Integer>();
+                Map<String, Integer> playerReputations = new HashMap<>();
                 for (Map.Entry<String, Object> playerEntry : playersMap.entrySet()) {
                     String playerName = playerEntry.getKey();
                     int playerRep = (Integer) playerEntry.getValue();
@@ -468,13 +464,13 @@ public class VillageManager {
      */
     public Map<String, Object> saveVillages() {
         // Make a nice clean map to save this in.
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, Object> map = new HashMap<>();
         // Step through each UVVillage
         for (Map.Entry<String, Map<String, UVVillage>> worldEntry : _villages.entrySet()) {
-            Map<String, Object> w = new HashMap<String, Object>();
+            Map<String, Object> w = new HashMap<>();
             for (Map.Entry<String, UVVillage> villageEntry : worldEntry.getValue().entrySet()) {
                 // Make a nice readable hashmap for this UVVillage
-                Map<String, Object> v = new HashMap<String, Object>();
+                Map<String, Object> v = new HashMap<>();
                 // Put in all its nice data. Someday maybe I'll learn to serialize instead...
                 v.put("world", villageEntry.getValue().getLocation().getWorld().getName());
                 v.put("x", villageEntry.getValue().getLocation().getBlockX());
@@ -532,6 +528,12 @@ public class VillageManager {
         return map;
     }
 
+    public void checkPlayerProximities(World world, int distance) {
+        for (Player player : world.getPlayers()) {
+            updatePlayerProximity(player.getLocation(), player, distance);
+        }
+    }
+    
     /**
      *
      * @param location
@@ -690,7 +692,7 @@ public class VillageManager {
      * @param world
      */
     protected void checkForMerge(World world) {
-        List<String> markedForAbandon = new ArrayList<String>();
+        List<String> markedForAbandon = new ArrayList<>();
         if (!_villages.containsKey(world.getName())) {
             return;
         }
@@ -783,5 +785,9 @@ public class VillageManager {
                 villageEntry.getValue().clearEmeraldTributes();
             }
         }
+    }
+
+    void tickWorld(World world, int _tributeRange) {
+        
     }
 }

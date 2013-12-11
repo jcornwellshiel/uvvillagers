@@ -19,7 +19,7 @@ public class LanguageManager {
      * @param strings
      */
     public LanguageManager(Map<String,Object> strings) {
-        _strings = new HashMap<String, String>();
+        _strings = new HashMap<>();
         for(Map.Entry<String, Object> string : strings.entrySet()) {
             _strings.put(string.getKey(), ((String) string.getValue()).replace("#", "%").replace('&', '\u00A7').replace("\u00A7\u00A7", "&"));
         }

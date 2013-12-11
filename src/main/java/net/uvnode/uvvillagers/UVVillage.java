@@ -5,15 +5,13 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import net.minecraft.server.v1_6_R2.Navigation;
-
-//import net.minecraft.server.v1_4_R1.Village;
-import net.minecraft.server.v1_6_R2.Village;
-import net.minecraft.server.v1_6_R2.VillageDoor;
+import net.minecraft.server.v1_7_R1.Navigation;
+import net.minecraft.server.v1_7_R1.Village;
+import net.minecraft.server.v1_7_R1.VillageDoor;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.craftbukkit.v1_6_R2.entity.CraftVillager;
+import org.bukkit.craftbukkit.v1_7_R1.entity.CraftVillager;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.ItemFrame;
@@ -24,16 +22,16 @@ import org.bukkit.entity.Villager;
  *
  * @author James Cornwell-Shiel
  */
-public class UVVillage {
+public final class UVVillage {
 
     private static UVVillagers _plugin;
     private int _numDoors;
     private Date _created;
     private Location _location;
-    private Map<String, Integer> _playerReputations = new HashMap<String, Integer>();
-    private Map<String, Integer> _playerEmeraldTributesPending = new HashMap<String, Integer>();
-    private Map<String, Integer> _playerTicksHere = new HashMap<String, Integer>();
-    private Map<String, Integer> _playerTicksGone = new HashMap<String, Integer>();
+    private Map<String, Integer> _playerReputations = new HashMap<>();
+    private Map<String, Integer> _playerEmeraldTributesPending = new HashMap<>();
+    private Map<String, Integer> _playerTicksHere = new HashMap<>();
+    private Map<String, Integer> _playerTicksGone = new HashMap<>();
     private int _population;
     private int _size;
     private Village _villageCore;

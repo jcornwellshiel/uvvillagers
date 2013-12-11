@@ -6,8 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-//import net.minecraft.server.v1_4_R1.Village;
-import net.minecraft.server.v1_6_R2.Village;
+import net.minecraft.server.v1_7_R1.Village;
 
 import net.uvnode.uvvillagers.util.FileManager;
 import org.bukkit.ChatColor;
@@ -20,8 +19,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.craftbukkit.v1_6_R2.block.CraftChest;
-import org.bukkit.craftbukkit.v1_6_R2.entity.CraftVillager;
+import org.bukkit.craftbukkit.v1_7_R1.entity.CraftVillager;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
@@ -54,17 +52,17 @@ public final class UVVillagers extends JavaPlugin implements Listener {
     private Random rng = new Random();
 
     //UVTributeMode tributeMode;
-    private List<UVVillageRank> _reputationRanks = new ArrayList<UVVillageRank>();
-    private int tributeRange,
+    private List<UVVillageRank> _reputationRanks = new ArrayList<>();
+    private int _tributeRange,
             villagerCount,
             minPerVillagerCount,
             maxPerVillagerCount,
             baseSiegeBonus,
             minPerSiegeKill,
             maxPerSiegeKill,
-            timerInterval = 100;
-    private ArrayList<String> tributeCalculating = new ArrayList<String>();
-    private ArrayList<String> _enabledWorlds = new ArrayList<String>();
+            timerInterval = 200;
+    private ArrayList<String> tributeCalculating = new ArrayList<>();
+    private ArrayList<String> _enabledWorlds = new ArrayList<>();
     private boolean _worldFilterEnabled = false;
     private boolean _debug = false;
     
@@ -166,7 +164,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
         _ironGolemValue = baseConfiguration.getInt("ironGolemValue");
         _villagerValue = baseConfiguration.getInt("villagerValue");
         _babyVillagerValue = baseConfiguration.getInt("babyVillagerValue");
-        tributeRange = baseConfiguration.getInt("tributeRange");
+        _tributeRange = baseConfiguration.getInt("tributeRange");
         villagerCount = baseConfiguration.getInt("villagerCount");
         _villageMinPopulation = baseConfiguration.getInt("villageMinPopulation");
         minPerVillagerCount = baseConfiguration.getInt("minPerVillagerCount");
@@ -417,7 +415,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                     if (sender instanceof Player) {
                         Player p = (Player) sender;
                         if (p.hasPermission("uvv.villageinfo")) {
-                            sendVillageInfo(sender, _villageManager.getVillagesNearLocation(p.getLocation(), tributeRange));
+                            sendVillageInfo(sender, _villageManager.getVillagesNearLocation(p.getLocation(), _tributeRange));
                         } else {
                             sender.sendMessage("You don't have permission to do that.");
                         }
@@ -429,7 +427,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                     if (sender instanceof Player) {
                         Player p = (Player) sender;
                         if (p.hasPermission("uvv.villageinfo")) {
-                            sendVillageInfo(sender, _villageManager.getClosestVillageToLocation(p.getLocation(), tributeRange));
+                            sendVillageInfo(sender, _villageManager.getClosestVillageToLocation(p.getLocation(), _tributeRange));
                         } else {
                             sender.sendMessage("You don't have permission to do that.");
                         }
@@ -441,7 +439,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                     if (sender instanceof Player) {
                         Player p = (Player) sender;
                         if (p.hasPermission("uvv.admin")) {
-                            UVVillage v = _villageManager.getClosestVillageToLocation(p.getLocation(), tributeRange);
+                            UVVillage v = _villageManager.getClosestVillageToLocation(p.getLocation(), _tributeRange);
                             if (v != null) {
                                 v = _villageManager.toggleServerVillage(v);
                                 if (v != null) {
@@ -476,7 +474,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                                         newName += " " + args[i];
                                     }
                                 }
-                                UVVillage village = _villageManager.getClosestVillageToLocation(p.getLocation(), tributeRange);
+                                UVVillage village = _villageManager.getClosestVillageToLocation(p.getLocation(), _tributeRange);
                                 if (village != null) {
                                     if (village.getTopReputation().equalsIgnoreCase(p.getName()) || village.getTopReputation().equalsIgnoreCase("Server") && p.hasPermission("uvv.admin")) {
                                         if (_villageManager.getVillageByKey(p.getWorld(), newName) == null) {
@@ -485,7 +483,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                                             } else {
                                                 sender.sendMessage(ChatColor.DARK_RED + getLanguageManager().getString("village_rename_failure"));
                                             }
-                                            sendVillageInfo(sender, _villageManager.getVillagesNearLocation(p.getLocation(), tributeRange));
+                                            sendVillageInfo(sender, _villageManager.getVillagesNearLocation(p.getLocation(), _tributeRange));
                                         } else {
                                             sender.sendMessage(ChatColor.DARK_RED + getLanguageManager().getString("village_rename_duplicate").replace("@village", newName));
                                         }
@@ -624,12 +622,13 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      *
      * @param event PlayerMoveEvent
      */
+    /*
     @EventHandler
     private void onPlayerMoveEvent(PlayerMoveEvent event) {
         if (!isWorldEnabled(event.getTo().getWorld().getName())) return;
-        _villageManager.updatePlayerProximity(event.getTo(), event.getPlayer(), tributeRange);
+        _villageManager.updatePlayerProximity(event.getTo(), event.getPlayer(), _tributeRange);
     }
-
+*/
     /**
      * CreatureSpawnEvent listener. Fires when a creature spawns.
      *
@@ -772,6 +771,9 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                 }
                 break;
             case CHECK:
+                
+                _villageManager.tickWorld(event.getWorld(), _tributeRange);
+                _villageManager.checkPlayerProximities(event.getWorld(), _tributeRange);
                 // Update villages
                 _villageManager.matchVillagesToCore(event.getWorld());
                 // Check for villages that need to merge
@@ -932,7 +934,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                     int tributeAmount = 0, killBonus = 0;
 
                     // Get the villages within tribute range of the player
-                    Map<String, UVVillage> villages = _villageManager.getVillagesNearLocation(player.getLocation(), tributeRange);
+                    Map<String, UVVillage> villages = _villageManager.getVillagesNearLocation(player.getLocation(), _tributeRange);
 
                     // if a siege is active, calculate siege tribute bonuses  
                     if (_siegeManager.isSiegeActive(world)) {
@@ -1160,7 +1162,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
     
     private void updateBaseConfig() {
         String configVersion = baseConfiguration.getString("configVersion");
-        if (configVersion == null || configVersion == "") {
+        if (configVersion == null || "".equals(configVersion)) {
             baseConfiguration.set("configVersion", "1.3.2", false);
             baseConfiguration.set("useWorlds", false, false);
             baseConfiguration.set("worlds", "", false);
@@ -1171,7 +1173,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
     
     private void updateLanguageConfig() {
         String configVersion = languageConfiguration.getString("configVersion");
-        if (configVersion == null || configVersion == "") {
+        if (configVersion == null || "".equals(configVersion)) {
             languageConfiguration.set("configVersion", "1.3.2", false);
             languageConfiguration.set("strings.chest_created", "You have created a tribute chest in @village. Tributes will be placed here daily.", false);
             languageConfiguration.set("strings.chest_already_exists", "&C@village already has a tribute chest!", false);
