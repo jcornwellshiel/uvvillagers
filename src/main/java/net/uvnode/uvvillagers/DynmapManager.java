@@ -44,7 +44,7 @@ public class DynmapManager implements Listener {
             PluginManager pm = _plugin.getServer().getPluginManager();
             _dynmap = pm.getPlugin("dynmap");
             if (_dynmap == null) {
-                _plugin.getLogger().severe("Cannot find dynmap!");
+                //_plugin.getLogger().severe("Cannot find dynmap!");
                 _enabled = false;
                 return false;
             }

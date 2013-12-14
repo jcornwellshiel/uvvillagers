@@ -627,12 +627,48 @@ public final class UVVillage {
      *
      */
     public void moveMayor() {
-        if (_mayor != null && _mayorSign != null && _mayor.getLocation().distanceSquared(_mayorSign.getLocation()) > 64) {
+        if (_mayor != null && _mayorSign != null && _mayor.getLocation().distanceSquared(_mayorSign.getLocation()) > 4) {
             Navigation nav = _mayor.getHandle().getNavigation();
             nav.a(_mayorSign.getLocation().getBlockX(), _mayorSign.getLocation().getBlockY(), _mayorSign.getLocation().getBlockZ(), 0.3f);
         }
+        //_mayor.getHandle().getNavigation().a((net.minecraft.server.v1_7_R1.Entity)_mayorSign);
         if (_mayor.getLocation().distanceSquared(_mayorSign.getLocation()) > 100) {
-            _mayor.teleport(_mayorSign.getLocation());
+            // Find an empty spot by the sign
+            Location safe = null;
+            int radius=4;
+            for (int y = 0; y < radius; y++) {
+                for (int x = 0; x < radius; x++) {
+                    for (int z = 0; z < radius; z++) {
+                        Location test = _mayorSign.getLocation().clone();
+                            if (test.clone().add(x, y, z).getBlock().isEmpty() && test.clone().add(x, y+1, z).getBlock().isEmpty()) {
+                            safe = test.clone();
+                            break;
+                        }
+                        if (test.clone().add(x, y, z*-1).getBlock().isEmpty() && test.clone().add(x, y+1, z*-1).getBlock().isEmpty()) {
+                            safe = test.clone();
+                            break;
+                        }                    
+                        if (test.clone().add(x*-1, y, z).getBlock().isEmpty() && test.clone().add(x*-1, y+1, z).getBlock().isEmpty()) {
+                            safe = test.clone();
+                            break;
+                        }                    
+                        if (test.clone().add(x*-1, y, z*-1).getBlock().isEmpty() && test.clone().add(x*-1, y+1, z*-1).getBlock().isEmpty()) {
+                            safe = test.clone();
+                            break;
+                        }                    
+                        if (safe != null) {
+                            break;
+                        }
+                    }
+                }
+                if (safe != null) {
+                    break;
+                }
+            }
+            // If we found a spot, teleport him.
+            if (safe != null) {
+                _mayor.teleport(safe);
+            }
         }
     }
 
