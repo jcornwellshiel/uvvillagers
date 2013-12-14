@@ -641,19 +641,19 @@ public final class UVVillage {
                     for (int z = 0; z < radius; z++) {
                         Location test = _mayorSign.getLocation().clone();
                             if (test.clone().add(x, y, z).getBlock().isEmpty() && test.clone().add(x, y+1, z).getBlock().isEmpty()) {
-                            safe = test.clone();
+                            safe = test.clone().add(x, y, z);
                             break;
                         }
                         if (test.clone().add(x, y, z*-1).getBlock().isEmpty() && test.clone().add(x, y+1, z*-1).getBlock().isEmpty()) {
-                            safe = test.clone();
+                            safe = test.clone().add(x, y, z*-1);
                             break;
                         }                    
                         if (test.clone().add(x*-1, y, z).getBlock().isEmpty() && test.clone().add(x*-1, y+1, z).getBlock().isEmpty()) {
-                            safe = test.clone();
+                            safe = test.clone().add(x*-1, y, z);
                             break;
                         }                    
                         if (test.clone().add(x*-1, y, z*-1).getBlock().isEmpty() && test.clone().add(x*-1, y+1, z*-1).getBlock().isEmpty()) {
-                            safe = test.clone();
+                            safe = test.clone().add(x*-1, y, z*-1);
                             break;
                         }                    
                         if (safe != null) {
