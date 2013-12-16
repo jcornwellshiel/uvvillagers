@@ -6,17 +6,24 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+
 import net.minecraft.server.v1_7_R1.Village;
-
+import net.uvnode.uvvillagers.DynmapManager;
+import net.uvnode.uvvillagers.LanguageManager;
+import net.uvnode.uvvillagers.SiegeManager;
+import net.uvnode.uvvillagers.UVTimeEvent;
+import net.uvnode.uvvillagers.UVTimeEventType;
+import net.uvnode.uvvillagers.UVVillage;
+import net.uvnode.uvvillagers.UVVillageRank;
+import net.uvnode.uvvillagers.VillageManager;
 import net.uvnode.uvvillagers.util.FileManager;
-import org.bukkit.ChatColor;
 
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Chest;
 import org.bukkit.plugin.java.JavaPlugin;
-
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.craftbukkit.v1_7_R1.entity.CraftVillager;
@@ -28,7 +35,6 @@ import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.ItemStack;
-
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.Villager;
@@ -149,6 +155,10 @@ public final class UVVillagers extends JavaPlugin implements Listener {
     public void onDisable() {
         _dynmapManager.disable();
         saveUpdatedVillages();
+        // Delete our objects to minimize memory leak on /reload
+        _languageManager = null;
+        _siegeManager = null;
+        _villageManager = null;
     }
 
     /**
@@ -273,7 +283,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
     }
     
     /**
-     * Convinience overload which assumes that consoleOK should be true. 
+     * Convenience overload which assumes that consoleOK should be true. 
      *
      * @param sender    The command sender
      * @param perm      The permission to check
@@ -364,17 +374,40 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                     break;
                     case "startsiege":
                         if (hasPerms(sender,"uvv.admin")) {
-                            Player p = (Player) sender;
-                            sender.sendMessage("Starting a siege...");
-                            startSiege(p.getWorld());
+                        	if(args.length > 1) {
+                        		World world = getServer().getWorld(args[1]);
+                        		if (world != null) {
+                        			sender.sendMessage("Starting a siege in "+world+"...");
+                        			startSiege(world);
+                        		} else {
+                        			sender.sendMessage(ChatColor.RED+"Unable to start a siege. '"+world+"' does not exist...");
+                        		}
+                        	} else {
+                        		sender.sendMessage("Starting a siege on all worlds...");
+                        		startSiege();
+                        	}
                         }
                     break;
                     case "siegeinfo":
                         if (hasPerms(sender,"uvv.siegeinfo")) {
-                            Player p = (Player) sender;
                             sender.sendMessage(ChatColor.GOLD + " - UVVillagers Siege Info - ");
-                            ArrayList<String> messages = _siegeManager.getSiegeInfo(p.getLocation().getWorld());
-                            sender.sendMessage(messages.toArray(new String[messages.size()]));
+                            if(args.length > 1) {
+                        		World world = getServer().getWorld(args[1]);
+                        		if (world != null) {
+                        			ArrayList<String> messages = _siegeManager.getSiegeInfo(world);
+    	                            sender.sendMessage(messages.toArray(new String[messages.size()]));
+                        		} else {
+                        			sender.sendMessage(ChatColor.RED+"Unable to get siege info. '"+world+"' does not exist...");
+                        		}
+                        	} else {
+                        		List<World> worlds = getServer().getWorlds();
+    	                        for (World world : worlds) {
+    	                            ArrayList<String> messages = _siegeManager.getSiegeInfo(world);
+    	                            sender.sendMessage(ChatColor.GREEN+"["+world.getName()+"]");
+    	                            sender.sendMessage(messages.toArray(new String[messages.size()]));
+    	                        }
+                        	}
+                            
                         }
                     break;
                     case "list":
@@ -390,14 +423,14 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                         }
                     break;
                     case "nearby":
-                        if (hasPerms(sender,"uvv.villiageinfo")) {
+                        if (hasPerms(sender,"uvv.villiageinfo", false)) {
                             Player p = (Player) sender;
                             sender.sendMessage(ChatColor.GOLD + " - UVVillagers Nearby Villages - ");
                             sendVillageInfo(sender, _villageManager.getVillagesNearLocation(p.getLocation(), _tributeRange));
                         }
                     break;
                     case "current":
-                        if (hasPerms(sender,"uvv.villiageinfo")) {
+                        if (hasPerms(sender,"uvv.villiageinfo", false)) {
                             Player p = (Player) sender;
                             sender.sendMessage(ChatColor.GOLD + " - UVVillagers Current Village - ");
                             sendVillageInfo(sender, _villageManager.getClosestVillageToLocation(p.getLocation(), _tributeRange));
@@ -417,10 +450,10 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                                         sender.sendMessage(_languageManager.getString("server_village").replace("@village", v.getName()).replace("@owner", "players"));
                                     }
                                 } else {
-                                    sender.sendMessage("An error occurred trying to change the village name.");
+                                    sender.sendMessage("An unknown error occurred while running /setserver");
                                 }
                             } else {
-                                sender.sendMessage("You're not in a village.");
+                                sender.sendMessage("You are not in a village.");
                             }
                         }
                     break;
@@ -580,7 +613,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
             if (sender instanceof Player) {
                 rankString = String.format(" (%s)", getRank(village.getPlayerReputation(sender.getName())).getName());
             }
-            sender.sendMessage(ChatColor.GRAY + String.format("%s%s: %d doors, %d villagers, %d block size.", village.getName(), rankString, village.getDoorCount(), village.getPopulation(), village.getSize()));
+            sender.sendMessage(ChatColor.GRAY + String.format(ChatColor.GREEN+"[%s]"+ChatColor.WHITE+" %s%s: %d doors, %d villagers, %d block size.", village.getLocation().getWorld().getName(), village.getName(), rankString, village.getDoorCount(), village.getPopulation(), village.getSize()));
             if(village.getMayor() != null) {
                 Location mv = village.getMayor().getLocation();
                 sender.sendMessage(ChatColor.GRAY + String.format("The Mayor is currently at %d %d %d", mv.getBlockX(), mv.getBlockY(), mv.getBlockZ()));
