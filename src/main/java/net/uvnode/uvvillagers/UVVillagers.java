@@ -271,6 +271,43 @@ public final class UVVillagers extends JavaPlugin implements Listener {
             }
         }, 0, timerInterval);
     }
+    
+    /**
+     * Convinience overload which assumes that consoleOK should be true. 
+     *
+     * @param sender    The command sender
+     * @param perm      The permission to check
+     * @return true if the user has the permission or is a console
+     */
+     private boolean hasPerms(CommandSender sender, String perm) {
+        return hasPerms(sender,perm,true);
+     }
+    /**
+     * Check if player has a given permission, or if the command is from the console
+     *
+     * @param sender    The command sender
+     * @param perm      The permission to check
+     * @param consoleOK When true, non-player originating commands will have all permissions.
+     * @return true if the user has the permission
+     */
+    private boolean hasPerms(CommandSender sender, String perm, boolean consoleOK) {
+        if (sender instanceof Player) {
+            Player p = (Player) sender;
+            if (p.hasPermission(perm)) {
+                return true;
+            } else {
+                sender.sendMessage("You don't have permission to do that.");
+                return false;
+            }
+        } else {
+            if (consoleOK) {
+                return true;
+            } else {
+                sender.sendMessage("Silly console! You can't do that.");
+                return false;
+            }
+        }
+    }
 
     /**
      * Command listener
@@ -279,26 +316,21 @@ public final class UVVillagers extends JavaPlugin implements Listener {
      * @param cmd The command sent.
      * @param label The command label.
      * @param args The command arguments.
-     * @return Whether the command was processed.
+     * @return True if the command was processed.
      */
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         
         if (cmd.getName().equalsIgnoreCase("uvv")) {
             if (args.length > 0) {
-                if (args[0].equalsIgnoreCase("dump")) {
-                    if (sender instanceof Player) {
-                        Player p = (Player) sender;
-                        if (p.hasPermission("uvv.admin")) {
+                switch(args[0].toLowerCase()) {
+                   case "dump":
+                        if (hasPerms(sender,"uvv.admin")) {
                             dumpDataToSender(sender, args);
-                        }
-                    } else {
-                        dumpDataToSender(sender, args);
-                    }
-                } else if (args[0].equalsIgnoreCase("reload")) {
-                    if (sender instanceof Player) {
-                        Player p = (Player) sender;
-                        if (p.hasPermission("uvv.admin")) {
+                        }   
+                    break;
+                    case "reload":
+                        if (hasPerms(sender,"uvv.admin")) {
                             if (args.length > 1 && args[1].equalsIgnoreCase("villages")) {
                                 sender.sendMessage("Reloading villages from disk...");
                                 // Reload the config from disk.
@@ -316,129 +348,65 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                                 readRanksConfig();
                                 readSiegeConfig();
                             }
-                        } else {
-                            sender.sendMessage("You don't have permission to do that.");
                         }
-                    } else {
-                        if (args.length > 1 && args[1].equalsIgnoreCase("villages")) {
-                            sender.sendMessage("Reloading villages from disk...");
-                            // Reload the config from disk.
-                            villageConfiguration.loadFile();
-                            // Process the new config.
-                            readAllVillageConfigs();
-                        } else {
-                            sender.sendMessage("Reloading config data...");
-                            // Reload the config from disk.
-                            baseConfiguration.loadFile();
-                            ranksConfiguration.loadFile();
-                            siegeConfiguration.loadFile();
-                            // Process the new config.
-                            readBaseConfig();
-                            readRanksConfig();
-                            readSiegeConfig();
+                    break;
+                    case "debug":
+                        if (!(sender instanceof Player)) {
+                            _debug = !_debug;
+                            sender.sendMessage("Debug is " + (_debug?"On":"Off"));
                         }
-                    }
-                } else if (args[0].equalsIgnoreCase("debug")) {
-                    if (!(sender instanceof Player)) {
-                        _debug = !_debug;
-                        sender.sendMessage("Debug is " + (_debug?"On":"Off"));
-                    }
-                } else if (args[0].equalsIgnoreCase("save")) {
-                    if (sender instanceof Player) {
-                        Player p = (Player) sender;
-                        if (p.hasPermission("uvv.admin")) {
+                    break;
+                    case "save":
+                        if (hasPerms(sender,"uvv.admin")) {
                             sender.sendMessage("Saving...");
                             saveUpdatedVillages();
-                        } else {
-                            sender.sendMessage("You don't have permission to do that.");
                         }
-                    } else {
-                        sender.sendMessage("Saving...");
-                        saveUpdatedVillages();
-                    }
-                } else if (args[0].equalsIgnoreCase("startsiege")) {
-                    if (sender instanceof Player) {
-                        Player p = (Player) sender;
-                        if (p.hasPermission("uvv.admin")) {
+                    break;
+                    case "startsiege":
+                        if (hasPerms(sender,"uvv.admin")) {
+                            Player p = (Player) sender;
                             sender.sendMessage("Starting a siege...");
                             startSiege(p.getWorld());
-                        } else {
-                            sender.sendMessage("You don't have permission to do that.");
                         }
-                    } else {
-                        sender.sendMessage("Starting a siege...");
-                        startSiege();
-                    }
-                } else if (args[0].equalsIgnoreCase("siegeinfo")) {
-                    sender.sendMessage(ChatColor.GOLD + " - UVVillagers Siege Info - ");
-                    if (sender instanceof Player) {
-                        Player p = (Player) sender;
-                        if (p.hasPermission("uvv.siegeinfo")) {
+                    break;
+                    case "siegeinfo":
+                        if (hasPerms(sender,"uvv.siegeinfo")) {
+                            Player p = (Player) sender;
+                            sender.sendMessage(ChatColor.GOLD + " - UVVillagers Siege Info - ");
                             ArrayList<String> messages = _siegeManager.getSiegeInfo(p.getLocation().getWorld());
                             sender.sendMessage(messages.toArray(new String[messages.size()]));
-                        } else {
-                            sender.sendMessage("You don't have permission to do that.");
                         }
-                    } else {
-                        List<World> worlds = getServer().getWorlds();
-                        for (World world : worlds) {
-                            ArrayList<String> messages = _siegeManager.getSiegeInfo(world);
-                            sender.sendMessage(messages.toArray(new String[messages.size()]));
+                    break;
+                    case "list":
+                        if (hasPerms(sender,"uvv.villiageinfo")) {
+                            sender.sendMessage(ChatColor.GOLD + " - UVVillagers Village List - ");
+                            sendVillageInfo(sender, _villageManager.getAllVillages());
                         }
-                    }
-                } else if (args[0].equalsIgnoreCase("list")) {
-                    sender.sendMessage(ChatColor.GOLD + " - UVVillagers Village List - ");
-                    if (sender instanceof Player) {
-                        Player p = (Player) sender;
-                        if (p.hasPermission("uvv.villageinfo")) {
-                            sendVillageInfo(sender, _villageManager.getAllVillages(p.getLocation().getWorld()));
-                        } else {
-                            sender.sendMessage("You don't have permission to do that.");
-                        }
-                    } else {
-                        sendVillageInfo(sender, _villageManager.getAllVillages());
-                    }
-                } else if (args[0].equalsIgnoreCase("loaded")) {
-                    sender.sendMessage(ChatColor.GOLD + " - UVVillagers Villages Loaded - ");
-                    if (sender instanceof Player) {
-                        Player p = (Player) sender;
-                        if (p.hasPermission("uvv.villageinfo")) {
+                    break;
+                    case "loaded":
+                        if (hasPerms(sender,"uvv.villiageinfo")) {
+                            sender.sendMessage(ChatColor.GOLD + " - UVVillagers Villages Loaded - ");
                             sendVillageInfo(sender, _villageManager.getLoadedVillages());
-                        } else {
-                            sender.sendMessage("You don't have permission to do that.");
                         }
-                    } else {
-                        sendVillageInfo(sender, _villageManager.getLoadedVillages());
-                    }
-                } else if (args[0].equalsIgnoreCase("nearby")) {
-                    sender.sendMessage(ChatColor.GOLD + " - UVVillagers Nearby Villages - ");
-                    if (sender instanceof Player) {
-                        Player p = (Player) sender;
-                        if (p.hasPermission("uvv.villageinfo")) {
+                    break;
+                    case "nearby":
+                        if (hasPerms(sender,"uvv.villiageinfo")) {
+                            Player p = (Player) sender;
+                            sender.sendMessage(ChatColor.GOLD + " - UVVillagers Nearby Villages - ");
                             sendVillageInfo(sender, _villageManager.getVillagesNearLocation(p.getLocation(), _tributeRange));
-                        } else {
-                            sender.sendMessage("You don't have permission to do that.");
                         }
-                    } else {
-                        sender.sendMessage("Silly console, you can't do that!");
-                    }
-                } else if (args[0].equalsIgnoreCase("current")) {
-                    sender.sendMessage(ChatColor.GOLD + " - UVVillagers Current Village - ");
-                    if (sender instanceof Player) {
-                        Player p = (Player) sender;
-                        if (p.hasPermission("uvv.villageinfo")) {
+                    break;
+                    case "current":
+                        if (hasPerms(sender,"uvv.villiageinfo")) {
+                            Player p = (Player) sender;
+                            sender.sendMessage(ChatColor.GOLD + " - UVVillagers Current Village - ");
                             sendVillageInfo(sender, _villageManager.getClosestVillageToLocation(p.getLocation(), _tributeRange));
-                        } else {
-                            sender.sendMessage("You don't have permission to do that.");
                         }
-                    } else {
-                        sender.sendMessage("Silly console, you can't do that!");
-                    }
-                } else if (args[0].equalsIgnoreCase("setserver")) {
-                    sender.sendMessage(ChatColor.GOLD + " - UVVillagers Set Server Village - ");
-                    if (sender instanceof Player) {
-                        Player p = (Player) sender;
-                        if (p.hasPermission("uvv.admin")) {
+                    break;
+                    case "setserver":
+                        if (hasPerms(sender,"uvv.admin", false)) {
+                            sender.sendMessage(ChatColor.GOLD + " - UVVillagers Set Server Village - ");
+                            Player p = (Player) sender;
                             UVVillage v = _villageManager.getClosestVillageToLocation(p.getLocation(), _tributeRange);
                             if (v != null) {
                                 v = _villageManager.toggleServerVillage(v);
@@ -454,18 +422,12 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                             } else {
                                 sender.sendMessage("You're not in a village.");
                             }
-                            
-                        } else {
-                            sender.sendMessage("You don't have permission to do that.");
                         }
-                    } else {
-                        sender.sendMessage("Silly console, you can't do that!");
-                    }
-                } else if (args[0].equalsIgnoreCase("rename")) {
-                    sender.sendMessage(ChatColor.GOLD + " - UVVillagers Rename Village - ");
-                    if (sender instanceof Player) {
-                        Player p = (Player) sender;
-                        if (p.hasPermission("uvv.rename")) {
+                    break;
+                    case "rename":
+                        if (hasPerms(sender,"uvv.admin", false)) {
+                            sender.sendMessage(ChatColor.GOLD + " - UVVillagers Rename Village - ");
+                            Player p = (Player) sender;
                             if (args.length > 1) {
                                 String newName = "";
                                 newName += args[1];
@@ -490,21 +452,18 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                                     } else {
                                         sender.sendMessage(ChatColor.DARK_RED + getLanguageManager().getString("village_rename_not_top_rep").replace("@village", village.getName()).replace("@toprep", village.getTopReputation()));
                                     }
-
                                 } else {
                                     sender.sendMessage(ChatColor.DARK_RED + getLanguageManager().getString("village_rename_no_village"));
                                 }
                             } else {
                                 sender.sendMessage(ChatColor.DARK_RED + getLanguageManager().getString("village_rename_no_name"));
                             }
-                        } else {
-                            sender.sendMessage("You don't have permission to do that.");
                         }
-                    } else {
-                        sender.sendMessage("Silly console, you can't do that!");
-                    }
-                } else {
-                    sendHelp(sender);
+                    break;
+                    default:
+                        sender.sendMessage("Unrecognized Command.");
+                        sendHelp(sender);
+                    break;
                 }
             } else {
                 sendHelp(sender);
@@ -515,18 +474,30 @@ public final class UVVillagers extends JavaPlugin implements Listener {
     }
 
     private void sendHelp(CommandSender sender) {
-        sender.sendMessage(ChatColor.GOLD + " - UVVillagers Help - ");
-        sender.sendMessage(ChatColor.GRAY + "Try one of the following:");
-        sender.sendMessage(ChatColor.GRAY + " /uvv save");
-        sender.sendMessage(ChatColor.GRAY + " /uvv reload");
-        sender.sendMessage(ChatColor.GRAY + " /uvv list - lists all villages in this world");
-        sender.sendMessage(ChatColor.GRAY + " /uvv loaded - lists all loaded villages in this world");
-        sender.sendMessage(ChatColor.GRAY + " /uvv nearby - lists villages in tribute range");
-        sender.sendMessage(ChatColor.GRAY + " /uvv current - displays current village info");
-        sender.sendMessage(ChatColor.GRAY + " /uvv rename New Village Name - renames the village you're in");
-        sender.sendMessage(ChatColor.GRAY + " /uvv siegeinfo - prints out the status of the current siege");
-        sender.sendMessage(ChatColor.GRAY + " /uvv setserver - toggles the current village between player-/server-owned");
+        sender.sendMessage(ChatColor.GOLD + " - UVVillagers Help - ");      
+        if (hasPerms(sender,"uvv.admin")) {
+            sender.sendMessage(ChatColor.GRAY + " /uvv reload - reloads the configuration from disk");
+            sender.sendMessage(ChatColor.GRAY + " /uvv reload villages - reloads the village list from disk (changes since last save will be lost)");
+            sender.sendMessage(ChatColor.GRAY + " /uvv save - saves villages to disk");
+        }
+        if (hasPerms(sender,"uvv.villageinfo")) {
+            sender.sendMessage(ChatColor.GRAY + " /uvv list - lists  all known villages");
+            sender.sendMessage(ChatColor.GRAY + " /uvv loaded - lists villages currently loaded");
+            sender.sendMessage(ChatColor.GRAY + " /uvv nearby - lists villages you're near");
+            sender.sendMessage(ChatColor.GRAY + " /uvv current - lists  your current village");
+        }
+        if (hasPerms(sender,"uvv.rename")) {
+            sender.sendMessage(ChatColor.GRAY + " /uvv rename - rename the village you're in");
+        }
+        if (hasPerms(sender,"uvv.siegeinfo")) {
+            sender.sendMessage(ChatColor.GRAY + " /uvv siegeinfo - displays siege status data");
+        }
+        if (hasPerms(sender,"uvv.admin")) {
+            sender.sendMessage(ChatColor.GRAY + " /uvv startsiege - forces a siege to start. no tribute bonus granted if it's daytime.");
+            sender.sendMessage(ChatColor.GRAY + " /uvv setserver - toggles the current village between player-/server-owned");
+        }
     }
+    
     private void dumpDataToSender(CommandSender sender, String[] args) {
         if (args.length > 1) {
             if (args[1].equalsIgnoreCase("language")) {
