@@ -996,7 +996,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                                 }
                             }
                         }
-                        if (_tributeMethod.equalsIgnoreCase("chest") && village.getValue().hasChest()) {
+                        if (_tributeMethod.equalsIgnoreCase("chest") && village.getValue().hasChest() && tributeAmount > 0) {
                             ItemStack items;
                             if (_emeraldTributeItem > 0 && Material.getMaterial(_emeraldTributeItem) != null) {
                                 items = new ItemStack(Material.getMaterial(_emeraldTributeItem), tributeAmount);
