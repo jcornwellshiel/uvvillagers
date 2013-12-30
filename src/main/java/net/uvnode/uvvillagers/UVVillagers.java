@@ -8,14 +8,6 @@ import java.util.Map;
 import java.util.Random;
 
 import net.minecraft.server.v1_7_R1.Village;
-import net.uvnode.uvvillagers.DynmapManager;
-import net.uvnode.uvvillagers.LanguageManager;
-import net.uvnode.uvvillagers.SiegeManager;
-import net.uvnode.uvvillagers.UVTimeEvent;
-import net.uvnode.uvvillagers.UVTimeEventType;
-import net.uvnode.uvvillagers.UVVillage;
-import net.uvnode.uvvillagers.UVVillageRank;
-import net.uvnode.uvvillagers.VillageManager;
 import net.uvnode.uvvillagers.util.FileManager;
 
 import org.bukkit.ChatColor;
@@ -33,7 +25,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.ItemFrame;
@@ -411,26 +402,26 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                         }
                     break;
                     case "list":
-                        if (hasPerms(sender,"uvv.villiageinfo")) {
+                        if (hasPerms(sender,"uvv.villageinfo")) {
                             sender.sendMessage(ChatColor.GOLD + " - UVVillagers Village List - ");
                             sendVillageInfo(sender, _villageManager.getAllVillages());
                         }
                     break;
                     case "loaded":
-                        if (hasPerms(sender,"uvv.villiageinfo")) {
+                        if (hasPerms(sender,"uvv.villageinfo")) {
                             sender.sendMessage(ChatColor.GOLD + " - UVVillagers Villages Loaded - ");
                             sendVillageInfo(sender, _villageManager.getLoadedVillages());
                         }
                     break;
                     case "nearby":
-                        if (hasPerms(sender,"uvv.villiageinfo", false)) {
+                        if (hasPerms(sender,"uvv.villageinfo", false)) {
                             Player p = (Player) sender;
                             sender.sendMessage(ChatColor.GOLD + " - UVVillagers Nearby Villages - ");
                             sendVillageInfo(sender, _villageManager.getVillagesNearLocation(p.getLocation(), _tributeRange));
                         }
                     break;
                     case "current":
-                        if (hasPerms(sender,"uvv.villiageinfo", false)) {
+                        if (hasPerms(sender,"uvv.villageinfo", false)) {
                             Player p = (Player) sender;
                             sender.sendMessage(ChatColor.GOLD + " - UVVillagers Current Village - ");
                             sendVillageInfo(sender, _villageManager.getClosestVillageToLocation(p.getLocation(), _tributeRange));
