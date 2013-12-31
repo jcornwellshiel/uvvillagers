@@ -1,6 +1,6 @@
 name: UVVillagers
 main: net.uvnode.uvvillagers.UVVillagers
-version: 1.3.7
+version: 1.3.8
 load: POSTWORLD
 author: jcornwellshiel
 website: uv-node.net
@@ -16,11 +16,15 @@ permissions:
     description: Gives access to all UVVillagers commands
     children:
       uvv.admin: true
+      uvv.startsiege: true
       uvv.villageinfo: true
       uvv.siegeinfo: true
       uvv.rename: true
   uvv.admin:
     description: Gives access to reload, save, toggle debug mode, and start sieges.
+    default: op
+  uvv.startsiege:
+    description: Gives access to start sieges.
     default: op
   uvv.villageinfo:
     description: Gives access to retrieve village info.
