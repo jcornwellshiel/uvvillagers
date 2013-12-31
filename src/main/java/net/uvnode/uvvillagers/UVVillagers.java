@@ -389,7 +389,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                                         for (int i = 2; i < args.length; i++)
                                             villageName += " " + args[i];
                                         villageName = villageName.trim();
-                                        if (villageName == "current") {
+                                        if (villageName.equalsIgnoreCase("current")) {
                                             if (sender instanceof Player) {
                                                 village = _villageManager.getClosestVillageToLocation(((Player)sender).getLocation(), 0);
                                             } else {
