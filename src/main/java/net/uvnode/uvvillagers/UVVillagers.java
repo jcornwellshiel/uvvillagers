@@ -486,7 +486,7 @@ public final class UVVillagers extends JavaPlugin implements Listener {
                         }
                     break;
                     case "rename":
-                        if (hasPerms(sender,"uvv.admin", false)) {
+                        if (hasPerms(sender,"uvv.rename", false)) {
                             sender.sendMessage(ChatColor.GOLD + " - UVVillagers Rename Village - ");
                             Player p = (Player) sender;
                             if (args.length > 1) {
