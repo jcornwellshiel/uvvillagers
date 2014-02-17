@@ -208,7 +208,7 @@ public class SiegeManager {
      * @param skeletonType Skeleton type
      */
     private void trySpawn(Location location, int population, EntityType type, SkeletonType skeletonType) {
-        int threshold, chance, max;
+        int threshold, chance, max, min;
         String typeString = type.toString();
         if (skeletonType != null) {
             typeString += "_" + skeletonType.toString();
@@ -216,6 +216,7 @@ public class SiegeManager {
         threshold = getPopulationThreshold(typeString);
         chance = getExtraMobChance(typeString);
         max = getMaxToSpawn(typeString);
+        min = getMinToSpawn(typeString);
 
         _plugin.debug(String.format("Trying to spawn %s: %d of %d villagers needed, %d percent chance, max %d", type.toString(), population, threshold, chance, max));
 
@@ -225,6 +226,8 @@ public class SiegeManager {
             if (chance > 0) {
                 // Generate a random number of extra mobs to possibly spawn
                 int count = _plugin.getRandomNumber(1, (int) (population / threshold) + 1);
+                if (count < min)
+                    count = min;
                 int numSpawned = 0;
                 for (int i = 0; i < count; i++) {
                     // Are we under our max allowed of this type?
@@ -329,6 +332,16 @@ public class SiegeManager {
      */
     protected int getMaxToSpawn(String type) {
         return _siegeConfig.getInt(String.format("mobs.%s.max", type.toLowerCase()));
+    }
+    
+    /**
+     * Get the min number of this mob type to allow to spawn
+     *
+     * @param type mob type
+     * @return max
+     */
+    protected int getMinToSpawn(String type) {
+        return _siegeConfig.getInt(String.format("mobs.%s.min", type.toLowerCase()));
     }
 
     /**
