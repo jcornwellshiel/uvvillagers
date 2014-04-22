@@ -83,7 +83,7 @@
             <groupId>org.bukkit</groupId>
             <artifactId>craftbukkit</artifactId>
             <!-- Bukkit API Version, change if necessary -->
-            <version>1.7.2-R0.3-SNAPSHOT</version>
+            <version>1.7.9-R0.1-SNAPSHOT</version>
         </dependency>
     
     </dependencies>

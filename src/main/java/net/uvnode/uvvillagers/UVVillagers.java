@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import net.minecraft.server.v1_7_R1.Village;
+import net.minecraft.server.v1_7_R3.Village;
 import net.uvnode.uvvillagers.util.FileManager;
 
 import org.bukkit.ChatColor;
@@ -18,7 +18,7 @@ import org.bukkit.block.Chest;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.craftbukkit.v1_7_R1.entity.CraftVillager;
+import org.bukkit.craftbukkit.v1_7_R3.entity.CraftVillager;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
