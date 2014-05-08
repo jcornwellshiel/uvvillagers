@@ -10,10 +10,10 @@ import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
-import net.minecraft.server.v1_7_R3.Village;
-import net.minecraft.server.v1_7_R3.WorldServer;
-import org.bukkit.craftbukkit.v1_7_R3.CraftWorld;
-import org.bukkit.craftbukkit.v1_7_R3.entity.CraftVillager;
+import net.minecraft.server.v1_7_R2.Village;
+import net.minecraft.server.v1_7_R2.WorldServer;
+import org.bukkit.craftbukkit.v1_7_R2.CraftWorld;
+import org.bukkit.craftbukkit.v1_7_R2.entity.CraftVillager;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Villager;
@@ -557,7 +557,7 @@ public class VillageManager {
             if (village != null) {
                 // Yes, we found a UVVillage.
                 // Do nothing.
-            } else if (coreVillage.getPopulationCount() > _plugin._villageMinPopulation) {
+            } else if (coreVillage.getPopulationCount() >= _plugin._villageMinPopulation) {
                 // No, no UVVillage, and the core village's population is over the minimum. Discover!
                 // Discover one, and get it.
                 village = discoverVillage(coreVillageLocation, coreVillage, player);
